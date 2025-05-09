@@ -43,6 +43,11 @@ Kotlin DSL (build.gradle.kts)
 - Author: [MIMIT](https://www.mimit.gov.it/) *Ministero delle Imprese e del Made in Italy*<br>
 - Licence: [IODL 2.0](https://www.dati.gov.it/iodl/2.0/) *Italian Open Data Licence 2.0*
 
+**Osmdroid (OpenStreetMap Integration)**
+- Link: [osmdroid](https://github.com/osmdroid/osmdroid/)<br>
+- Author: [osmdroid](https://www.mimit.gov.it/) *Ministero delle Imprese e del Made in Italy*<br>
+- Licence: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
 ## Authors
 
 **Marco Marrelli**
