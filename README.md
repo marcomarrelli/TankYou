@@ -45,7 +45,7 @@ Kotlin DSL (build.gradle.kts)
 
 **Osmdroid (OpenStreetMap Integration)**
 - Link: [osmdroid](https://github.com/osmdroid/osmdroid/)<br>
-- Author: [osmdroid](https://www.mimit.gov.it/) *Ministero delle Imprese e del Made in Italy*<br>
+- Author: [osmdroid](https://www.mimit.gov.it/)<br>
 - Licence: [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## Authors
