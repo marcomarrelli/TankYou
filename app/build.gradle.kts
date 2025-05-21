@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.devtools.ksp")
 }
 
 android {
@@ -59,12 +60,27 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
 
-    // @DOC: Implementazione Usata per la Gestione delle Preferenze (PreferenceManager)
+    // @DOC: Libreria per Gestione delle Preferenze (PreferenceManager)
     implementation(libs.androidx.preference.ktx)
 
-    // @DOC: Librerie 'osmdroid'
+    // @DOC: Libreria 'osmdroid' per Mappe OpenStreetMap (OSM)
     implementation(libs.osmdroid.android)
 
     // @DOC: (Opzionale) Funzionalità Aggiuntive (Ricerca di Indirizzi...)
     // implementation 'org.osmdroid:osmdroid-mapsforge:6.1.16'
+
+    // @DOC: Libreria Room per Database
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
+    // @DOC: Libreria per Lettura/Fetching di File .csv
+    implementation(libs.opencsv)
+
+    // @DOC: Libreria per Coroutines
+    implementation(libs.kotlinx.coroutines.android)
+
+    // @DOC: Librerie per Download dei File .csv
+    implementation(libs.okhttp)
+    implementation(libs.androidx.work.runtime.ktx)
 }
