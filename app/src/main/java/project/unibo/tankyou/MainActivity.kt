@@ -1,94 +1,80 @@
 package project.unibo.tankyou
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Log
+import android.widget.RelativeLayout
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import org.osmdroid.config.Configuration
-import org.osmdroid.tileprovider.tilesource.TileSourceFactory
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.MapView
-// import org.osmdroid.views.overlay.compass.CompassOverlay
-// import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
-// import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import project.unibo.tankyou.components.MapComponent
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var map: MapView
-    private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
+    private lateinit var mapComponent: MapComponent
+    private val PERMISSIONS_REQUEST_CODE = 1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
 
-        try {
-            // Prima configura osmdroid
-            val ctx: Context = applicationContext
-            Configuration.getInstance().load(ctx, ctx.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
-            Configuration.getInstance().userAgentValue = packageName
+        requestPermissions()
 
-            // Poi imposta la view
-            setContentView(R.layout.activity_main)
+        val mapContainer = findViewById<RelativeLayout>(R.id.mapContainer)
+        mapComponent = MapComponent(this, mapContainer)
+    }
 
-            // Verifica i permessi prima di inizializzare la mappa
-            val permissionsGranted = requestPermissionsIfNecessary(arrayOf(
-                Manifest.permission.INTERNET,
-                Manifest.permission.ACCESS_NETWORK_STATE,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ))
+    override fun onStart() {
+        super.onStart()
 
-            // Solo se i permessi sono concessi, inizializza la mappa
-            if (permissionsGranted) {
-                initializeMap()
-            }
-        } catch (e: Exception) {
-            // Log dell'errore per capire cosa sta causando il crash
-            Log.e("OSMDroid", "Error initializing app", e)
-            Toast.makeText(this, "Errore: " + e.message, Toast.LENGTH_LONG).show()
+        mapComponent.initialize()
+    }
+
+    private fun requestPermissions() {
+        val permissionsNeeded = mutableListOf<String>()
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.INTERNET)
         }
-    }
 
-    private fun initializeMap() {
-        map = findViewById(R.id.mapView)
-        map.setTileSource(TileSourceFactory.MAPNIK)
-        map.setMultiTouchControls(true)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE)
+        }
 
-        // Configurazione iniziale della mappa
-        val mapController = map.controller
-        mapController.setZoom(15.0)
-        val startPoint = GeoPoint(41.9028, 12.4964) // Roma
-        mapController.setCenter(startPoint)
-    }
-
-    private fun requestPermissionsIfNecessary(permissions: Array<String>): Boolean {
-        val permissionsToRequest = ArrayList<String>()
-        for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                permissionsToRequest.add(permission)
+        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.P) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+                permissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
 
-        if (permissionsToRequest.isNotEmpty()) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED) {
+            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+
+        if (permissionsNeeded.isNotEmpty()) {
             ActivityCompat.requestPermissions(
                 this,
-                permissionsToRequest.toTypedArray(),
-                REQUEST_PERMISSIONS_REQUEST_CODE
+                permissionsNeeded.toTypedArray(),
+                PERMISSIONS_REQUEST_CODE
             )
-            return false
         }
-        return true
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-        if (requestCode == REQUEST_PERMISSIONS_REQUEST_CODE) {
+        if (requestCode == PERMISSIONS_REQUEST_CODE) {
             var allGranted = true
+
             for (result in grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
@@ -97,24 +83,37 @@ class MainActivity : AppCompatActivity() {
             }
 
             if (allGranted) {
-                initializeMap()
+                mapComponent.initialize()
             } else {
-                Toast.makeText(this, "L'applicazione richiede permessi per funzionare correttamente", Toast.LENGTH_LONG).show()
+                Toast.makeText(
+                    this,
+                    "Alcune funzionalità potrebbero essere limitate senza i permessi richiesti",
+                    Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
 
+    // fun zoomToLocation(latitude: Double, longitude: Double) {
+    //     mapComponent.centerOn(latitude, longitude)
+    //     mapComponent.setZoom(15.0)
+    // }
+
+    // fun enableFollowMode() {
+    //     mapComponent.enableLocationFollowing(true)
+    // }
+
+    // fun disableFollowMode() {
+    //     mapComponent.enableLocationFollowing(false)
+    // }
+
     override fun onResume() {
         super.onResume()
-        if (::map.isInitialized) {
-            map.onResume()
-        }
+        mapComponent.onResume()
     }
 
     override fun onPause() {
         super.onPause()
-        if (::map.isInitialized) {
-            map.onPause()
-        }
+        mapComponent.onPause()
     }
 }
