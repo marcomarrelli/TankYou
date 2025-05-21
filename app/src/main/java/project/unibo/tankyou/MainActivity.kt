@@ -9,11 +9,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import project.unibo.tankyou.components.MapComponent
+import project.unibo.tankyou.data.repository.AppRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-
     private lateinit var mapComponent: MapComponent
+    private val applicationScope = CoroutineScope(Dispatchers.Default)
+
     private val PERMISSIONS_REQUEST_CODE = 1
+    private val STATIONS_CSV_URL = "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv"
+    private val PRICES_CSV_URL = "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv"
+    private val SYNC_INTERVAL_HOURS = 24
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -23,6 +31,20 @@ class MainActivity : AppCompatActivity() {
 
         val mapContainer = findViewById<RelativeLayout>(R.id.mapContainer)
         mapComponent = MapComponent(this, mapContainer)
+
+        val repository = AppRepository.getInstance(this)
+
+        applicationScope.launch {
+            if (repository.isDataEmpty()) {
+                repository.syncData(STATIONS_CSV_URL, PRICES_CSV_URL)
+            }
+
+            repository.schedulePeriodicSync(
+                STATIONS_CSV_URL,
+                PRICES_CSV_URL,
+                SYNC_INTERVAL_HOURS
+            )
+        }
     }
 
     override fun onStart() {
