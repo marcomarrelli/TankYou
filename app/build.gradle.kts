@@ -1,13 +1,20 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.devtools.ksp")
+    kotlin("plugin.serialization") version "1.9.20"
 }
 
 android {
     namespace = "project.unibo.tankyou"
     compileSdk = 35
+
+    buildFeatures {
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "project.unibo.tankyou"
@@ -20,12 +27,33 @@ android {
     }
 
     buildTypes {
+        val p = Properties()
+        val f = rootProject.file("local.properties")
+
+        var url: String = ""
+        var key: String = ""
+
+        if (f.exists()) {
+            p.load(f.inputStream())
+
+            url = p.getProperty("database.url")
+            key = p.getProperty("database.key")
+        }
+
+        debug {
+            buildConfigField("String", "DATABASE_URL", "\"${url}\"")
+            buildConfigField("String", "DATABASE_KEY", "\"${key}\"")
+        }
         release {
             isMinifyEnabled = false
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            buildConfigField("String", "DATABASE_URL", "\"${url}\"")
+            buildConfigField("String", "DATABASE_KEY", "\"${key}\"")
         }
     }
     compileOptions {
@@ -69,7 +97,7 @@ dependencies {
     // @DOC: (Opzionale) Funzionalità Aggiuntive (Ricerca di Indirizzi...)
     // implementation 'org.osmdroid:osmdroid-mapsforge:6.1.16'
 
-    // @DOC: Libreria Room per Database
+    // @DOC: Libreria Room per Database Interno
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
@@ -83,4 +111,18 @@ dependencies {
     // @DOC: Librerie per Download dei File .csv
     implementation(libs.okhttp)
     implementation(libs.androidx.work.runtime.ktx)
+
+    // @DOC: Librerie per Database Esterno (Supabase)
+    implementation(libs.postgrest.kt.v260)
+    implementation(libs.realtime.kt.v260)
+    implementation(libs.storage.kt)
+    implementation(libs.ktor.client.android)
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    // Serialization
+    implementation(libs.kotlinx.serialization.json)
+
+    // DateTime
+    implementation(libs.kotlinx.datetime)
 }

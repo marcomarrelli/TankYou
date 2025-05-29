@@ -3,8 +3,8 @@ package project.unibo.tankyou
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Log
 import android.widget.RelativeLayout
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -16,12 +16,8 @@ import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mapComponent: MapComponent
-    private val applicationScope = CoroutineScope(Dispatchers.Default)
-
-    private val PERMISSIONS_REQUEST_CODE = 1
-    private val STATIONS_CSV_URL = "https://www.mimit.gov.it/images/exportCSV/anagrafica_impianti_attivi.csv"
-    private val PRICES_CSV_URL = "https://www.mimit.gov.it/images/exportCSV/prezzo_alle_8.csv"
-    private val SYNC_INTERVAL_HOURS = 24
+    private val applicationScope = CoroutineScope(Dispatchers.Main)
+    private lateinit var repository: AppRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,25 +27,19 @@ class MainActivity : AppCompatActivity() {
 
         val mapContainer = findViewById<RelativeLayout>(R.id.mapContainer)
         mapComponent = MapComponent(this, mapContainer)
-
-        val repository = AppRepository.getInstance(this)
+        repository = AppRepository.getInstance()
 
         applicationScope.launch {
-            if (repository.isDataEmpty()) {
-                repository.syncData(STATIONS_CSV_URL, PRICES_CSV_URL)
+            try {
+                Log.e("[ERR]", "GAS STATION COUNT: ${repository.getStationCount()}")
+            } catch (e: Exception) {
+                Log.e("[ERR]", "Errore nel caricamento dati: ${e.message}")
             }
-
-            repository.schedulePeriodicSync(
-                STATIONS_CSV_URL,
-                PRICES_CSV_URL,
-                SYNC_INTERVAL_HOURS
-            )
         }
     }
 
     override fun onStart() {
         super.onStart()
-
         mapComponent.initialize()
     }
 
@@ -64,13 +54,6 @@ class MainActivity : AppCompatActivity() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE)
             != PackageManager.PERMISSION_GRANTED) {
             permissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE)
-        }
-
-        if (android.os.Build.VERSION.SDK_INT <= android.os.Build.VERSION_CODES.P) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-                permissionsNeeded.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            }
         }
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -96,7 +79,6 @@ class MainActivity : AppCompatActivity() {
 
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
             var allGranted = true
-
             for (result in grantResults) {
                 if (result != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
@@ -106,28 +88,12 @@ class MainActivity : AppCompatActivity() {
 
             if (allGranted) {
                 mapComponent.initialize()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Alcune funzionalità potrebbero essere limitate senza i permessi richiesti",
-                    Toast.LENGTH_LONG
-                ).show()
+            }
+            else {
+                // TODO: Qualcosa...
             }
         }
     }
-
-    // fun zoomToLocation(latitude: Double, longitude: Double) {
-    //     mapComponent.centerOn(latitude, longitude)
-    //     mapComponent.setZoom(15.0)
-    // }
-
-    // fun enableFollowMode() {
-    //     mapComponent.enableLocationFollowing(true)
-    // }
-
-    // fun disableFollowMode() {
-    //     mapComponent.enableLocationFollowing(false)
-    // }
 
     override fun onResume() {
         super.onResume()
@@ -137,5 +103,9 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         mapComponent.onPause()
+    }
+
+    companion object {
+        private const val PERMISSIONS_REQUEST_CODE = 123
     }
 }
