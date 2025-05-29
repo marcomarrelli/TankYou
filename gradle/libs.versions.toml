@@ -20,6 +20,8 @@ composeBom = "2024.09.00"
 okhttp = "4.11.0"
 opencsv = "5.7.1"
 osmdroidAndroid = "6.1.16"
+osmdroidClustering = "6.1.18"
+osmdroidMapsforge = "6.1.16"
 postgrestKt = "2.0.4"
 postgrestKtVersion = "2.6.0"
 preferenceKtx = "1.2.1"
@@ -61,6 +63,8 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
 opencsv = { module = "com.opencsv:opencsv", version.ref = "opencsv" }
 osmdroid-android = { module = "org.osmdroid:osmdroid-android", version.ref = "osmdroidAndroid" }
+osmdroid-clustering = { module = "org.osmdroid:osmdroid-clustering", version.ref = "osmdroidClustering" }
+osmdroid-mapsforge = { module = "org.osmdroid:osmdroid-mapsforge", version.ref = "osmdroidMapsforge" }
 postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "postgrestKt" }
 postgrest-kt-v260 = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "postgrestKtVersion" }
 realtime-kt = { module = "io.github.jan-tennert.supabase:realtime-kt", version.ref = "realtimeKt" }

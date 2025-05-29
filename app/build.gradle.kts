@@ -95,7 +95,7 @@ dependencies {
     implementation(libs.osmdroid.android)
 
     // @DOC: (Opzionale) Funzionalità Aggiuntive (Ricerca di Indirizzi...)
-    // implementation 'org.osmdroid:osmdroid-mapsforge:6.1.16'
+    implementation(libs.osmdroid.mapsforge)
 
     // @DOC: Libreria Room per Database Interno
     implementation(libs.androidx.room.runtime)

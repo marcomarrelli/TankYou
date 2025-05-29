@@ -14,27 +14,31 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
+import project.unibo.tankyou.data.database.entities.GasStation
 
 class MapComponent(
     private val context: AppCompatActivity,
     private val mapContainer: RelativeLayout
-) {
+) : MapListener {
     private lateinit var map: MapView
     private var locationOverlay: MyLocationNewOverlay? = null
+    private lateinit var clusterManager: ClusterManager
     private val TAG: String = "MapComponent"
 
     private var mapInitialized = false
 
-    // Definizione dei confini geografici dell'Italia (con un po' di margine)
+    // Definizione dei confini geografici dell'Italia
     private val italyBounds = BoundingBox(
-        47.5,  // Nord (include parzialmente Svizzera e Austria per coprire tutto il Nord Italia)
-        19.0,  // Est (include costa adriatica e parte dell'Ionio)
-        36.0,  // Sud (include Sicilia e Lampedusa)
-        6.0    // Ovest (include la Sardegna e il confine con la Francia)
+        47.5,  // Nord
+        19.0,  // Est
+        36.0,  // Sud
+        6.0    // Ovest
     )
 
     init {
-        // Configurazione iniziale di osmdroid
         Configuration.getInstance().load(
             context,
             context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE)
@@ -66,14 +70,11 @@ class MapComponent(
             map.setMultiTouchControls(true)
 
             // Configurazione zoom
-            map.minZoomLevel = 6.0  // Zoom minimo per vedere l'Italia intera
-            map.maxZoomLevel = 19.0 // Zoom massimo per vedere i dettagli
+            map.minZoomLevel = 6.0
+            map.maxZoomLevel = 19.0
 
             // Limita la mappa ai confini dell'Italia
             map.setScrollableAreaLimitDouble(italyBounds)
-
-            // Limita anche il livello di zoom in base alle dimensioni dell'Italia
-            map.setMinZoomLevel(6.0) // Livello di zoom che mostra tutta l'Italia
 
             // Abilita i controlli zoom
             map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.ALWAYS)
@@ -82,18 +83,37 @@ class MapComponent(
 
             // Posizionamento iniziale (Centro Italia)
             val mapController = map.controller
-            mapController.setZoom(7.0)  // Un livello che mostra gran parte dell'Italia
-            val italyCenterPoint = GeoPoint(42.5, 12.5) // Centro approssimativo dell'Italia
+            mapController.setZoom(7.0)
+            val italyCenterPoint = GeoPoint(42.5, 12.5)
             mapController.setCenter(italyCenterPoint)
+
+            // Inizializza il cluster manager
+            clusterManager = ClusterManager(context, map)
+
+            // Aggiungi listener per aggiornare i cluster quando la mappa cambia
+            map.addMapListener(this)
 
             setupLocationOverlay()
 
             mapInitialized = true
-            Log.d(TAG, "Mappa inizializzata con successo e limitata all'Italia")
+            Log.d(TAG, "Mappa inizializzata con successo con clustering")
 
         } catch (e: Exception) {
             Log.e(TAG, "Errore nell'inizializzazione della mappa", e)
         }
+    }
+
+    // Implementazione MapListener per aggiornare cluster su zoom/scroll
+    override fun onZoom(event: ZoomEvent?): Boolean {
+        if (::clusterManager.isInitialized) {
+            clusterManager.updateClusters()
+        }
+        return true
+    }
+
+    override fun onScroll(event: ScrollEvent?): Boolean {
+        // Opzionale: aggiorna cluster anche su scroll se necessario
+        return true
     }
 
     private fun setupLocationOverlay() {
@@ -148,6 +168,89 @@ class MapComponent(
         }
     }
 
+    // Nuova funzione con clustering
+    fun addGasStationMarkersWithClustering(gasStations: List<GasStation>) {
+        if (!mapInitialized) {
+            Log.w(TAG, "Mappa non ancora inizializzata, impossibile aggiungere marker")
+            return
+        }
+
+        try {
+            // Filtra le stazioni entro i confini italiani
+            val validStations = gasStations.filter { station ->
+                val point = GeoPoint(station.latitude, station.longitude)
+                italyBounds.contains(point)
+            }
+
+            if (validStations.isNotEmpty()) {
+                clusterManager.setStations(validStations)
+                Log.d(TAG, "Aggiunti ${validStations.size} stazioni con clustering")
+            } else {
+                Log.d(TAG, "Nessuna stazione valida entro i confini italiani")
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nell'aggiunta dei marker con clustering", e)
+        }
+    }
+
+    // Mantieni anche la funzione originale per compatibilità
+    fun addGasStationMarkers(gasStations: List<GasStation>) {
+        addGasStationMarkersWithClustering(gasStations)
+    }
+
+    fun clearGasStationMarkers() {
+        if (!mapInitialized) {
+            Log.w(TAG, "Mappa non ancora inizializzata")
+            return
+        }
+
+        try {
+            if (::clusterManager.isInitialized) {
+                clusterManager.setStations(emptyList())
+            }
+            Log.d(TAG, "Rimossi tutti i marker delle stazioni")
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nella rimozione dei marker", e)
+        }
+    }
+
+    fun fitMapToStations(gasStations: List<GasStation>) {
+        if (!mapInitialized) {
+            Log.w(TAG, "Mappa non ancora inizializzata")
+            return
+        }
+
+        if (gasStations.isEmpty()) {
+            Log.d(TAG, "Nessuna stazione da visualizzare")
+            return
+        }
+
+        try {
+            val validStations = gasStations.filter { station ->
+                val point = GeoPoint(station.latitude, station.longitude)
+                italyBounds.contains(point)
+            }
+
+            if (validStations.isNotEmpty()) {
+                val latitudes = validStations.map { it.latitude }
+                val longitudes = validStations.map { it.longitude }
+
+                val minLat = latitudes.minOrNull() ?: return
+                val maxLat = latitudes.maxOrNull() ?: return
+                val minLon = longitudes.minOrNull() ?: return
+                val maxLon = longitudes.maxOrNull() ?: return
+
+                val boundingBox = BoundingBox(maxLat, maxLon, minLat, minLon)
+                map.zoomToBoundingBox(boundingBox, true, 100)
+
+                Log.d(TAG, "Mappa centrata su ${validStations.size} stazioni")
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nel centrare la mappa sulle stazioni", e)
+        }
+    }
+
     fun onResume() {
         if (::map.isInitialized && mapInitialized) {
             map.onResume()
@@ -159,8 +262,4 @@ class MapComponent(
             map.onPause()
         }
     }
-
-    // fun isInItaly(latitude: Double, longitude: Double): Boolean {
-    //     return italyBounds.contains(GeoPoint(latitude, longitude))
-    // }
 }
