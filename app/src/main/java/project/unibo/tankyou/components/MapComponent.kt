@@ -14,6 +14,8 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
@@ -25,9 +27,8 @@ class MapComponent(
 ) : MapListener {
     private lateinit var map: MapView
     private var locationOverlay: MyLocationNewOverlay? = null
-    private lateinit var clusterManager: ClusterManager
+    private var clusterer: RadiusMarkerClusterer? = null
     private val TAG: String = "MapComponent"
-
     private var mapInitialized = false
 
     // Definizione dei confini geografici dell'Italia
@@ -87,8 +88,8 @@ class MapComponent(
             val italyCenterPoint = GeoPoint(42.5, 12.5)
             mapController.setCenter(italyCenterPoint)
 
-            // Inizializza il cluster manager
-            clusterManager = ClusterManager(context, map)
+            // Inizializza il clusterer
+            setupClusterer()
 
             // Aggiungi listener per aggiornare i cluster quando la mappa cambia
             map.addMapListener(this)
@@ -96,23 +97,50 @@ class MapComponent(
             setupLocationOverlay()
 
             mapInitialized = true
-            Log.d(TAG, "Mappa inizializzata con successo con clustering")
+            Log.d(TAG, "Mappa inizializzata con successo con OSMBonusPack clustering")
 
         } catch (e: Exception) {
             Log.e(TAG, "Errore nell'inizializzazione della mappa", e)
         }
     }
 
+    private fun setupClusterer() {
+        try {
+            // Crea il clusterer con raggio personalizzato
+            clusterer = RadiusMarkerClusterer(context)
+
+            // Configurazione del clusterer
+            clusterer?.let { cluster ->
+                // Raggio di clustering in pixel (più alto = più raggruppamento)
+                cluster.setRadius(100)
+
+                // Icona per i cluster (opzionale)
+                // cluster.setIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_cluster))
+
+                // Testo per i cluster
+                cluster.textPaint.textSize = 12f * context.resources.displayMetrics.density
+                cluster.textPaint.color = android.graphics.Color.WHITE
+                cluster.textPaint.isAntiAlias = true
+
+                // Aggiungi il clusterer alla mappa
+                map.overlays.add(cluster)
+
+                Log.d(TAG, "Clusterer configurato correttamente")
+            }
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nella configurazione del clusterer", e)
+        }
+    }
+
     // Implementazione MapListener per aggiornare cluster su zoom/scroll
     override fun onZoom(event: ZoomEvent?): Boolean {
-        if (::clusterManager.isInitialized) {
-            clusterManager.updateClusters()
-        }
+        clusterer?.invalidate()
         return true
     }
 
     override fun onScroll(event: ScrollEvent?): Boolean {
-        // Opzionale: aggiorna cluster anche su scroll se necessario
+        // Il clusterer si aggiorna automaticamente
         return true
     }
 
@@ -168,7 +196,7 @@ class MapComponent(
         }
     }
 
-    // Nuova funzione con clustering
+    // Nuova funzione con OSMBonusPack clustering
     fun addGasStationMarkersWithClustering(gasStations: List<GasStation>) {
         if (!mapInitialized) {
             Log.w(TAG, "Mappa non ancora inizializzata, impossibile aggiungere marker")
@@ -176,25 +204,43 @@ class MapComponent(
         }
 
         try {
-            // Filtra le stazioni entro i confini italiani
-            val validStations = gasStations.filter { station ->
-                val point = GeoPoint(station.latitude, station.longitude)
-                italyBounds.contains(point)
-            }
+            clusterer?.let { cluster ->
+                // Pulisce i marker esistenti
+                cluster.items.clear()
 
-            if (validStations.isNotEmpty()) {
-                clusterManager.setStations(validStations)
-                Log.d(TAG, "Aggiunti ${validStations.size} stazioni con clustering")
-            } else {
-                Log.d(TAG, "Nessuna stazione valida entro i confini italiani")
-            }
+                // Filtra le stazioni entro i confini italiani
+                val validStations = gasStations.filter { station ->
+                    val point = GeoPoint(station.latitude, station.longitude)
+                    italyBounds.contains(point)
+                }
+
+                // Crea i marker per le stazioni valide
+                for (station in validStations) {
+                    val marker = GasStationMarker(map, station)
+
+                    // Opzionale: aggiungi listener personalizzato
+                    marker.setOnMarkerClickListener { clickedMarker, _ ->
+                        Log.d(TAG, "Cliccata stazione: ${station.name}")
+                        // Qui puoi aggiungere logica personalizzata per il click
+                        false // Ritorna false per permettere il comportamento di default (popup)
+                    }
+
+                    cluster.add(marker)
+                }
+
+                // Aggiorna la visualizzazione
+                cluster.invalidate()
+                map.invalidate()
+
+                Log.d(TAG, "Aggiunti ${validStations.size} marker con OSMBonusPack clustering")
+            } ?: Log.e(TAG, "Clusterer non inizializzato")
 
         } catch (e: Exception) {
             Log.e(TAG, "Errore nell'aggiunta dei marker con clustering", e)
         }
     }
 
-    // Mantieni anche la funzione originale per compatibilità
+    // Mantieni la funzione originale per compatibilità
     fun addGasStationMarkers(gasStations: List<GasStation>) {
         addGasStationMarkersWithClustering(gasStations)
     }
@@ -206,8 +252,10 @@ class MapComponent(
         }
 
         try {
-            if (::clusterManager.isInitialized) {
-                clusterManager.setStations(emptyList())
+            clusterer?.let { cluster ->
+                cluster.items.clear()
+                cluster.invalidate()
+                map.invalidate()
             }
             Log.d(TAG, "Rimossi tutti i marker delle stazioni")
         } catch (e: Exception) {
