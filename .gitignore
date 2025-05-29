@@ -32,3 +32,5 @@ replay_pid*
 
 # Local Properties with Database URL and Database Anon Key (supabase)
 ./local.properties
+local.properties
+*.propertiesc
