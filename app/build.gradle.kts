@@ -93,9 +93,10 @@ dependencies {
 
     // @DOC: Libreria 'osmdroid' per Mappe OpenStreetMap (OSM)
     implementation(libs.osmdroid.android)
+    implementation("com.github.MKergall:osmbonuspack:6.8.0") // Add-On per il Marker Clustering
 
     // @DOC: (Opzionale) Funzionalità Aggiuntive (Ricerca di Indirizzi...)
-    implementation(libs.osmdroid.mapsforge)
+    // implementation(libs.osmdroid.mapsforge)
 
     // @DOC: Libreria Room per Database Interno
     implementation(libs.androidx.room.runtime)
