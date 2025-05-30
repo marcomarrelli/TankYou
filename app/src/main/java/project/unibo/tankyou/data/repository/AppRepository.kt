@@ -3,20 +3,17 @@ package project.unibo.tankyou.data.repository
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Count
 import android.util.Log
+import android.util.LruCache
 import io.github.jan.supabase.postgrest.query.Order
+import org.osmdroid.util.BoundingBox
 import project.unibo.tankyou.data.DatabaseClient
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.Fuel
 
 class AppRepository {
     private val client = DatabaseClient.client
+    private val stationCache = LruCache<String, List<GasStation>>(20)
 
-    // Funzione originale (mantieni per compatibilità)
-    // suspend fun getAllStations(): List<GasStation> {
-    //     return client.from("gas_stations").select().decodeList<GasStation>()
-    // }
-
-    // Nuova funzione con paginazione usando limit e offset
     suspend fun getAllStations(): List<GasStation> {
         val allStations = mutableListOf<GasStation>()
         var lastId = 0L
@@ -44,28 +41,65 @@ class AppRepository {
         return allStations
     }
 
-    // Funzione per caricare stazioni in una specifica area geografica
     suspend fun getStationsInBounds(
         minLat: Double,
         maxLat: Double,
         minLon: Double,
         maxLon: Double
     ): List<GasStation> {
+        val cacheKey = "${minLat}_${maxLat}_${minLon}_${maxLon}"
+
+        stationCache.get(cacheKey)?.let { return it }
+
+        return try {
+            val stations = client.from("gas_stations")
+                .select {
+                    filter {
+                        and {
+                            gte("latitude", minLat)
+                            lte("latitude", maxLat)
+                            gte("longitude", minLon)
+                            lte("longitude", maxLon)
+                        }
+                    }
+                    limit(1000)
+                }
+                .decodeList<GasStation>()
+
+            stationCache.put(cacheKey, stations)
+            stations
+
+        } catch (e: Exception) {
+            Log.e("AppRepository", "Errore nel caricamento stazioni in bounds", e)
+            emptyList()
+        }
+    }
+
+    suspend fun getStationsForZoomLevel(
+        bounds: BoundingBox,
+        zoomLevel: Double
+    ): List<GasStation> {
+        val limit = when {
+            zoomLevel < 10 -> 200
+            zoomLevel < 15 -> 500
+            else -> 1000
+        }
+
         return client.from("gas_stations")
             .select {
                 filter {
                     and {
-                        gte("latitude", minLat)
-                        lte("latitude", maxLat)
-                        gte("longitude", minLon)
-                        lte("longitude", maxLon)
+                        gte("latitude", bounds.latSouth)
+                        lte("latitude", bounds.latNorth)
+                        gte("longitude", bounds.lonWest)
+                        lte("longitude", bounds.lonEast)
                     }
                 }
+                limit(limit.toLong())
             }
             .decodeList<GasStation>()
     }
 
-    // Funzione per caricare stazioni per province specifiche
     suspend fun getStationsByProvinces(provinces: List<String>): List<GasStation> {
         return client.from("gas_stations")
             .select {
@@ -76,7 +110,6 @@ class AppRepository {
             .decodeList<GasStation>()
     }
 
-    // Resto delle funzioni esistenti...
     suspend fun getStationById(id: String): GasStation? {
         return client.from("gas_stations").select {
             filter { eq("id", id) }
