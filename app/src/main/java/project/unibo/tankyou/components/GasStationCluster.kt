@@ -76,7 +76,7 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
         canvas.drawText(text, centerX, textY, textPaint)
 
         return android.graphics.drawable.BitmapDrawable(null, bitmap)
-    }c
+    }
 
     private fun formatClusterText(clusterSize: Int): String {
         return when {
