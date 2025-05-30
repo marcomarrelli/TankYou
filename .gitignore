@@ -34,3 +34,6 @@ replay_pid*
 ./local.properties
 local.properties
 *.properties
+
+# Reports from Build
+./build/reports
