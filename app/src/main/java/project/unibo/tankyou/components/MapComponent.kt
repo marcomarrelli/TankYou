@@ -7,6 +7,8 @@ import android.util.Log
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
@@ -14,12 +16,13 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import org.osmdroid.views.overlay.Marker
-import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
 import project.unibo.tankyou.data.database.entities.GasStation
+import project.unibo.tankyou.data.repository.AppRepository
+import project.unibo.tankyou.utils.DebounceManager
+import kotlin.math.abs
 
 class MapComponent(
     private val context: AppCompatActivity,
@@ -27,16 +30,19 @@ class MapComponent(
 ) : MapListener {
     private lateinit var map: MapView
     private var locationOverlay: MyLocationNewOverlay? = null
-    private var clusterer: RadiusMarkerClusterer? = null
+    private var clusterer: GasStationCluster? = null
     private val TAG: String = "MapComponent"
     private var mapInitialized = false
+    private val appRepository = AppRepository.getInstance()
+    private var currentZoomLevel = 7.0
+    private var lastLoadedBounds: BoundingBox? = null
+    private val debounceHelper = DebounceManager()
 
-    // Definizione dei confini geografici dell'Italia
     private val italyBounds = BoundingBox(
-        47.5,  // Nord
-        19.0,  // Est
-        36.0,  // Sud
-        6.0    // Ovest
+        47.5,
+        19.0,
+        36.0,
+        6.0
     )
 
     init {
@@ -53,45 +59,35 @@ class MapComponent(
         }
 
         try {
-            // Crea e configura la MapView
             map = MapView(context)
 
-            // Imposta i parametri di layout
             val params = RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.MATCH_PARENT,
                 RelativeLayout.LayoutParams.MATCH_PARENT
             )
             map.layoutParams = params
 
-            // Aggiungi la mappa al container
             mapContainer.addView(map)
 
-            // Configura la mappa
             map.setTileSource(TileSourceFactory.MAPNIK)
             map.setMultiTouchControls(true)
 
-            // Configurazione zoom
             map.minZoomLevel = 6.0
             map.maxZoomLevel = 19.0
 
-            // Limita la mappa ai confini dell'Italia
             map.setScrollableAreaLimitDouble(italyBounds)
 
-            // Abilita i controlli zoom
             map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.ALWAYS)
             map.zoomController.setZoomInEnabled(true)
             map.zoomController.setZoomOutEnabled(true)
 
-            // Posizionamento iniziale (Centro Italia)
             val mapController = map.controller
             mapController.setZoom(7.0)
             val italyCenterPoint = GeoPoint(42.5, 12.5)
             mapController.setCenter(italyCenterPoint)
 
-            // Inizializza il clusterer
             setupClusterer()
 
-            // Aggiungi listener per aggiornare i cluster quando la mappa cambia
             map.addMapListener(this)
 
             setupLocationOverlay()
@@ -106,26 +102,12 @@ class MapComponent(
 
     private fun setupClusterer() {
         try {
-            // Crea il clusterer con raggio personalizzato
-            clusterer = RadiusMarkerClusterer(context)
+            clusterer = GasStationCluster(context)
 
-            // Configurazione del clusterer
             clusterer?.let { cluster ->
-                // Raggio di clustering in pixel (più alto = più raggruppamento)
                 cluster.setRadius(100)
-
-                // Icona per i cluster (opzionale)
-                // cluster.setIcon(BitmapFactory.decodeResource(context.resources, R.drawable.ic_cluster))
-
-                // Testo per i cluster
-                cluster.textPaint.textSize = 12f * context.resources.displayMetrics.density
-                cluster.textPaint.color = android.graphics.Color.WHITE
-                cluster.textPaint.isAntiAlias = true
-
-                // Aggiungi il clusterer alla mappa
                 map.overlays.add(cluster)
-
-                Log.d(TAG, "Clusterer configurato correttamente")
+                Log.d(TAG, "Clusterer colorato configurato correttamente")
             }
 
         } catch (e: Exception) {
@@ -133,15 +115,94 @@ class MapComponent(
         }
     }
 
-    // Implementazione MapListener per aggiornare cluster su zoom/scroll
     override fun onZoom(event: ZoomEvent?): Boolean {
-        clusterer?.invalidate()
+        event?.let { zoomEvent ->
+            val newZoomLevel = zoomEvent.zoomLevel
+
+            if (abs(newZoomLevel - currentZoomLevel) > 0.5) {
+                currentZoomLevel = newZoomLevel
+
+                debounceHelper.debounce(300L, context.lifecycleScope) {
+                    loadStationsInCurrentView()
+                }
+            }
+        }
         return true
     }
 
     override fun onScroll(event: ScrollEvent?): Boolean {
-        // Il clusterer si aggiorna automaticamente
+        debounceHelper.debounce(500L, context.lifecycleScope) {
+            loadStationsInCurrentView()
+        }
         return true
+    }
+
+    private suspend fun loadStationsInCurrentView() {
+        if (!mapInitialized) return
+
+        val currentBounds = map.boundingBox
+
+        try {
+            val buffer = 0.1
+            val gasStations = appRepository.getStationsForZoomLevel(
+                BoundingBox(
+                    currentBounds.latNorth + buffer,
+                    currentBounds.lonEast + buffer,
+                    currentBounds.latSouth - buffer,
+                    currentBounds.lonWest - buffer
+                ),
+                currentZoomLevel
+            )
+
+            addMarkersOptimized(gasStations)
+            lastLoadedBounds = currentBounds
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nel caricamento delle stazioni", e)
+        }
+    }
+
+    fun loadInitialStations() {
+        context.lifecycleScope.launch {
+            loadStationsInCurrentView()
+        }
+    }
+
+    private fun addMarkersOptimized(gasStations: List<GasStation>) {
+        if (!mapInitialized) {
+            Log.w(TAG, "Mappa non ancora inizializzata, impossibile aggiungere marker")
+            return
+        }
+
+        try {
+            clusterer?.let { cluster ->
+                cluster.items.clear()
+
+                val validStations = gasStations.filter { station ->
+                    val point = GeoPoint(station.latitude, station.longitude)
+                    italyBounds.contains(point)
+                }
+
+                for (station in validStations) {
+                    val marker = GasStationMarker(map, station)
+
+                    marker.setOnMarkerClickListener { clickedMarker, _ ->
+                        Log.d(TAG, "Cliccata stazione: ${station.name}")
+                        false
+                    }
+
+                    cluster.add(marker)
+                }
+
+                cluster.invalidate()
+                map.invalidate()
+
+                Log.d(TAG, "Aggiunti ${validStations.size} marker con OSMBonusPack clustering ottimizzato")
+            } ?: Log.e(TAG, "Clusterer non inizializzato")
+
+        } catch (e: Exception) {
+            Log.e(TAG, "Errore nell'aggiunta dei marker con clustering", e)
+        }
     }
 
     private fun setupLocationOverlay() {
@@ -196,53 +257,8 @@ class MapComponent(
         }
     }
 
-    // Nuova funzione con OSMBonusPack clustering
-    fun addGasStationMarkersWithClustering(gasStations: List<GasStation>) {
-        if (!mapInitialized) {
-            Log.w(TAG, "Mappa non ancora inizializzata, impossibile aggiungere marker")
-            return
-        }
-
-        try {
-            clusterer?.let { cluster ->
-                // Pulisce i marker esistenti
-                cluster.items.clear()
-
-                // Filtra le stazioni entro i confini italiani
-                val validStations = gasStations.filter { station ->
-                    val point = GeoPoint(station.latitude, station.longitude)
-                    italyBounds.contains(point)
-                }
-
-                // Crea i marker per le stazioni valide
-                for (station in validStations) {
-                    val marker = GasStationMarker(map, station)
-
-                    // Opzionale: aggiungi listener personalizzato
-                    marker.setOnMarkerClickListener { clickedMarker, _ ->
-                        Log.d(TAG, "Cliccata stazione: ${station.name}")
-                        // Qui puoi aggiungere logica personalizzata per il click
-                        false // Ritorna false per permettere il comportamento di default (popup)
-                    }
-
-                    cluster.add(marker)
-                }
-
-                // Aggiorna la visualizzazione
-                cluster.invalidate()
-                map.invalidate()
-
-                Log.d(TAG, "Aggiunti ${validStations.size} marker con OSMBonusPack clustering")
-            } ?: Log.e(TAG, "Clusterer non inizializzato")
-
-        } catch (e: Exception) {
-            Log.e(TAG, "Errore nell'aggiunta dei marker con clustering", e)
-        }
-    }
-
-    // Mantieni la funzione originale per compatibilità
     fun addGasStationMarkers(gasStations: List<GasStation>) {
-        addGasStationMarkersWithClustering(gasStations)
+        addMarkersOptimized(gasStations)
     }
 
     fun clearGasStationMarkers() {
