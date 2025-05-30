@@ -12,31 +12,47 @@ import project.unibo.tankyou.data.database.entities.Fuel
 
 class AppRepository {
     private val client = DatabaseClient.client
-    private val stationCache = LruCache<String, List<GasStation>>(20)
+    private val stationCache = LruCache<String, List<GasStation>>(50)
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppRepository? = null
+
+        fun getInstance(): AppRepository {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: AppRepository().also { INSTANCE = it }
+            }
+        }
+    }
 
     suspend fun getAllStations(): List<GasStation> {
         val allStations = mutableListOf<GasStation>()
         var lastId = 0L
         val batchSize = 1000
 
-        do {
-            val batch = client.from("gas_stations")
-                .select {
-                    filter {
-                        gt("id", lastId)
+        try {
+            do {
+                val batch = client.from("gas_stations")
+                    .select {
+                        filter { gt("id", lastId) }
+                        order("id", Order.ASCENDING)
+                        limit(batchSize.toLong())
                     }
-                    limit(batchSize.toLong())
-                    order("id", Order.ASCENDING)
-                }
-                .decodeList<GasStation>()
+                    .decodeList<GasStation>()
 
-            if (batch.isNotEmpty()) {
                 allStations.addAll(batch)
-                lastId = batch.last().id
-                Log.d("AppRepository", "Caricato batch di ${batch.size} stazioni (totale: ${allStations.size}, ultimo ID: $lastId)")
-            }
 
-        } while (batch.size == batchSize)
+                if (batch.isNotEmpty()) {
+                    lastId = batch.last().id.toLong()
+                }
+
+                Log.d("AppRepository", "Caricato batch di ${batch.size} stazioni (totale: ${allStations.size})")
+
+            } while (batch.size == batchSize)
+
+        } catch (e: Exception) {
+            Log.e("AppRepository", "Errore nel caricamento delle stazioni", e)
+        }
 
         return allStations
     }
@@ -79,25 +95,47 @@ class AppRepository {
         bounds: BoundingBox,
         zoomLevel: Double
     ): List<GasStation> {
-        val limit = when {
-            zoomLevel < 10 -> 200
-            zoomLevel < 15 -> 500
-            else -> 1000
+        // Cache key che include zoom level per granularità
+        val roundedZoom = kotlin.math.round(zoomLevel * 2) / 2.0 // Arrotonda a 0.5
+        val cacheKey = "${bounds.latSouth}_${bounds.latNorth}_${bounds.lonWest}_${bounds.lonEast}_$roundedZoom"
+
+        stationCache.get(cacheKey)?.let {
+            Log.d("AppRepository", "Cache hit per zoom $roundedZoom")
+            return it
         }
 
-        return client.from("gas_stations")
-            .select {
-                filter {
-                    and {
-                        gte("latitude", bounds.latSouth)
-                        lte("latitude", bounds.latNorth)
-                        gte("longitude", bounds.lonWest)
-                        lte("longitude", bounds.lonEast)
+        val limit = when {
+            zoomLevel < 8 -> 100    // Molto poche per zoom continentali
+            zoomLevel < 10 -> 300   // Poche per zoom regionali
+            zoomLevel < 13 -> 600   // Medie per zoom provinciali
+            zoomLevel < 16 -> 1000  // Molte per zoom cittadini
+            else -> 2000            // Tutte per zoom di strada
+        }
+
+        return try {
+            val stations = client.from("gas_stations")
+                .select {
+                    filter {
+                        and {
+                            gte("latitude", bounds.latSouth)
+                            lte("latitude", bounds.latNorth)
+                            gte("longitude", bounds.lonWest)
+                            lte("longitude", bounds.lonEast)
+                        }
                     }
+                    limit(limit.toLong())
+                    order("id", Order.ASCENDING)
                 }
-                limit(limit.toLong())
-            }
-            .decodeList<GasStation>()
+                .decodeList<GasStation>()
+
+            stationCache.put(cacheKey, stations)
+            Log.d("AppRepository", "Caricate ${stations.size} stazioni per zoom $roundedZoom (limit: $limit)")
+            stations
+
+        } catch (e: Exception) {
+            Log.e("AppRepository", "Errore nel caricamento stazioni per zoom", e)
+            emptyList()
+        }
     }
 
     suspend fun getStationsByProvinces(provinces: List<String>): List<GasStation> {
@@ -116,66 +154,22 @@ class AppRepository {
         }.decodeSingleOrNull<GasStation>()
     }
 
-    suspend fun getPricesByStationId(stationId: String): List<Fuel> {
-        return client.from("fuels").select {
-            filter { eq("stationId", stationId) }
-        }.decodeList<Fuel>()
+    suspend fun getStationCount(): Long {
+        return client.from("gas_stations").select() {}.countOrNull() ?: 0L
     }
 
-    suspend fun getSpecificPrice(stationId: String, fuelType: Int, isSelf: Boolean): Fuel? {
-        return client.from("fuels").select {
-            filter {
-                eq("stationId", stationId)
-                eq("type", fuelType)
-                eq("self", isSelf)
-            }
+    suspend fun getAllFuels(): List<Fuel> {
+        return client.from("fuel").select().decodeList<Fuel>()
+    }
+
+    suspend fun getFuelById(id: String): Fuel? {
+        return client.from("fuel").select {
+            filter { eq("id", id) }
         }.decodeSingleOrNull<Fuel>()
     }
 
-    suspend fun insertStation(station: GasStation): GasStation {
-        return client.from("gas_stations").insert(station) {
-            select()
-        }.decodeSingle<GasStation>()
-    }
-
-    suspend fun insertFuel(fuel: Fuel): Fuel {
-        return client.from("fuels").insert(fuel) {
-            select()
-        }.decodeSingle<Fuel>()
-    }
-
-    suspend fun getStationCount(): Int {
-        return try {
-            client.from("gas_stations").select {
-                count(Count.EXACT)
-            }.countOrNull()?.toInt() ?: 0
-        } catch (e: Exception) {
-            0
-        }
-    }
-
-    suspend fun getFuelCount(): Int {
-        return try {
-            client.from("fuels").select {
-                count(Count.EXACT)
-            }.countOrNull()?.toInt() ?: 0
-        } catch (e: Exception) {
-            0
-        }
-    }
-
-    suspend fun isDataEmpty(): Boolean {
-        return getStationCount() == 0 || getFuelCount() == 0
-    }
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppRepository? = null
-
-        fun getInstance(): AppRepository {
-            return INSTANCE ?: synchronized(this) {
-                INSTANCE ?: AppRepository().also { INSTANCE = it }
-            }
-        }
+    fun clearCache() {
+        stationCache.evictAll()
+        Log.d("AppRepository", "Cache svuotata")
     }
 }
