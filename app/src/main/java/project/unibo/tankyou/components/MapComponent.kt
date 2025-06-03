@@ -2,7 +2,6 @@ package project.unibo.tankyou.components
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.drawable.Drawable
 import android.util.Log
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -21,6 +20,7 @@ import org.osmdroid.events.ScrollEvent
 import org.osmdroid.events.ZoomEvent
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.repository.AppRepository
+import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.DebounceManager
 import kotlin.math.abs
 
@@ -89,10 +89,8 @@ class MapComponent(
             setupLocationOverlay()
 
             mapInitialized = true
-            Log.d(TAG, "Mappa inizializzata correttamente")
-
         } catch (e: Exception) {
-            Log.e(TAG, "Errore nell'inizializzazione della mappa", e)
+
         }
     }
 
@@ -101,26 +99,23 @@ class MapComponent(
             clusterer = GasStationCluster(context)
 
             clusterer?.let { cluster ->
-                // Raggio dinamico basato sul zoom
                 updateClustererRadius()
                 map.overlays.add(cluster)
-                Log.d(TAG, "Clusterer configurato correttamente")
             }
 
         } catch (e: Exception) {
-            Log.e(TAG, "Errore configurazione clusterer", e)
+
         }
     }
 
     private fun updateClustererRadius() {
         clusterer?.let { cluster ->
-            val radius = when {
-                currentZoomLevel < 10 -> 150
-                currentZoomLevel < 15 -> 100
-                else -> 50
+            val radius: Int = when {
+                currentZoomLevel < 10 -> (Constants.Cluster.CLUSTER_GROUP_RADIUS*0.35).toInt()
+                currentZoomLevel < 15 -> (Constants.Cluster.CLUSTER_GROUP_RADIUS*0.65).toInt()
+                else -> Constants.Cluster.CLUSTER_GROUP_RADIUS
             }
             cluster.setRadius(radius)
-            Log.d(TAG, "Raggio clusterer aggiornato a $radius per zoom $currentZoomLevel")
         }
     }
 
@@ -137,11 +132,11 @@ class MapComponent(
                 }
             }
         }
+
         return true
     }
 
     override fun onScroll(event: ScrollEvent?): Boolean {
-        // Controlla se siamo usciti dall'area già caricata
         lastLoadedBounds?.let { loadedBounds ->
             val currentCenter = map.mapCenter
             if (!loadedBounds.contains(currentCenter)) {
@@ -150,11 +145,11 @@ class MapComponent(
                 }
             }
         } ?: run {
-            // Prima volta o nessun bound caricato
             debounceHelper.debounce(300L, context.lifecycleScope) {
                 loadStationsInCurrentView()
             }
         }
+
         return true
     }
 
@@ -163,11 +158,10 @@ class MapComponent(
 
         val currentBounds = map.boundingBox
 
-        // Calcola buffer dinamico basato sul livello di zoom
         val buffer = when {
-            currentZoomLevel < 8 -> 0.5   // Buffer più ampio per zoom bassi
-            currentZoomLevel < 12 -> 0.2  // Buffer medio
-            else -> 0.05                  // Buffer minimo per zoom alti
+            currentZoomLevel < 8 -> 0.5
+            currentZoomLevel < 12 -> 0.2
+            else -> 0.05
         }
 
         try {
@@ -186,10 +180,8 @@ class MapComponent(
             addMarkersOptimized(gasStations)
             lastLoadedBounds = currentBounds
 
-            Log.d(TAG, "Caricate ${gasStations.size} stazioni per zoom $currentZoomLevel con buffer $buffer")
 
         } catch (e: Exception) {
-            Log.e(TAG, "Errore nel caricamento delle stazioni", e)
         }
     }
 
@@ -201,7 +193,6 @@ class MapComponent(
 
     private fun addMarkersOptimized(gasStations: List<GasStation>) {
         if (!mapInitialized) {
-            Log.w(TAG, "Mappa non ancora inizializzata, impossibile aggiungere marker")
             return
         }
 
@@ -218,7 +209,6 @@ class MapComponent(
                     val marker = GasStationMarker(map, station)
 
                     marker.setOnMarkerClickListener { clickedMarker, _ ->
-                        Log.d(TAG, "Cliccata stazione: ${station.name}")
                         false
                     }
 
@@ -228,11 +218,8 @@ class MapComponent(
                 cluster.invalidate()
                 map.invalidate()
 
-                Log.d(TAG, "Aggiunti ${validStations.size} marker ottimizzati")
-            } ?: Log.e(TAG, "Clusterer non inizializzato")
-
+            }
         } catch (e: Exception) {
-            Log.e(TAG, "Errore nell'aggiunta dei marker", e)
         }
     }
 
@@ -250,27 +237,21 @@ class MapComponent(
                 locationOverlay?.isDrawAccuracyEnabled = true
 
                 map.overlays.add(locationOverlay)
-                Log.d(TAG, "Location overlay configurato correttamente")
 
             } catch (e: Exception) {
-                Log.e(TAG, "Errore nella configurazione del location overlay", e)
             }
         } else {
-            Log.w(TAG, "Permessi di localizzazione non concessi")
         }
     }
 
     fun initialize() {
         if (!mapInitialized) {
-            Log.w(TAG, "Tentativo di inizializzazione su mappa non configurata")
             return
         }
 
         try {
             map.onResume()
-            Log.d(TAG, "Mappa ripresa correttamente")
         } catch (e: Exception) {
-            Log.e(TAG, "Errore nella ripresa della mappa", e)
         }
     }
 
@@ -282,7 +263,6 @@ class MapComponent(
         clusterer?.items?.clear()
         clusterer?.invalidate()
         map.invalidate()
-        Log.d(TAG, "Marker delle stazioni rimossi")
     }
 
     fun onResume() {

@@ -95,8 +95,7 @@ class AppRepository {
         bounds: BoundingBox,
         zoomLevel: Double
     ): List<GasStation> {
-        // Cache key che include zoom level per granularità
-        val roundedZoom = kotlin.math.round(zoomLevel * 2) / 2.0 // Arrotonda a 0.5
+        val roundedZoom = kotlin.math.round(zoomLevel * 2) / 2.0
         val cacheKey = "${bounds.latSouth}_${bounds.latNorth}_${bounds.lonWest}_${bounds.lonEast}_$roundedZoom"
 
         stationCache.get(cacheKey)?.let {
@@ -105,11 +104,11 @@ class AppRepository {
         }
 
         val limit = when {
-            zoomLevel < 8 -> 100    // Molto poche per zoom continentali
-            zoomLevel < 10 -> 300   // Poche per zoom regionali
-            zoomLevel < 13 -> 600   // Medie per zoom provinciali
-            zoomLevel < 16 -> 1000  // Molte per zoom cittadini
-            else -> 2000            // Tutte per zoom di strada
+            zoomLevel < 8 -> 10000
+            zoomLevel < 10 -> 5000
+            zoomLevel < 13 -> 1000
+            zoomLevel < 16 -> 250
+            else -> 50
         }
 
         return try {

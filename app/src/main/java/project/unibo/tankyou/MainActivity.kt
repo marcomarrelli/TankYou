@@ -4,13 +4,24 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.RelativeLayout
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import project.unibo.tankyou.components.MapComponent
+import project.unibo.tankyou.ui.TankYouTheme
+import project.unibo.tankyou.ui.ThemeManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -18,21 +29,54 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        val mapContainer: RelativeLayout = findViewById(R.id.mapContainer)
-        mapComponent = MapComponent(this, mapContainer)
+        // Inizializza il ThemeManager
+        ThemeManager.initialize(this)
 
+        // Richiedi i permessi
         requestPermissions()
+
+        setContent {
+            TankYouApp()
+        }
+    }
+
+    @Composable
+    private fun TankYouApp() {
+        val currentTheme by ThemeManager.themeMode
+
+        TankYouTheme(themeMode = currentTheme) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize()
+            ) { paddingValues ->
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    // Mappa che occupa tutto lo schermo
+                    AndroidView(
+                        factory = { context ->
+                            val mapContainer = RelativeLayout(context)
+                            mapComponent = MapComponent(this@MainActivity, mapContainer)
+                            mapContainer
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
     }
 
     override fun onStart() {
         super.onStart()
-        mapComponent.initialize()
+        if (::mapComponent.isInitialized) {
+            mapComponent.initialize()
 
-        lifecycleScope.launch {
-            delay(500)
-            mapComponent.loadInitialStations()
+            lifecycleScope.launch {
+                delay(500)
+                mapComponent.loadInitialStations()
+            }
         }
     }
 
@@ -61,11 +105,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        mapComponent.onResume()
+        if (::mapComponent.isInitialized) {
+            mapComponent.onResume()
+        }
     }
 
     override fun onPause() {
         super.onPause()
-        mapComponent.onPause()
+        if (::mapComponent.isInitialized) {
+            mapComponent.onPause()
+        }
     }
 }
