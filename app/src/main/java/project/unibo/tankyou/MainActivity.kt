@@ -1,27 +1,31 @@
 package project.unibo.tankyou
 
-import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.RelativeLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
 import project.unibo.tankyou.components.MapComponent
+import project.unibo.tankyou.data.database.models.AuthState
+import project.unibo.tankyou.components.Screen
 import project.unibo.tankyou.ui.TankYouTheme
 import project.unibo.tankyou.ui.ThemeManager
+import project.unibo.tankyou.ui.LoginScreen
+import project.unibo.tankyou.ui.RegisterScreen
+import project.unibo.tankyou.ui.ProfileScreen
+import project.unibo.tankyou.components.AuthViewModel
+import project.unibo.tankyou.utils.Constants
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,76 +34,126 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Inizializza il ThemeManager
         ThemeManager.initialize(this)
 
-        // Richiedi i permessi
         requestPermissions()
 
         setContent {
-            TankYouApp()
+            TankYouTheme {
+                MainApp()
+            }
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun TankYouApp() {
-        val currentTheme by ThemeManager.themeMode
+    private fun MainApp() {
+        val authViewModel: AuthViewModel = viewModel()
+        val authState by authViewModel.authState.collectAsState()
+        var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
-        TankYouTheme(themeMode = currentTheme) {
-            Scaffold(
-                modifier = Modifier.fillMaxSize()
-            ) { paddingValues ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                ) {
-                    // Mappa che occupa tutto lo schermo
-                    AndroidView(
-                        factory = { context ->
-                            val mapContainer = RelativeLayout(context)
-                            mapComponent = MapComponent(this@MainActivity, mapContainer)
-                            mapContainer
-                        },
-                        modifier = Modifier.fillMaxSize()
-                    )
+        LaunchedEffect(authState) {
+            when (authState) {
+                is AuthState.Authenticated -> {
+                    if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
+                        currentScreen = Screen.MAP
+                    }
+                }
+                is AuthState.Unauthenticated -> {
+                    currentScreen = Screen.LOGIN
+                }
+                else -> { }
+            }
+        }
+
+        when (currentScreen) {
+            Screen.LOGIN -> {
+                LoginScreen(
+                    onNavigateToRegister = { currentScreen = Screen.REGISTER },
+                    onLoginSuccess = { currentScreen = Screen.MAP },
+                    authViewModel = authViewModel
+                )
+            }
+
+            Screen.REGISTER -> {
+                RegisterScreen(
+                    onNavigateToLogin = { currentScreen = Screen.LOGIN },
+                    onRegisterSuccess = { currentScreen = Screen.MAP },
+                    authViewModel = authViewModel
+                )
+            }
+
+            Screen.MAP -> {
+                AuthenticatedContent(
+                    onNavigateToProfile = { currentScreen = Screen.PROFILE },
+                    onLogout = { currentScreen = Screen.LOGIN }
+                )
+            }
+
+            Screen.PROFILE -> {
+                Scaffold(
+                    topBar = {
+                        TopAppBar(
+                            title = { Text("Profilo") },
+                            navigationIcon = {
+                                IconButton(onClick = { currentScreen = Screen.MAP }) {
+                                    Icon(Icons.Default.LocationOn, contentDescription = "Mappa")
+                                }
+                            }
+                        )
+                    }
+                ) { paddingValues ->
+                    Box(modifier = Modifier.padding(paddingValues)) {
+                        ProfileScreen(
+                            onLogout = { currentScreen = Screen.LOGIN },
+                            authViewModel = authViewModel
+                        )
+                    }
                 }
             }
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        if (::mapComponent.isInitialized) {
-            mapComponent.initialize()
-
-            lifecycleScope.launch {
-                delay(500)
-                mapComponent.loadInitialStations()
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    private fun AuthenticatedContent(
+        onNavigateToProfile: () -> Unit,
+        onLogout: () -> Unit
+    ) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("TankYou") },
+                    actions = {
+                        IconButton(onClick = onNavigateToProfile) {
+                            Icon(Icons.Default.Person, contentDescription = "Profilo")
+                        }
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Box(modifier = Modifier.padding(paddingValues)) {
+                AndroidView(
+                    factory = { context ->
+                        RelativeLayout(context).apply {
+                            mapComponent = MapComponent(this@MainActivity, this)
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
             }
         }
     }
 
     private fun requestPermissions() {
-        val permissionsNeeded = mutableListOf<String>()
+        val permissions = Constants.APP_PERMISSIONS
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.INTERNET)
-            != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.INTERNET)
+        val missingPermissions = permissions.filter {
+            ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_NETWORK_STATE)
-            != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.ACCESS_NETWORK_STATE)
-        }
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED) {
-            permissionsNeeded.add(Manifest.permission.ACCESS_FINE_LOCATION)
-        }
-
-        if (permissionsNeeded.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, permissionsNeeded.toTypedArray(), 1)
+        if (missingPermissions.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, missingPermissions.toTypedArray(), 1)
         }
     }
 

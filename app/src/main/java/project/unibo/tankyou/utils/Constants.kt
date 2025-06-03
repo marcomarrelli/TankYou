@@ -1,5 +1,7 @@
 package project.unibo.tankyou.utils
 
+import android.Manifest
+
 /**
  * Constants Global Object
  *
@@ -27,4 +29,12 @@ object Constants {
         /** Cluster Saved in Cache for Efficiency between Zoom Actions */
         const val CACHE_SIZE: Int = 100
     }
+
+    val APP_PERMISSIONS = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.INTERNET,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
 }

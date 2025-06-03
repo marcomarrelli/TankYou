@@ -16,7 +16,6 @@ class DebounceManager {
         action: suspend () -> Unit
     ) {
         if (highPriority) {
-            // Le azioni ad alta priorità cancellano tutto
             highPriorityJob?.cancel()
             debounceJob?.cancel()
             highPriorityJob = scope.launch {
@@ -24,7 +23,6 @@ class DebounceManager {
                 action()
             }
         } else {
-            // Solo se non c'è un'azione ad alta priorità in corso
             if (highPriorityJob?.isActive != true) {
                 debounceJob?.cancel()
                 debounceJob = scope.launch {
