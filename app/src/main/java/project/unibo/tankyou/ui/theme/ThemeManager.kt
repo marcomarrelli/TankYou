@@ -1,4 +1,4 @@
-package project.unibo.tankyou.ui
+package project.unibo.tankyou.ui.theme
 
 import android.content.Context
 import android.content.SharedPreferences

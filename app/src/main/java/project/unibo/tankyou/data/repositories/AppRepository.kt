@@ -1,7 +1,6 @@
-package project.unibo.tankyou.data.repository
+package project.unibo.tankyou.data.repositories
 
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Count
 import android.util.Log
 import android.util.LruCache
 import io.github.jan.supabase.postgrest.query.Order

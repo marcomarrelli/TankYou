@@ -1,4 +1,4 @@
-package project.unibo.tankyou.components
+package project.unibo.tankyou.data.database.models
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -6,9 +6,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import project.unibo.tankyou.data.database.models.AuthState
-import project.unibo.tankyou.data.repository.AuthRepository
+import project.unibo.tankyou.data.repositories.AuthRepository
 
+/**
+ * [ViewModel] that manages user authentication state.
+ */
 class AuthViewModel : ViewModel() {
     private val authRepository = AuthRepository.getInstance()
 
@@ -19,6 +21,9 @@ class AuthViewModel : ViewModel() {
         checkAuthStatus()
     }
 
+    /**
+     * Checks the current user authentication status.
+     */
     private fun checkAuthStatus() {
         if (authRepository.isUserLoggedIn()) {
             _authState.value = AuthState.Authenticated
@@ -27,6 +32,12 @@ class AuthViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Signs in the user with provided credentials.
+     *
+     * @param email the user's email
+     * @param password the user's password
+     */
     fun signIn(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -34,11 +45,17 @@ class AuthViewModel : ViewModel() {
             _authState.value = if (result.isSuccess) {
                 AuthState.Authenticated
             } else {
-                AuthState.Error(result.exceptionOrNull()?.message ?: "Errore durante il login")
+                AuthState.Error(result.exceptionOrNull()?.message ?: "Login error")
             }
         }
     }
 
+    /**
+     * Registers a new user with provided credentials.
+     *
+     * @param email the new user's email
+     * @param password the new user's password
+     */
     fun signUp(email: String, password: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
@@ -46,11 +63,14 @@ class AuthViewModel : ViewModel() {
             _authState.value = if (result.isSuccess) {
                 AuthState.Authenticated
             } else {
-                AuthState.Error(result.exceptionOrNull()?.message ?: "Errore durante la registrazione")
+                AuthState.Error(result.exceptionOrNull()?.message ?: "Registration error")
             }
         }
     }
 
+    /**
+     * Signs out the current user.
+     */
     fun signOut() {
         viewModelScope.launch {
             val result = authRepository.signOut()

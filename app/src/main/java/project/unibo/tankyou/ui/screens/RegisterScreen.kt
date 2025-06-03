@@ -1,5 +1,6 @@
-package project.unibo.tankyou.ui
+package project.unibo.tankyou.ui.screens
 
+import android.util.Patterns
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -10,7 +11,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import project.unibo.tankyou.components.AuthViewModel
+import project.unibo.tankyou.data.database.models.AuthViewModel
 import project.unibo.tankyou.data.database.models.AuthState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -26,7 +27,7 @@ fun RegisterScreen(
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (authState is project.unibo.tankyou.data.database.models.AuthState.Authenticated) {
+        if (authState is AuthState.Authenticated) {
             onRegisterSuccess()
         }
     }
@@ -50,10 +51,10 @@ fun RegisterScreen(
             label = { Text("Email") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
-            isError = email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
+            isError = email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()
         )
 
-        if (email.isNotEmpty() && !android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Text(
                 text = "Inserisci un'email valida",
                 color = MaterialTheme.colorScheme.error,
@@ -114,10 +115,10 @@ fun RegisterScreen(
                     password.isNotEmpty() &&
                     password.length >= 6 &&
                     password == confirmPassword &&
-                    android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches(),
+                    Patterns.EMAIL_ADDRESS.matcher(email).matches(),
             modifier = Modifier.fillMaxWidth()
         ) {
-            if (authState is project.unibo.tankyou.data.database.models.AuthState.Loading) {
+            if (authState is AuthState.Loading) {
                 CircularProgressIndicator(modifier = Modifier.size(20.dp))
             } else {
                 Text("Registrati")
@@ -130,7 +131,7 @@ fun RegisterScreen(
             Text("Hai già un account? Accedi")
         }
 
-        if (authState is project.unibo.tankyou.data.database.models.AuthState.Error) {
+        if (authState is AuthState.Error) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(
                 text = (authState as AuthState.Error).message,

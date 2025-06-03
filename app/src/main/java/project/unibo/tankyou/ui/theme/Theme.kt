@@ -1,4 +1,4 @@
-package project.unibo.tankyou.ui
+package project.unibo.tankyou.ui.theme
 
 import android.app.Activity
 import android.os.Build
@@ -36,7 +36,7 @@ private val TankYouLightColorScheme = lightColorScheme(
 @Composable
 fun TankYouTheme(
     themeMode: ThemeMode = ThemeMode.SYSTEM,
-    dynamicColor: Boolean = false, // Disabilitato per usare i tuoi colori
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -60,7 +60,6 @@ fun TankYouTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
             WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
         }
     }

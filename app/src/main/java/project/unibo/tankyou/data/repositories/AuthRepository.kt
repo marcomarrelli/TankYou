@@ -1,4 +1,4 @@
-package project.unibo.tankyou.data.repository
+package project.unibo.tankyou.data.repositories
 
 import android.util.Log
 import io.github.jan.supabase.gotrue.Auth

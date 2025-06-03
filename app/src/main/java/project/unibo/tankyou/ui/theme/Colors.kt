@@ -1,4 +1,4 @@
-package project.unibo.tankyou.ui
+package project.unibo.tankyou.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
