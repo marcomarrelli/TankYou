@@ -5,12 +5,25 @@ import android.os.Bundle
 import android.widget.RelativeLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -18,13 +31,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import project.unibo.tankyou.components.MapComponent
 import project.unibo.tankyou.data.database.models.AuthState
-import project.unibo.tankyou.components.Screen
-import project.unibo.tankyou.ui.TankYouTheme
-import project.unibo.tankyou.ui.ThemeManager
-import project.unibo.tankyou.ui.LoginScreen
-import project.unibo.tankyou.ui.RegisterScreen
-import project.unibo.tankyou.ui.ProfileScreen
-import project.unibo.tankyou.components.AuthViewModel
+import project.unibo.tankyou.data.database.models.AuthViewModel
+import project.unibo.tankyou.ui.screens.LoginScreen
+import project.unibo.tankyou.ui.screens.ProfileScreen
+import project.unibo.tankyou.ui.screens.RegisterScreen
+import project.unibo.tankyou.ui.screens.Screen
+import project.unibo.tankyou.ui.theme.TankYouTheme
+import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
 
 class MainActivity : AppCompatActivity() {
@@ -59,10 +72,12 @@ class MainActivity : AppCompatActivity() {
                         currentScreen = Screen.MAP
                     }
                 }
+
                 is AuthState.Unauthenticated -> {
                     currentScreen = Screen.LOGIN
                 }
-                else -> { }
+
+                else -> {}
             }
         }
 
@@ -146,7 +161,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
-        val permissions = Constants.APP_PERMISSIONS
+        val permissions = Constants.App.PERMISSIONS
 
         val missingPermissions = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED

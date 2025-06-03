@@ -1,4 +1,4 @@
-package project.unibo.tankyou.ui
+package project.unibo.tankyou.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -10,7 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import project.unibo.tankyou.components.AuthViewModel
+import project.unibo.tankyou.data.database.models.AuthViewModel
+import project.unibo.tankyou.data.repositories.AuthRepository
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,7 +19,7 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     authViewModel: AuthViewModel = viewModel()
 ) {
-    val authRepository = remember { project.unibo.tankyou.data.repository.AuthRepository.getInstance() }
+    val authRepository = remember { AuthRepository.getInstance() }
     val currentUser = authRepository.currentUser
 
     Column(

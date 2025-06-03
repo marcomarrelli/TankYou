@@ -2,58 +2,62 @@ package project.unibo.tankyou.components
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Log
 import android.widget.RelativeLayout
+
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+
 import org.osmdroid.config.Configuration
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
+
 import project.unibo.tankyou.data.database.entities.GasStation
-import project.unibo.tankyou.data.repository.AppRepository
 import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.DebounceManager
+
 import kotlin.math.abs
 
+/**
+ * Component that manages the OpenStreetMap view and gas station markers.
+ * Handles map initialization, clustering, location services, and user interactions.
+ *
+ * @param context the [AppCompatActivity] context
+ * @param mapContainer the [RelativeLayout] container for the map
+ */
 class MapComponent(
     private val context: AppCompatActivity,
     private val mapContainer: RelativeLayout
 ) : MapListener {
+    /** Current TankYou Map */
     private lateinit var map: MapView
+
     private var locationOverlay: MyLocationNewOverlay? = null
     private var clusterer: GasStationCluster? = null
-    private val TAG: String = "MapComponent"
     private var mapInitialized = false
-    private val appRepository = AppRepository.getInstance()
-    private var currentZoomLevel = 7.0
+    private var currentZoomLevel: Double = Constants.Map.DEFAULT_ZOOM_LEVEL
     private var lastLoadedBounds: BoundingBox? = null
     private val debounceHelper = DebounceManager()
-
-    private val italyBounds = BoundingBox(
-        47.5,
-        19.0,
-        36.0,
-        6.0
-    )
 
     init {
         setupMapConfiguration()
     }
 
+    /**
+     * Configures and initializes the map with default settings.
+     */
     private fun setupMapConfiguration() {
         Configuration.getInstance().apply {
             userAgentValue = context.packageName
-            cacheMapTileCount = 12
-            cacheMapTileOvershoot = 2
+            cacheMapTileCount = Constants.Map.Cache.TILE_COUNT
+            cacheMapTileOvershoot = Constants.Map.Cache.TILE_OVERSHOOT
         }
 
         try {
@@ -70,30 +74,33 @@ class MapComponent(
             map.setTileSource(TileSourceFactory.MAPNIK)
             map.setMultiTouchControls(true)
 
-            map.minZoomLevel = 6.0
-            map.maxZoomLevel = 19.0
+            map.minZoomLevel = Constants.Map.MIN_ZOOM_LEVEL
+            map.maxZoomLevel = Constants.Map.MAX_ZOOM_LEVEL
 
-            map.setScrollableAreaLimitDouble(italyBounds)
+            map.setScrollableAreaLimitDouble(Constants.Map.BOUNDS)
 
             map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.ALWAYS)
             map.zoomController.setZoomInEnabled(true)
             map.zoomController.setZoomOutEnabled(true)
 
-            val mapController = map.controller
-            mapController.setZoom(7.0)
-            val italyCenterPoint = GeoPoint(42.5, 12.5)
-            mapController.setCenter(italyCenterPoint)
+            map.controller.setZoom(Constants.Map.DEFAULT_ZOOM_LEVEL)
+            map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
 
             setupClusterer()
+
             map.addMapListener(this)
+
             setupLocationOverlay()
 
             mapInitialized = true
         } catch (e: Exception) {
-
+            e
         }
     }
 
+    /**
+     * Sets up the marker clustering functionality for gas stations.
+     */
     private fun setupClusterer() {
         try {
             clusterer = GasStationCluster(context)
@@ -104,21 +111,29 @@ class MapComponent(
             }
 
         } catch (e: Exception) {
-
+            e
         }
     }
 
+    /**
+     * Updates the clustering radius based on current zoom level.
+     */
     private fun updateClustererRadius() {
         clusterer?.let { cluster ->
             val radius: Int = when {
-                currentZoomLevel < 10 -> (Constants.Cluster.CLUSTER_GROUP_RADIUS*0.35).toInt()
-                currentZoomLevel < 15 -> (Constants.Cluster.CLUSTER_GROUP_RADIUS*0.65).toInt()
-                else -> Constants.Cluster.CLUSTER_GROUP_RADIUS
+                currentZoomLevel < 10 -> (Constants.Map.Cluster.CLUSTER_GROUP_RADIUS * 0.35).toInt()
+                currentZoomLevel < 15 -> (Constants.Map.Cluster.CLUSTER_GROUP_RADIUS * 0.65).toInt()
+                else -> Constants.Map.Cluster.CLUSTER_GROUP_RADIUS
             }
             cluster.setRadius(radius)
         }
     }
 
+    /**
+     * Handles map zoom events and updates clustering accordingly.
+     * @param event the ZoomEvent containing zoom information
+     * @return true if the event was handled
+     */
     override fun onZoom(event: ZoomEvent?): Boolean {
         event?.let { zoomEvent ->
             val newZoomLevel = zoomEvent.zoomLevel
@@ -136,6 +151,11 @@ class MapComponent(
         return true
     }
 
+    /**
+     * Handles map scroll events and loads stations when needed.
+     * @param event the ScrollEvent containing scroll information
+     * @return true if the event was handled
+     */
     override fun onScroll(event: ScrollEvent?): Boolean {
         lastLoadedBounds?.let { loadedBounds ->
             val currentCenter = map.mapCenter
@@ -153,15 +173,18 @@ class MapComponent(
         return true
     }
 
+    /**
+     * Loads gas stations within the current map view bounds.
+     */
     private suspend fun loadStationsInCurrentView() {
         if (!mapInitialized) return
 
         val currentBounds = map.boundingBox
 
         val buffer = when {
-            currentZoomLevel < 8 -> 0.5
-            currentZoomLevel < 12 -> 0.2
-            else -> 0.05
+            currentZoomLevel < 8 -> Constants.Map.BOUNDS_BUFFER
+            currentZoomLevel < 12 -> Constants.Map.BOUNDS_BUFFER / 2
+            else -> Constants.Map.BOUNDS_BUFFER / 10
         }
 
         try {
@@ -172,29 +195,25 @@ class MapComponent(
                 currentBounds.lonWest - buffer
             )
 
-            val gasStations = appRepository.getStationsForZoomLevel(
+            val gasStations = Constants.App.REPOSITORY.getStationsForZoomLevel(
                 expandedBounds,
                 currentZoomLevel
             )
 
-            addMarkersOptimized(gasStations)
+            loadGasStationMarkers(gasStations)
             lastLoadedBounds = currentBounds
-
-
         } catch (e: Exception) {
+            e
         }
     }
 
-    fun loadInitialStations() {
-        context.lifecycleScope.launch {
-            loadStationsInCurrentView()
-        }
-    }
-
-    private fun addMarkersOptimized(gasStations: List<GasStation>) {
-        if (!mapInitialized) {
-            return
-        }
+    /**
+     * Adds gas station markers to the map with clustering optimization.
+     *
+     * @param gasStations the list of gas stations to display
+     */
+    private fun loadGasStationMarkers(gasStations: List<GasStation>) {
+        if (!mapInitialized) return
 
         try {
             clusterer?.let { cluster ->
@@ -202,7 +221,7 @@ class MapComponent(
 
                 val validStations = gasStations.filter { station ->
                     val point = GeoPoint(station.latitude, station.longitude)
-                    italyBounds.contains(point)
+                    Constants.Map.BOUNDS.contains(point)
                 }
 
                 for (station in validStations) {
@@ -220,9 +239,13 @@ class MapComponent(
 
             }
         } catch (e: Exception) {
+            e
         }
     }
 
+    /**
+     * Sets up the user location overlay if location permissions are granted.
+     */
     private fun setupLocationOverlay() {
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -231,6 +254,7 @@ class MapComponent(
         ) {
             try {
                 val locationProvider = GpsMyLocationProvider(context)
+
                 locationOverlay = MyLocationNewOverlay(locationProvider, map)
                 locationOverlay?.enableMyLocation()
                 locationOverlay?.enableFollowLocation()
@@ -239,41 +263,24 @@ class MapComponent(
                 map.overlays.add(locationOverlay)
 
             } catch (e: Exception) {
+                e
             }
-        } else {
         }
     }
 
-    fun initialize() {
-        if (!mapInitialized) {
-            return
-        }
-
-        try {
-            map.onResume()
-        } catch (e: Exception) {
-        }
-    }
-
-    fun addGasStationMarkers(gasStations: List<GasStation>) {
-        addMarkersOptimized(gasStations)
-    }
-
-    fun clearGasStationMarkers() {
-        clusterer?.items?.clear()
-        clusterer?.invalidate()
-        map.invalidate()
-    }
-
+    /**
+     * Resumes map operations when the activity resumes.
+     */
     fun onResume() {
-        if (mapInitialized) {
-            map.onResume()
-        }
+        if (!mapInitialized) return
+        map.onResume()
     }
 
+    /**
+     * Pauses map operations when the activity pauses.
+     */
     fun onPause() {
-        if (mapInitialized) {
-            map.onPause()
-        }
+        if (!mapInitialized) return
+        map.onPause()
     }
 }
