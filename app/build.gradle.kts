@@ -117,9 +117,11 @@ dependencies {
     implementation(libs.postgrest.kt.v260)
     implementation(libs.realtime.kt.v260)
     implementation(libs.storage.kt)
+    implementation(libs.gotrue.kt) // User-Supabase Auth
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
