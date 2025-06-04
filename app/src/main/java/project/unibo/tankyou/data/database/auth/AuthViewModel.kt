@@ -1,4 +1,4 @@
-package project.unibo.tankyou.data.database.models
+package project.unibo.tankyou.data.database.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

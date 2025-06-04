@@ -13,12 +13,7 @@ data class PaletteData(
     val accent: Color,
     val ok: Color,
     val warning: Color,
-    val alert: Color//,
-    //val onPrimary: Color,
-    //val onSecondary: Color,
-    //val onAccent: Color,
-    //val onBackground: Color,
-    //val onSurface: Color
+    val alert: Color
 )
 
 val LightTankYouColors = PaletteData(
@@ -29,12 +24,7 @@ val LightTankYouColors = PaletteData(
     accent = LightColors.Accent,
     ok = LightColors.OK,
     warning = LightColors.Warning,
-    alert = LightColors.Alert//,
-    //onPrimary = LightColors.OnPrimary,
-    //onSecondary = LightColors.OnSecondary,
-    //onAccent = LightColors.OnAccent,
-    //onBackground = LightColors.OnBackground,
-    //onSurface = LightColors.OnSurface
+    alert = LightColors.Alert
 )
 
 val DarkTankYouColors = PaletteData(
@@ -45,12 +35,7 @@ val DarkTankYouColors = PaletteData(
     accent = DarkColors.Accent,
     ok = DarkColors.OK,
     warning = DarkColors.Warning,
-    alert = DarkColors.Alert//,
-    //onPrimary = DarkColors.OnPrimary,
-    //onSecondary = DarkColors.OnSecondary,
-    //onAccent = DarkColors.OnAccent,
-    //onBackground = DarkColors.OnBackground,
-    //onSurface = DarkColors.OnSurface
+    alert = DarkColors.Alert
 )
 
 val LocalTankYouColors = staticCompositionLocalOf { LightTankYouColors }
