@@ -30,8 +30,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
-import project.unibo.tankyou.data.database.models.AuthState
-import project.unibo.tankyou.data.database.models.AuthViewModel
+import project.unibo.tankyou.data.database.auth.AuthState
+import project.unibo.tankyou.data.database.auth.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
