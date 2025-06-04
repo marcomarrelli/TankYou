@@ -1,14 +1,21 @@
 package project.unibo.tankyou.data.repositories
 
-import io.github.jan.supabase.postgrest.from
-import android.util.Log
 import android.util.LruCache
-import io.github.jan.supabase.postgrest.query.Order
-import org.osmdroid.util.BoundingBox
-import project.unibo.tankyou.data.DatabaseClient
-import project.unibo.tankyou.data.database.entities.GasStation
-import project.unibo.tankyou.data.database.entities.Fuel
 
+import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
+
+import org.osmdroid.util.BoundingBox
+
+import project.unibo.tankyou.data.DatabaseClient
+import project.unibo.tankyou.data.database.entities.Fuel
+import project.unibo.tankyou.data.database.entities.GasStation
+
+/**
+ * Repository class that handles data access for [GasStation]s and fuel information.
+ *
+ * Implements singleton pattern and provides caching functionality for improved performance.
+ */
 class AppRepository {
     private val client = DatabaseClient.client
     private val stationCache = LruCache<String, List<GasStation>>(50)
@@ -17,6 +24,11 @@ class AppRepository {
         @Volatile
         private var INSTANCE: AppRepository? = null
 
+        /**
+         * Returns the singleton instance of AppRepository.
+         *
+         * @return the singleton [AppRepository] instance
+         */
         fun getInstance(): AppRepository {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: AppRepository().also { INSTANCE = it }
@@ -24,6 +36,11 @@ class AppRepository {
         }
     }
 
+    /**
+     * Retrieves all [GasStation]s from the database using batch processing.
+     *
+     * @return list of all [GasStation]s
+     */
     suspend fun getAllStations(): List<GasStation> {
         val allStations = mutableListOf<GasStation>()
         var lastId = 0L
@@ -44,18 +61,24 @@ class AppRepository {
                 if (batch.isNotEmpty()) {
                     lastId = batch.last().id.toLong()
                 }
-
-                Log.d("AppRepository", "Caricato batch di ${batch.size} stazioni (totale: ${allStations.size})")
-
             } while (batch.size == batchSize)
-
         } catch (e: Exception) {
-            Log.e("AppRepository", "Errore nel caricamento delle stazioni", e)
+            e
         }
 
         return allStations
     }
 
+    /**
+     * Retrieves [GasStation]s within specified geographical bounds with caching support.
+     *
+     * @param minLat minimum latitude boundary
+     * @param maxLat maximum latitude boundary
+     * @param minLon minimum longitude boundary
+     * @param maxLon maximum longitude boundary
+     *
+     * @return list of [GasStation]s within the specified bounds
+     */
     suspend fun getStationsInBounds(
         minLat: Double,
         maxLat: Double,
@@ -85,20 +108,28 @@ class AppRepository {
             stations
 
         } catch (e: Exception) {
-            Log.e("AppRepository", "Errore nel caricamento stazioni in bounds", e)
+            e
             emptyList()
         }
     }
 
+    /**
+     * Retrieves [GasStation]s optimized for specific zoom levels with adaptive limits.
+     *
+     * @param bounds the geographical bounding box
+     * @param zoomLevel the map zoom level for optimization
+     *
+     * @return list of [GasStation]s optimized for the zoom level
+     */
     suspend fun getStationsForZoomLevel(
         bounds: BoundingBox,
         zoomLevel: Double
     ): List<GasStation> {
         val roundedZoom = kotlin.math.round(zoomLevel * 2) / 2.0
-        val cacheKey = "${bounds.latSouth}_${bounds.latNorth}_${bounds.lonWest}_${bounds.lonEast}_$roundedZoom"
+        val cacheKey =
+            "${bounds.latSouth}_${bounds.latNorth}_${bounds.lonWest}_${bounds.lonEast}_$roundedZoom"
 
         stationCache.get(cacheKey)?.let {
-            Log.d("AppRepository", "Cache hit per zoom $roundedZoom")
             return it
         }
 
@@ -127,15 +158,20 @@ class AppRepository {
                 .decodeList<GasStation>()
 
             stationCache.put(cacheKey, stations)
-            Log.d("AppRepository", "Caricate ${stations.size} stazioni per zoom $roundedZoom (limit: $limit)")
             stations
-
         } catch (e: Exception) {
-            Log.e("AppRepository", "Errore nel caricamento stazioni per zoom", e)
+            e
             emptyList()
         }
     }
 
+    /**
+     * Retrieves [GasStation]s filtered by specific provinces.
+     *
+     * @param provinces list of province names to filter by
+     *
+     * @return list of [GasStation]s in the specified provinces
+     */
     suspend fun getStationsByProvinces(provinces: List<String>): List<GasStation> {
         return client.from("gas_stations")
             .select {
@@ -146,28 +182,53 @@ class AppRepository {
             .decodeList<GasStation>()
     }
 
+    /**
+     * Retrieves a specific [GasStation] by its ID.
+     *
+     * @param id the unique identifier of the [GasStation]
+     * @return the [GasStation] if found, null otherwise
+     */
     suspend fun getStationById(id: String): GasStation? {
         return client.from("gas_stations").select {
             filter { eq("id", id) }
         }.decodeSingleOrNull<GasStation>()
     }
 
+    /**
+     * Retrieves the total count of [GasStation]s in the database.
+     *
+     * @return the total number of [GasStation]s
+     */
     suspend fun getStationCount(): Long {
         return client.from("gas_stations").select() {}.countOrNull() ?: 0L
     }
 
-    suspend fun getAllFuels(): List<Fuel> {
+    /**
+     * Retrieves all available [Fuel] types from the database.
+     *
+     * @return list of all [Fuel] types
+     */
+    suspend fun getAllFuelTypes(): List<Fuel> {
         return client.from("fuel").select().decodeList<Fuel>()
     }
 
+    /**
+     * Retrieves a specific [Fuel] type by its ID.
+     *
+     * @param id the unique identifier of the [Fuel] type
+     *
+     * @return the [Fuel] type if found, null otherwise
+     */
     suspend fun getFuelById(id: String): Fuel? {
         return client.from("fuel").select {
             filter { eq("id", id) }
         }.decodeSingleOrNull<Fuel>()
     }
 
+    /**
+     * Clears all cached data from the station cache.
+     */
     fun clearCache() {
         stationCache.evictAll()
-        Log.d("AppRepository", "Cache svuotata")
     }
 }
