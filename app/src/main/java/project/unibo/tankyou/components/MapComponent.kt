@@ -121,9 +121,9 @@ class MapComponent(
     private fun updateClustererRadius() {
         clusterer?.let { cluster ->
             val radius: Int = when {
-                currentZoomLevel < 10 -> (Constants.Map.Cluster.CLUSTER_GROUP_RADIUS * 0.35).toInt()
+                currentZoomLevel < 10 -> Constants.Map.Cluster.CLUSTER_GROUP_RADIUS
                 currentZoomLevel < 15 -> (Constants.Map.Cluster.CLUSTER_GROUP_RADIUS * 0.65).toInt()
-                else -> Constants.Map.Cluster.CLUSTER_GROUP_RADIUS
+                else -> (Constants.Map.Cluster.CLUSTER_GROUP_RADIUS * 0.35).toInt()
             }
             cluster.setRadius(radius)
         }

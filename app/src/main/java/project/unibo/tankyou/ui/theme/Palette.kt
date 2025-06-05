@@ -1,16 +1,21 @@
 package project.unibo.tankyou.ui.theme
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 data class PaletteData(
     val text: Color,
     val background: Color,
+    val border: Color,
+
+    val disabledText: Color,
+    val disabledBackground: Color,
+    val disabledBorder: Color,
+
     val primary: Color,
     val secondary: Color,
     val accent: Color,
+
     val ok: Color,
     val warning: Color,
     val alert: Color
@@ -19,9 +24,16 @@ data class PaletteData(
 val LightTankYouColors = PaletteData(
     text = LightColors.Text,
     background = LightColors.Background,
+    border = LightColors.Border,
+
+    disabledText = LightColors.DisabledText,
+    disabledBackground = LightColors.DisabledBackground,
+    disabledBorder = LightColors.DisabledBorder,
+
     primary = LightColors.Primary,
     secondary = LightColors.Secondary,
     accent = LightColors.Accent,
+
     ok = LightColors.OK,
     warning = LightColors.Warning,
     alert = LightColors.Alert
@@ -30,19 +42,21 @@ val LightTankYouColors = PaletteData(
 val DarkTankYouColors = PaletteData(
     text = DarkColors.Text,
     background = DarkColors.Background,
+    border = DarkColors.Border,
+
+    disabledText = DarkColors.DisabledText,
+    disabledBackground = DarkColors.DisabledBackground,
+    disabledBorder = DarkColors.DisabledBorder,
+
     primary = DarkColors.Primary,
     secondary = DarkColors.Secondary,
     accent = DarkColors.Accent,
+
     ok = DarkColors.OK,
     warning = DarkColors.Warning,
     alert = DarkColors.Alert
 )
 
 val LocalTankYouColors = staticCompositionLocalOf { LightTankYouColors }
-
-val Palette.colors: PaletteData
-    @Composable
-    @ReadOnlyComposable
-    get() = LocalTankYouColors.current
 
 object Palette
