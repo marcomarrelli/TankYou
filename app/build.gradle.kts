@@ -1,4 +1,7 @@
+import com.android.tools.build.jetifier.core.utils.Log
 import java.util.Properties
+
+import kotlin.system.exitProcess
 
 plugins {
     alias(libs.plugins.android.application)
@@ -30,14 +33,39 @@ android {
         val p = Properties()
         val f = rootProject.file("local.properties")
 
-        var url: String = ""
-        var key: String = ""
+        var url: String
+        var key: String
 
         if (f.exists()) {
             p.load(f.inputStream())
 
-            url = p.getProperty("database.url")
-            key = p.getProperty("database.key")
+            try {
+                url = p.getProperty("database.url")
+            } catch (e: Exception) {
+                Log.e(
+                    "[BUILD]",
+                    "Database URL Not Found in 'local.properties'! Exiting Process...\nError Tracestack:",
+                    e
+                )
+                exitProcess(-1)
+            }
+
+            try {
+                key = p.getProperty("database.key")
+            } catch (e: Exception) {
+                Log.e(
+                    "[BUILD]",
+                    "Database KEY Not Found in 'local.properties'! Exiting Process...\nError Tracestack:",
+                    e
+                )
+                exitProcess(-1)
+            }
+        } else {
+            Log.e(
+                "[BUILD]",
+                "File 'local.properties' Not Found! Exiting Process..."
+            )
+            exitProcess(-1)
         }
 
         debug {

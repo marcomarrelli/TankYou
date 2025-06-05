@@ -25,8 +25,8 @@ object DatabaseClient {
         }
 
     /**
-     * The Supabase anonymous key retrieved from build configuration.
-     * Validates that the key is properly configured before returning it.
+     * The Supabase anonymous key retrieved from [build configuration][BuildConfig]
+     * Validates that the [key][BuildConfig.DATABASE_KEY] is properly configured before returning it.
      *
      * @throws IllegalStateException if [BuildConfig.DATABASE_KEY] is not configured or blank
      */
