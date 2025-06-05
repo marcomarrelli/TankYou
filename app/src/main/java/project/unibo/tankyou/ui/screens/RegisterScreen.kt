@@ -47,7 +47,7 @@ import project.unibo.tankyou.ui.theme.ThemeManager
 
 /**
  * Register screen composable that provides user registration interface.
- * Displays email, password and confirm password input fields with validation.
+ * Displays name, surname, username, email, password and confirm password input fields with validation.
  * Also provides navigation back to login screen.
  *
  * @param onNavigateToLogin Callback function to navigate to login screen
@@ -64,6 +64,10 @@ fun RegisterScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("") }
+    var surname by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+
     val authState by authViewModel.authState.collectAsState()
 
     LaunchedEffect(authState) {
@@ -89,6 +93,60 @@ fun RegisterScreen(
             color = ThemeManager.palette.text,
             modifier = Modifier.padding(bottom = 32.dp)
         )
+
+        /** Name input field */
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Nome", color = ThemeManager.palette.text) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ThemeManager.palette.primary,
+                unfocusedBorderColor = ThemeManager.palette.border,
+                focusedTextColor = ThemeManager.palette.text,
+                unfocusedTextColor = ThemeManager.palette.text,
+                cursorColor = ThemeManager.palette.primary
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        /** Surname input field */
+        OutlinedTextField(
+            value = surname,
+            onValueChange = { surname = it },
+            label = { Text("Cognome", color = ThemeManager.palette.text) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ThemeManager.palette.primary,
+                unfocusedBorderColor = ThemeManager.palette.border,
+                focusedTextColor = ThemeManager.palette.text,
+                unfocusedTextColor = ThemeManager.palette.text,
+                cursorColor = ThemeManager.palette.primary
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        /** Username input field */
+        OutlinedTextField(
+            value = username,
+            onValueChange = { username = it },
+            label = { Text("Username", color = ThemeManager.palette.text) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = ThemeManager.palette.primary,
+                unfocusedBorderColor = ThemeManager.palette.border,
+                focusedTextColor = ThemeManager.palette.text,
+                unfocusedTextColor = ThemeManager.palette.text,
+                cursorColor = ThemeManager.palette.primary
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         /** Email input field with validation styling */
         OutlinedTextField(
@@ -188,9 +246,12 @@ fun RegisterScreen(
         /** Primary register button with loading indicator support and larger text */
         Button(
             onClick = {
-                authViewModel.signUp(email, password)
+                authViewModel.signUp(email, password, name, surname, username)
             },
-            enabled = email.isNotEmpty() &&
+            enabled = name.isNotEmpty() &&
+                    surname.isNotEmpty() &&
+                    username.isNotEmpty() &&
+                    email.isNotEmpty() &&
                     password.isNotEmpty() &&
                     password.length >= 6 &&
                     password == confirmPassword &&

@@ -58,11 +58,11 @@ class AuthViewModel : ViewModel() {
      * @param email the new user's email
      * @param password the new user's password
      */
-    fun signUp(email: String, password: String) {
+    fun signUp(email: String, password: String, name: String, surname: String, username: String) {
         viewModelScope.launch {
             _authState.value = AuthState.Loading
 
-            val result = authRepository.signUp(email, password, "", "", "")
+            val result = authRepository.signUp(email, password, name, surname, username)
             _authState.value = if (result.isSuccess) {
                 AuthState.Authenticated
             } else {
