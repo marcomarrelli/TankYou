@@ -12,12 +12,11 @@ import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
-
 import org.osmdroid.bonuspack.clustering.RadiusMarkerClusterer
 import org.osmdroid.bonuspack.clustering.StaticCluster
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-
+import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
 
 /**
@@ -39,9 +38,9 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * Determines the appropriate color for a cluster based on its size.
      *
      * Color scheme:
-     * - Red: More than [Constants.Map.Cluster.CLUSTER_MAX_SIZE] gas stations (high density areas)
-     * - Orange: More than half of [Constants.Map.Cluster.CLUSTER_MAX_SIZE] gas stations (medium density areas)
-     * - Green: Less than half of [Constants.Map.Cluster.CLUSTER_MAX_SIZE] gas stations (low density areas)
+     * - Alert: More than [Constants.Map.Cluster.CLUSTER_MAX_COUNT] gas stations (high density areas)
+     * - Warning: More than half of [Constants.Map.Cluster.CLUSTER_MAX_COUNT] gas stations (medium density areas)
+     * - OK: Less than half of [Constants.Map.Cluster.CLUSTER_MAX_COUNT] gas stations (low density areas)
      *
      * @param size The number of gas stations in the cluster
      *
@@ -49,9 +48,9 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      */
     private fun getClusterColor(size: Int): Int {
         return when {
-            size > Constants.Map.Cluster.CLUSTER_MAX_SIZE -> Color.RED
-            size >= (Constants.Map.Cluster.CLUSTER_MAX_SIZE / 2) -> Color.rgb(255, 165, 0)
-            else -> Color.GREEN
+            size > Constants.Map.Cluster.CLUSTER_MAX_COUNT -> ThemeManager.palette.text.value.toInt()
+            size >= (Constants.Map.Cluster.CLUSTER_MAX_COUNT / 2) -> ThemeManager.palette.warning.value.toInt()
+            else -> ThemeManager.palette.ok.value.toInt()
         }
     }
 
@@ -93,8 +92,8 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      *
      * The icon consists of:
      * - A filled circle with the specified base color
-     * - A white stroke border for better visibility
-     * - Centered white text showing the formatted cluster size
+     * - A border for better visibility using the palette border color
+     * - Centered text showing the formatted cluster size using palette text color
      * - Anti-aliased rendering for smooth appearance
      *
      * @param clusterSize The number of gas stations in the cluster
@@ -141,31 +140,31 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
 
         val strokePaint = Paint().apply {
             isAntiAlias = true
-            color = Color.argb(100, 255, 255, 255)
+            color = ThemeManager.palette.text.value.toInt()
             style = Paint.Style.STROKE
-            strokeWidth = 1f
+            strokeWidth = 2f
         }
 
         val dynamicTextSize = when {
-            clusterSize >= 1000 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.75)
-            clusterSize >= 100 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.5)
+            clusterSize >= 1000 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 0.75)
+            clusterSize >= 100 -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
             clusterSize >= 10 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.25)
-            else -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
+            else -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.5
         }.toFloat()
 
         val textOutlinePaint = Paint().apply {
             isAntiAlias = true
-            color = Color.BLACK
+            color = ThemeManager.palette.background.value.toInt()
             textSize = dynamicTextSize
             typeface = Typeface.DEFAULT_BOLD
             textAlign = Paint.Align.CENTER
             style = Paint.Style.STROKE
-            strokeWidth = 5f
+            strokeWidth = 3f
         }
 
         val textPaint = Paint().apply {
             isAntiAlias = true
-            color = Color.WHITE
+            color = ThemeManager.palette.text.value.toInt()
             textSize = dynamicTextSize
             typeface = Typeface.DEFAULT_BOLD
             textAlign = Paint.Align.CENTER

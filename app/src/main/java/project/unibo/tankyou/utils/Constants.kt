@@ -16,7 +16,7 @@ import project.unibo.tankyou.utils.Constants.Map.Cache.CACHE_SIZE
 import project.unibo.tankyou.utils.Constants.Map.Cache.TILE_COUNT
 import project.unibo.tankyou.utils.Constants.Map.Cache.TILE_OVERSHOOT
 import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_GROUP_RADIUS
-import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_MAX_SIZE
+import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_MAX_COUNT
 import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_SIZE
 import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
 import project.unibo.tankyou.utils.Constants.Map.DEFAULT_GEO_POINT
@@ -71,23 +71,23 @@ object Constants {
         /**
          * Map Cluster Constants Global Object
          *
-         * @param CLUSTER_MAX_SIZE Cluster Maximum Size
+         * @param CLUSTER_MAX_COUNT Cluster Maximum Size
          * @param CLUSTER_SIZE Cluster Map Drawing Size (Diameter, pixels)
          * @param CLUSTER_GROUP_RADIUS Cluster Group Size (Radius, pixels)
          * @param CLUSTER_TEXT_FONT_SIZE Default Font Size for Cluster Text
          */
         object Cluster {
             /** Cluster Maximum Size */
-            const val CLUSTER_MAX_SIZE: Int = 100
+            const val CLUSTER_MAX_COUNT: Int = 100
 
             /** Cluster Map Drawing Size (Diameter, pixels) */
-            const val CLUSTER_SIZE: Int = 200
+            const val CLUSTER_SIZE: Int = 175
 
             /** Cluster Group Size (Radius, pixels) */
-            const val CLUSTER_GROUP_RADIUS: Int = 250
+            const val CLUSTER_GROUP_RADIUS: Int = 200
 
             /** Default Font Size for Cluster Text */
-            const val CLUSTER_TEXT_FONT_SIZE: Float = 16f
+            const val CLUSTER_TEXT_FONT_SIZE: Float = 48f
         }
 
         /**

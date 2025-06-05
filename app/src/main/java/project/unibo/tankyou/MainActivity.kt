@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity() {
                 LoginScreen(
                     onNavigateToRegister = { currentScreen = Screen.REGISTER },
                     onLoginSuccess = { currentScreen = Screen.MAP },
+                    onContinueAsGuest = { currentScreen = Screen.MAP },
                     authViewModel = authViewModel
                 )
             }
