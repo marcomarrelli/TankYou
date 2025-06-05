@@ -200,7 +200,7 @@ class AppRepository {
      * @return the total number of [GasStation]s
      */
     suspend fun getStationCount(): Long {
-        return client.from("gas_stations").select() {}.countOrNull() ?: 0L
+        return client.from("gas_stations").select().countOrNull() ?: 0L
     }
 
     /**
