@@ -1,11 +1,16 @@
 package project.unibo.tankyou.data.repositories
 
+import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
 import io.github.jan.supabase.gotrue.user.UserInfo
+import io.github.jan.supabase.toJsonObject
+
 import kotlinx.coroutines.flow.Flow
+import kotlinx.serialization.json.buildJsonObject
+
 import project.unibo.tankyou.data.DatabaseClient
 
 /**
@@ -50,11 +55,23 @@ class AuthRepository {
      *
      * @return Result containing [Unit] on success or [Exception] on failure
      */
-    suspend fun signUp(email: String, password: String): Result<Unit> {
+    @OptIn(SupabaseInternal::class)
+    suspend fun signUp(
+        email: String,
+        password: String,
+        name: String,
+        surname: String,
+        username: String
+    ): Result<Unit> {
         return try {
             auth.signUpWith(Email) {
                 this.email = email
                 this.password = password
+                data = buildJsonObject {
+                    put("name", name.toJsonObject())
+                    put("surname", surname.toJsonObject())
+                    put("username", username.toJsonObject())
+                }
             }
             Result.success(Unit)
         } catch (e: Exception) {
