@@ -18,6 +18,9 @@ object LightColors {
     val OK = Color(0xFF23BA39)
     val Warning = Color(0xFFEAAD16)
     val Alert = Color(0xFFEC2E23)
+
+    val White = Color(0xFFFEFAE1)
+    val Black = Color(0xFF1E1A01)
 }
 
 object DarkColors {
@@ -36,4 +39,7 @@ object DarkColors {
     val OK = Color(0xFF1A8A2B)
     val Warning = Color(0xFFB8850F)
     val Alert = Color(0xFFB8211A)
+
+    val White = Color(0xFFFEFAE1)
+    val Black = Color(0xFF1E1A01)
 }

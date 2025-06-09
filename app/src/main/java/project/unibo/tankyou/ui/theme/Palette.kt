@@ -18,7 +18,10 @@ data class PaletteData(
 
     val ok: Color,
     val warning: Color,
-    val alert: Color
+    val alert: Color,
+
+    val white: Color,
+    val black: Color
 )
 
 val LightTankYouColors = PaletteData(
@@ -36,7 +39,10 @@ val LightTankYouColors = PaletteData(
 
     ok = LightColors.OK,
     warning = LightColors.Warning,
-    alert = LightColors.Alert
+    alert = LightColors.Alert,
+
+    white = LightColors.White,
+    black = LightColors.Black
 )
 
 val DarkTankYouColors = PaletteData(
@@ -54,9 +60,10 @@ val DarkTankYouColors = PaletteData(
 
     ok = DarkColors.OK,
     warning = DarkColors.Warning,
-    alert = DarkColors.Alert
+    alert = DarkColors.Alert,
+
+    white = DarkColors.White,
+    black = DarkColors.Black
 )
 
 val LocalTankYouColors = staticCompositionLocalOf { LightTankYouColors }
-
-object Palette
