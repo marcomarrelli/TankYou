@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -36,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.ui.theme.ThemeManager
@@ -78,7 +80,7 @@ fun LoginScreen(
     ) {
         /** Application title text with primary color styling and bold font */
         Text(
-            text = "TankYou",
+            text = LocalContext.current.getString(R.string.app_name),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -90,7 +92,12 @@ fun LoginScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.email),
+                    color = ThemeManager.palette.text
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -108,7 +115,12 @@ fun LoginScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.password),
+                    color = ThemeManager.palette.text
+                )
+            },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -144,7 +156,7 @@ fun LoginScreen(
                 )
             } else {
                 Text(
-                    "Log In",
+                    LocalContext.current.getString(R.string.log_in),
                     fontSize = 18.sp
                 )
             }
@@ -171,7 +183,7 @@ fun LoginScreen(
                 )
             ) {
                 Text(
-                    "Register Now",
+                    LocalContext.current.getString(R.string.register_now),
                     textAlign = TextAlign.Left
                 )
             }
@@ -190,7 +202,7 @@ fun LoginScreen(
                 )
             ) {
                 Text(
-                    "Enter as a Guest",
+                    LocalContext.current.getString(R.string.enter_as_guest),
                     textAlign = TextAlign.Right
                 )
             }

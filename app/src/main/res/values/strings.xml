@@ -1,3 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- APP -->
     <string name="app_name">TankYou</string>
+
+    <!-- Login Screen -->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="log_in">Log In</string>
+    <string name="register_now">Sign Up Now</string>
+    <string name="enter_as_guest">Enter as a Guest</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Sign Up on TankYou</string>
+    <string name="name">Name</string>
+    <string name="surname">Surname</string>
+    <string name="username">Username</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="register">Sign Up</string>
+    <string name="already_have_account">Already have an account? Sign In</string>
+
+    <!-- Validation Messages -->
+    <string name="invalid_email">Please enter a valid email</string>
+    <string name="password_min_length">Password must be at least 6 characters</string>
+    <string name="passwords_dont_match">Passwords don\'t match</string>
 </resources>

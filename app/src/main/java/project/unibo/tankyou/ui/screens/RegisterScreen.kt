@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -40,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.lifecycle.viewmodel.compose.viewModel
+import project.unibo.tankyou.R
 
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
@@ -86,7 +88,7 @@ fun RegisterScreen(
     ) {
         /** Application title text with primary color styling and bold font */
         Text(
-            text = "Registrati su TankYou",
+            text = LocalContext.current.getString(R.string.register_title),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -98,7 +100,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nome", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.name),
+                    color = ThemeManager.palette.text
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -116,7 +123,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = surname,
             onValueChange = { surname = it },
-            label = { Text("Cognome", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.surname),
+                    color = ThemeManager.palette.text
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -134,7 +146,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = username,
             onValueChange = { username = it },
-            label = { Text("Username", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.username),
+                    color = ThemeManager.palette.text
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text),
             modifier = Modifier.fillMaxWidth(),
             colors = OutlinedTextFieldDefaults.colors(
@@ -152,7 +169,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            label = { Text("Email", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.email),
+                    color = ThemeManager.palette.text
+                )
+            },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
             modifier = Modifier.fillMaxWidth(),
             isError = email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches(),
@@ -170,7 +192,7 @@ fun RegisterScreen(
         /** Email validation error message */
         if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Text(
-                text = "Inserisci un'email valida",
+                text = LocalContext.current.getString(R.string.invalid_email),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -183,7 +205,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.password),
+                    color = ThemeManager.palette.text
+                )
+            },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -202,7 +229,7 @@ fun RegisterScreen(
         /** Password validation error message */
         if (password.isNotEmpty() && password.length < 6) {
             Text(
-                text = "La password deve avere almeno 6 caratteri",
+                text = LocalContext.current.getString(R.string.password_min_length),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -215,7 +242,12 @@ fun RegisterScreen(
         OutlinedTextField(
             value = confirmPassword,
             onValueChange = { confirmPassword = it },
-            label = { Text("Conferma Password", color = ThemeManager.palette.text) },
+            label = {
+                Text(
+                    LocalContext.current.getString(R.string.confirm_password),
+                    color = ThemeManager.palette.text
+                )
+            },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             modifier = Modifier.fillMaxWidth(),
@@ -234,7 +266,7 @@ fun RegisterScreen(
         /** Confirm password validation error message */
         if (confirmPassword.isNotEmpty() && password != confirmPassword) {
             Text(
-                text = "Le password non corrispondono",
+                text = LocalContext.current.getString(R.string.passwords_dont_match),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -271,7 +303,7 @@ fun RegisterScreen(
                 )
             } else {
                 Text(
-                    "Registrati",
+                    LocalContext.current.getString(R.string.register),
                     fontSize = 18.sp
                 )
             }
@@ -286,7 +318,7 @@ fun RegisterScreen(
                 contentColor = ThemeManager.palette.secondary
             )
         ) {
-            Text("Hai già un account? Accedi")
+            Text(LocalContext.current.getString(R.string.already_have_account))
         }
 
         /** Error message display for authentication failures */
