@@ -5,17 +5,22 @@ import android.os.Bundle
 import android.widget.RelativeLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.twotone.Add
+import androidx.compose.material.icons.twotone.LocationOn
+import androidx.compose.material.icons.twotone.Person
+import androidx.compose.material.icons.twotone.Remove
+import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -123,7 +129,7 @@ class MainActivity : AppCompatActivity() {
                             title = { Text("Profilo") },
                             navigationIcon = {
                                 IconButton(onClick = { currentScreen = Screen.MAP }) {
-                                    Icon(Icons.Default.LocationOn, contentDescription = "Mappa")
+                                    Icon(Icons.TwoTone.LocationOn, contentDescription = "Mappa")
                                 }
                             }
                         )
@@ -144,86 +150,101 @@ class MainActivity : AppCompatActivity() {
     private fun MapScreenWithFABs(
         onNavigateToProfile: () -> Unit
     ) {
+        var fabsVisible by remember { mutableStateOf(true) }
+
         Box(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { context ->
                     RelativeLayout(context).apply {
                         mapComponent = MapComponent(
-                            this@MainActivity, this
+                            context = this@MainActivity,
+                            mapContainer = this,
+                            onMapClick = {
+                                fabsVisible = !fabsVisible
+                            }
                         )
                     }
                 },
                 modifier = Modifier.fillMaxSize()
             )
 
-            // FABs per lo zoom (sinistra)
-            Column(
+            AnimatedVisibility(
+                visible = fabsVisible,
+                enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(start = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .align(Alignment.BottomStart)
+                    .padding(start = 16.dp, bottom = 32.dp)
             ) {
-                SmallFloatingActionButton(
-                    onClick = {
-                        if (::mapComponent.isInitialized) {
-                            mapComponent.zoomIn()
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Zoom In"
-                    )
-                }
+                    SmallFloatingActionButton(
+                        onClick = {
+                            if (::mapComponent.isInitialized) {
+                                mapComponent.zoomIn()
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.Add,
+                            contentDescription = LocalContext.current.getString(R.string.zoom_in_icon_description)
+                        )
+                    }
 
-                SmallFloatingActionButton(
-                    onClick = {
-                        if (::mapComponent.isInitialized) {
-                            mapComponent.zoomOut()
-                        }
-                    },
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Zoom Out"
-                    )
+                    SmallFloatingActionButton(
+                        onClick = {
+                            if (::mapComponent.isInitialized) {
+                                mapComponent.zoomOut()
+                            }
+                        },
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.Remove,
+                            contentDescription = LocalContext.current.getString(R.string.zoom_out_icon_description)
+                        )
+                    }
                 }
             }
 
-            // FABs per azioni (destra)
-            Column(
+            AnimatedVisibility(
+                visible = fabsVisible,
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(top = 16.dp, end = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 32.dp)
             ) {
-                SmallFloatingActionButton(
-                    onClick = {
-                        // TODO: Implementare ricerca
-                        println("Search clicked")
-                    },
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Cerca"
-                    )
-                }
+                    SmallFloatingActionButton(
+                        onClick = {
+                            println("Search clicked")
+                        },
+                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.Search,
+                            contentDescription = LocalContext.current.getString(R.string.search_icon_description)
+                        )
+                    }
 
-                SmallFloatingActionButton(
-                    onClick = onNavigateToProfile,
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Profilo"
-                    )
+                    SmallFloatingActionButton(
+                        onClick = onNavigateToProfile,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                    ) {
+                        Icon(
+                            imageVector = Icons.TwoTone.Person,
+                            contentDescription = LocalContext.current.getString(R.string.account_icon_description)
+                        )
+                    }
                 }
             }
         }

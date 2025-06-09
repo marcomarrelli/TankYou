@@ -23,4 +23,10 @@
     <string name="invalid_email">Inserisci un\'email valida</string>
     <string name="password_min_length">La password deve contenere almeno 6 caratteri</string>
     <string name="passwords_dont_match">Le password non corrispondono</string>
+
+    <!-- Map Controls Description -->
+    <string name="search_icon_description">Ricerca Impianti</string>
+    <string name="zoom_in_icon_description">Più Zoom</string>
+    <string name="zoom_out_icon_description">Meno Zoom</string>
+    <string name="account_icon_description">Il Mio Account</string>
 </resources>

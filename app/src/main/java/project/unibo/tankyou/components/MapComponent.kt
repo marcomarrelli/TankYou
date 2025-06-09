@@ -2,6 +2,7 @@ package project.unibo.tankyou.components
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.view.MotionEvent
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -14,6 +15,7 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import project.unibo.tankyou.data.database.entities.GasStation
@@ -27,10 +29,12 @@ import kotlin.math.abs
  *
  * @param context the [AppCompatActivity] context
  * @param mapContainer the [RelativeLayout] container for the map
+ * @param onMapClick callback chiamato quando si clicca sulla mappa
  */
 class MapComponent(
     private val context: AppCompatActivity,
-    private val mapContainer: RelativeLayout
+    private val mapContainer: RelativeLayout,
+    private val onMapClick: () -> Unit = {}
 ) : MapListener {
     /** Current TankYou Map */
     private lateinit var map: MapView
@@ -82,6 +86,7 @@ class MapComponent(
             map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
 
             setupClusterer()
+            setupMapClickListener()
             map.addMapListener(this)
             setupLocationOverlay()
 
@@ -89,6 +94,21 @@ class MapComponent(
         } catch (e: Exception) {
             e
         }
+    }
+
+    /**
+     * Configura il listener per i click sulla mappa
+     */
+    private fun setupMapClickListener() {
+        val mapClickOverlay = object : Overlay() {
+            override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
+                // Chiamare il callback quando si clicca sulla mappa
+                onMapClick()
+                return true
+            }
+        }
+
+        map.overlays.add(0, mapClickOverlay) // Aggiungere all'inizio per avere priorità
     }
 
     /**
@@ -105,8 +125,6 @@ class MapComponent(
             map.controller.zoomOut()
         }
     }
-
-    // ... resto del codice esistente rimane uguale
 
     /**
      * Sets up the marker clustering functionality for gas stations.
