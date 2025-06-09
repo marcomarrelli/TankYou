@@ -3,11 +3,9 @@ package project.unibo.tankyou.components
 import android.Manifest
 import android.content.pm.PackageManager
 import android.widget.RelativeLayout
-
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
-
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -18,11 +16,9 @@ import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.DebounceManager
-
 import kotlin.math.abs
 
 /**
@@ -79,17 +75,14 @@ class MapComponent(
 
             map.setScrollableAreaLimitDouble(Constants.Map.BOUNDS)
 
-            map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.ALWAYS)
-            map.zoomController.setZoomInEnabled(true)
-            map.zoomController.setZoomOutEnabled(true)
+            // Nascondere i controlli zoom di default
+            map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
 
             map.controller.setZoom(Constants.Map.DEFAULT_ZOOM_LEVEL)
             map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
 
             setupClusterer()
-
             map.addMapListener(this)
-
             setupLocationOverlay()
 
             mapInitialized = true
@@ -97,6 +90,23 @@ class MapComponent(
             e
         }
     }
+
+    /**
+     * Metodi pubblici per controllo zoom dai FAB
+     */
+    fun zoomIn() {
+        if (::map.isInitialized) {
+            map.controller.zoomIn()
+        }
+    }
+
+    fun zoomOut() {
+        if (::map.isInitialized) {
+            map.controller.zoomOut()
+        }
+    }
+
+    // ... resto del codice esistente rimane uguale
 
     /**
      * Sets up the marker clustering functionality for gas stations.
@@ -129,11 +139,6 @@ class MapComponent(
         }
     }
 
-    /**
-     * Handles map zoom events and updates clustering accordingly.
-     * @param event the ZoomEvent containing zoom information
-     * @return true if the event was handled
-     */
     override fun onZoom(event: ZoomEvent?): Boolean {
         event?.let { zoomEvent ->
             val newZoomLevel = zoomEvent.zoomLevel
@@ -151,11 +156,6 @@ class MapComponent(
         return true
     }
 
-    /**
-     * Handles map scroll events and loads stations when needed.
-     * @param event the ScrollEvent containing scroll information
-     * @return true if the event was handled
-     */
     override fun onScroll(event: ScrollEvent?): Boolean {
         lastLoadedBounds?.let { loadedBounds ->
             val currentCenter = map.mapCenter
@@ -173,9 +173,6 @@ class MapComponent(
         return true
     }
 
-    /**
-     * Loads gas stations within the current map view bounds.
-     */
     private suspend fun loadStationsInCurrentView() {
         if (!mapInitialized) return
 
@@ -207,11 +204,6 @@ class MapComponent(
         }
     }
 
-    /**
-     * Adds gas station markers to the map with clustering optimization.
-     *
-     * @param gasStations the list of gas stations to display
-     */
     private fun loadGasStationMarkers(gasStations: List<GasStation>) {
         if (!mapInitialized) return
 
@@ -236,16 +228,12 @@ class MapComponent(
 
                 cluster.invalidate()
                 map.invalidate()
-
             }
         } catch (e: Exception) {
             e
         }
     }
 
-    /**
-     * Sets up the user location overlay if location permissions are granted.
-     */
     private fun setupLocationOverlay() {
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -268,17 +256,11 @@ class MapComponent(
         }
     }
 
-    /**
-     * Resumes map operations when the activity resumes.
-     */
     fun onResume() {
         if (!mapInitialized) return
         map.onResume()
     }
 
-    /**
-     * Pauses map operations when the activity pauses.
-     */
     fun onPause() {
         if (!mapInitialized) return
         map.onPause()
