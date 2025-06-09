@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- APP -->
+    <string name="app_name">TankYou</string>
+
+    <!-- Login Screen -->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="log_in">Accedi</string>
+    <string name="register_now">Registrati Ora</string>
+    <string name="enter_as_guest">Entra Come Ospite</string>
+
+    <!-- Register Screen -->
+    <string name="register_title">Registrati su TankYou</string>
+    <string name="name">Nome</string>
+    <string name="surname">Cognome</string>
+    <string name="username">Nome utente</string>
+    <string name="confirm_password">Conferma Password</string>
+    <string name="register">Registrati</string>
+    <string name="already_have_account">Hai già un account? Accedi</string>
+
+    <!-- Validation Messages -->
+    <string name="invalid_email">Inserisci un\'email valida</string>
+    <string name="password_min_length">La password deve contenere almeno 6 caratteri</string>
+    <string name="passwords_dont_match">Le password non corrispondono</string>
+</resources>
