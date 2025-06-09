@@ -5,16 +5,23 @@ import android.os.Bundle
 import android.widget.RelativeLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -24,7 +31,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -48,7 +57,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         supportActionBar?.hide()
-        
+
         ThemeManager.initialize(this)
 
         requestPermissions()
@@ -102,9 +111,8 @@ class MainActivity : AppCompatActivity() {
             }
 
             Screen.MAP -> {
-                AuthenticatedContent(
-                    onNavigateToProfile = { currentScreen = Screen.PROFILE },
-                    onLogout = { currentScreen = Screen.LOGIN }
+                MapScreenWithFABs(
+                    onNavigateToProfile = { currentScreen = Screen.PROFILE }
                 )
             }
 
@@ -132,33 +140,91 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    private fun AuthenticatedContent(
-        onNavigateToProfile: () -> Unit,
-        onLogout: () -> Unit
+    private fun MapScreenWithFABs(
+        onNavigateToProfile: () -> Unit
     ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text("TankYou") },
-                    actions = {
-                        IconButton(onClick = onNavigateToProfile) {
-                            Icon(Icons.Default.Person, contentDescription = "Profilo")
-                        }
+        Box(modifier = Modifier.fillMaxSize()) {
+            AndroidView(
+                factory = { context ->
+                    RelativeLayout(context).apply {
+                        mapComponent = MapComponent(
+                            this@MainActivity, this
+                        )
                     }
-                )
-            }
-        ) { paddingValues ->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                AndroidView(
-                    factory = { context ->
-                        RelativeLayout(context).apply {
-                            mapComponent = MapComponent(this@MainActivity, this)
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+
+            // FABs per lo zoom (sinistra)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .padding(start = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        if (::mapComponent.isInitialized) {
+                            mapComponent.zoomIn()
                         }
                     },
-                    modifier = Modifier.fillMaxSize()
-                )
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Zoom In"
+                    )
+                }
+
+                SmallFloatingActionButton(
+                    onClick = {
+                        if (::mapComponent.isInitialized) {
+                            mapComponent.zoomOut()
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Clear,
+                        contentDescription = "Zoom Out"
+                    )
+                }
+            }
+
+            // FABs per azioni (destra)
+            Column(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        // TODO: Implementare ricerca
+                        println("Search clicked")
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Cerca"
+                    )
+                }
+
+                SmallFloatingActionButton(
+                    onClick = onNavigateToProfile,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Profilo"
+                    )
+                }
             }
         }
     }
