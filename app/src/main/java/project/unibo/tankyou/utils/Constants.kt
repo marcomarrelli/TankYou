@@ -84,7 +84,7 @@ object Constants {
             const val CLUSTER_SIZE: Int = 175
 
             /** Cluster Group Size (Radius, pixels) */
-            const val CLUSTER_GROUP_RADIUS: Int = 200
+            const val CLUSTER_GROUP_RADIUS: Int = 250
 
             /** Default Font Size for Cluster Text */
             const val CLUSTER_TEXT_FONT_SIZE: Float = 48f

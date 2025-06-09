@@ -17,6 +17,7 @@ import org.osmdroid.bonuspack.clustering.StaticCluster
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
 import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.ui.theme.toAndroidColor
 import project.unibo.tankyou.utils.Constants
 
 /**
@@ -48,9 +49,9 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      */
     private fun getClusterColor(size: Int): Int {
         return when {
-            size > Constants.Map.Cluster.CLUSTER_MAX_COUNT -> ThemeManager.palette.text.value.toInt()
-            size >= (Constants.Map.Cluster.CLUSTER_MAX_COUNT / 2) -> ThemeManager.palette.warning.value.toInt()
-            else -> ThemeManager.palette.ok.value.toInt()
+            size > Constants.Map.Cluster.CLUSTER_MAX_COUNT -> ThemeManager.palette.alert.toAndroidColor()
+            size >= (Constants.Map.Cluster.CLUSTER_MAX_COUNT / 2) -> ThemeManager.palette.warning.toAndroidColor()
+            else -> ThemeManager.palette.ok.toAndroidColor()
         }
     }
 
@@ -91,9 +92,8 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * Creates a custom circular cluster icon with the specified size and color.
      *
      * The icon consists of:
-     * - A filled circle with the specified base color
-     * - A border for better visibility using the palette border color
-     * - Centered text showing the formatted cluster size using palette text color
+     * - A filled circle with a smooth radial gradient
+     * - Centered text with high contrast and outline for better visibility
      * - Anti-aliased rendering for smooth appearance
      *
      * @param clusterSize The number of gas stations in the cluster
@@ -108,7 +108,7 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
 
         val centerX = size / 2f
         val centerY = size / 2f
-        val radius = size / 2f - 3f
+        val radius = size / 2f - 2f
 
         val radialGradient = RadialGradient(
             centerX,
@@ -117,16 +117,21 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
             intArrayOf(
                 baseColor,
                 Color.argb(
-                    255 / 2,
+                    125,
                     Color.red(baseColor),
                     Color.green(baseColor),
                     Color.blue(baseColor)
                 ),
-                Color.TRANSPARENT
+                Color.argb(
+                    25,
+                    Color.red(baseColor),
+                    Color.green(baseColor),
+                    Color.blue(baseColor)
+                )
             ),
             floatArrayOf(
                 0.0f,
-                0.5f,
+                0.7f,
                 1.0f
             ),
             Shader.TileMode.CLAMP
@@ -138,47 +143,28 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
             style = Paint.Style.FILL
         }
 
-        val strokePaint = Paint().apply {
-            isAntiAlias = true
-            color = ThemeManager.palette.text.value.toInt()
-            style = Paint.Style.STROKE
-            strokeWidth = 2f
-        }
-
         val dynamicTextSize = when {
-            clusterSize >= 1000 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 0.75)
+            clusterSize >= 1000 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 0.8)
             clusterSize >= 100 -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
-            clusterSize >= 10 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.25)
-            else -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.5
+            clusterSize >= 10 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.2)
+            else -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.4
         }.toFloat()
-
-        val textOutlinePaint = Paint().apply {
-            isAntiAlias = true
-            color = ThemeManager.palette.background.value.toInt()
-            textSize = dynamicTextSize
-            typeface = Typeface.DEFAULT_BOLD
-            textAlign = Paint.Align.CENTER
-            style = Paint.Style.STROKE
-            strokeWidth = 3f
-        }
 
         val textPaint = Paint().apply {
             isAntiAlias = true
-            color = ThemeManager.palette.text.value.toInt()
+            color = ThemeManager.palette.black.toAndroidColor()
             textSize = dynamicTextSize
-            typeface = Typeface.DEFAULT_BOLD
             textAlign = Paint.Align.CENTER
             style = Paint.Style.FILL
+            strokeWidth = 5f
+            typeface = Typeface.DEFAULT_BOLD
         }
 
         canvas.drawCircle(centerX, centerY, radius, paint)
 
-        canvas.drawCircle(centerX, centerY, radius, strokePaint)
-
         val text = formatClusterText(clusterSize)
         val textY = centerY + (textPaint.textSize / 3f)
 
-        canvas.drawText(text, centerX, textY, textOutlinePaint)
         canvas.drawText(text, centerX, textY, textPaint)
 
         return bitmap.toDrawable(Resources.getSystem())
@@ -188,8 +174,8 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * Formats the cluster size number for display on the cluster icon.
      *
      * Formatting rules:
-     * - 1000+: Display as "Xk+" (e.g., "2k+" for 2000-2999)
-     * - 100-999: Display as "Xh+" (e.g., "3h+" for 300-399)
+     * - 1000+: Display as "XK+"
+     * - 100-999: Display as "XH+"
      * - 1-99: Display the exact number
      *
      * This formatting ensures the text fits well within the cluster icon
@@ -201,8 +187,8 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      */
     private fun formatClusterText(clusterSize: Int): String {
         return when {
-            clusterSize >= 1000 -> "${clusterSize / 1000}k+"
-            clusterSize >= 100 -> "${clusterSize / 100}h+"
+            clusterSize >= 1000 -> "${clusterSize / 1000}K+"
+            clusterSize >= 100 -> "${clusterSize / 100}H+"
             else -> clusterSize.toString()
         }
     }

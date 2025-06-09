@@ -5,6 +5,8 @@ import android.content.SharedPreferences
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 import androidx.core.content.edit
 
@@ -13,6 +15,8 @@ enum class ThemeMode {
     DARK,
     SYSTEM
 }
+
+fun Color.toAndroidColor(): Int = this.toArgb()
 
 object ThemeManager {
     private const val PREFS_NAME = "theme_preferences"
