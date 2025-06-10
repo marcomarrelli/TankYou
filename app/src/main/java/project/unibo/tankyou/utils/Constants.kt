@@ -1,15 +1,11 @@
 package project.unibo.tankyou.utils
 
 import android.Manifest
-
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
-
 import project.unibo.tankyou.data.repositories.AppRepository
-
 import project.unibo.tankyou.utils.Constants.App.PERMISSIONS
 import project.unibo.tankyou.utils.Constants.App.REPOSITORY
-
 import project.unibo.tankyou.utils.Constants.Map.BOUNDS
 import project.unibo.tankyou.utils.Constants.Map.BOUNDS_BUFFER
 import project.unibo.tankyou.utils.Constants.Map.Cache.CACHE_SIZE
@@ -21,6 +17,7 @@ import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_SIZE
 import project.unibo.tankyou.utils.Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
 import project.unibo.tankyou.utils.Constants.Map.DEFAULT_GEO_POINT
 import project.unibo.tankyou.utils.Constants.Map.DEFAULT_ZOOM_LEVEL
+import project.unibo.tankyou.utils.Constants.Map.GAS_STATION_SIZE
 import project.unibo.tankyou.utils.Constants.Map.MAX_ZOOM_LEVEL
 import project.unibo.tankyou.utils.Constants.Map.MIN_ZOOM_LEVEL
 
@@ -40,6 +37,7 @@ object Constants {
      * @param BOUNDS_BUFFER Boundary Buffer
      * @param DEFAULT_GEO_POINT Default Geo Point, pointing Rome
      * @param BOUNDS Geo Bounds for Italy Region
+     * @param GAS_STATION_SIZE Gas Station Map Drawing Size (Diameter, pixels)
      *
      * @param Cluster Map Clusters Related Constants
      * @param Cache Map Cache Related Constants
@@ -67,6 +65,9 @@ object Constants {
             36.0,
             6.0
         )
+
+        /** Gas Station Map Drawing Size (Diameter, pixels) */
+        const val GAS_STATION_SIZE: Int = 132
 
         /**
          * Map Cluster Constants Global Object
