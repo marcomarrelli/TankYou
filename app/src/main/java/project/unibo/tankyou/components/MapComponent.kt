@@ -274,7 +274,7 @@ class MapComponent(
                 }
 
                 for (station in validStations) {
-                    val marker = GasStationMarker(map, station)
+                    val marker = GasStationMarker(map, station, context)
 
                     marker.setOnMarkerClickListener { clickedMarker, _ ->
                         false
