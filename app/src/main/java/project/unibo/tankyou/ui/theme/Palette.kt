@@ -4,6 +4,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 data class PaletteData(
+    val title: Color,
     val text: Color,
     val background: Color,
     val border: Color,
@@ -25,6 +26,7 @@ data class PaletteData(
 )
 
 val LightTankYouColors = PaletteData(
+    title = LightColors.Title,
     text = LightColors.Text,
     background = LightColors.Background,
     border = LightColors.Border,
@@ -46,6 +48,7 @@ val LightTankYouColors = PaletteData(
 )
 
 val DarkTankYouColors = PaletteData(
+    title = DarkColors.Title,
     text = DarkColors.Text,
     background = DarkColors.Background,
     border = DarkColors.Border,

@@ -29,4 +29,21 @@
     <string name="zoom_in_icon_description">Zoom In</string>
     <string name="zoom_out_icon_description">Zoom Out</string>
     <string name="account_icon_description">My Account</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">Settings</string>
+    <string name="appearance">Appearance</string>
+    <string name="notifications">Notifications</string>
+    <string name="information">Information</string>
+    <string name="select_theme_mode">Select Theme Mode</string>
+    <string name="light_mode">Light Mode</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="system_default_mode">Use System Default Mode</string>
+    <string name="push_notifications">Push Notifications</string>
+    <string name="push_notifications_desc">Receive notifications about fuel prices</string>
+    <string name="location_access">Location Access</string>
+    <string name="location_access_desc">Allow location access to find nearby stations</string>
+    <string name="app_version">App Version</string>
+    <string name="developer">Developer</string>
+    <string name="selected">Selected</string>
 </resources>

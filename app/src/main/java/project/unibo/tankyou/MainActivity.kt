@@ -16,18 +16,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.twotone.Add
-import androidx.compose.material.icons.twotone.LocationOn
 import androidx.compose.material.icons.twotone.MyLocation
 import androidx.compose.material.icons.twotone.Remove
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -50,6 +52,7 @@ import project.unibo.tankyou.ui.screens.LoginScreen
 import project.unibo.tankyou.ui.screens.ProfileScreen
 import project.unibo.tankyou.ui.screens.RegisterScreen
 import project.unibo.tankyou.ui.screens.Screen
+import project.unibo.tankyou.ui.screens.SettingsScreen
 import project.unibo.tankyou.ui.theme.TankYouTheme
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
@@ -97,48 +100,54 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        when (currentScreen) {
-            Screen.LOGIN -> {
-                LoginScreen(
-                    onNavigateToRegister = { currentScreen = Screen.REGISTER },
-                    onLoginSuccess = { currentScreen = Screen.MAP },
-                    onContinueAsGuest = { currentScreen = Screen.MAP },
-                    authViewModel = authViewModel
-                )
-            }
+        if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
+            when (currentScreen) {
+                Screen.LOGIN -> {
+                    LoginScreen(
+                        onNavigateToRegister = { currentScreen = Screen.REGISTER },
+                        onLoginSuccess = { currentScreen = Screen.MAP },
+                        onContinueAsGuest = { currentScreen = Screen.MAP },
+                        authViewModel = authViewModel
+                    )
+                }
 
-            Screen.REGISTER -> {
-                RegisterScreen(
-                    onNavigateToLogin = { currentScreen = Screen.LOGIN },
-                    onRegisterSuccess = { currentScreen = Screen.MAP },
-                    authViewModel = authViewModel
-                )
-            }
+                Screen.REGISTER -> {
+                    RegisterScreen(
+                        onNavigateToLogin = { currentScreen = Screen.LOGIN },
+                        onRegisterSuccess = { currentScreen = Screen.MAP },
+                        authViewModel = authViewModel
+                    )
+                }
 
-            Screen.MAP -> {
-                MapScreenWithFABs(
-                    onNavigateToProfile = { currentScreen = Screen.PROFILE }
-                )
+                else -> {}
             }
+        } else {
+            Scaffold(
+                bottomBar = {
+                    BottomNavigationBar(
+                        currentScreen = currentScreen,
+                        onScreenSelected = { screen -> currentScreen = screen }
+                    )
+                }
+            ) { paddingValues ->
+                Box(modifier = Modifier.padding(paddingValues)) {
+                    when (currentScreen) {
+                        Screen.MAP -> {
+                            MapScreenWithFABs()
+                        }
 
-            Screen.PROFILE -> {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text("Profilo") },
-                            navigationIcon = {
-                                IconButton(onClick = { currentScreen = Screen.MAP }) {
-                                    Icon(Icons.TwoTone.LocationOn, contentDescription = "Mappa")
-                                }
-                            }
-                        )
-                    }
-                ) { paddingValues ->
-                    Box(modifier = Modifier.padding(paddingValues)) {
-                        ProfileScreen(
-                            onLogout = { currentScreen = Screen.LOGIN },
-                            authViewModel = authViewModel
-                        )
+                        Screen.PROFILE -> {
+                            ProfileScreen(
+                                onLogout = { currentScreen = Screen.LOGIN },
+                                authViewModel = authViewModel
+                            )
+                        }
+
+                        Screen.SETTINGS -> {
+                            SettingsScreen()
+                        }
+
+                        else -> {}
                     }
                 }
             }
@@ -146,9 +155,34 @@ class MainActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun MapScreenWithFABs(
-        onNavigateToProfile: () -> Unit
+    private fun BottomNavigationBar(
+        currentScreen: Screen,
+        onScreenSelected: (Screen) -> Unit
     ) {
+        NavigationBar {
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Map, contentDescription = "Mappa") },
+                label = { Text("Map") },
+                selected = currentScreen == Screen.MAP,
+                onClick = { onScreenSelected(Screen.MAP) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Person, contentDescription = "Profilo") },
+                label = { Text("Profilo") },
+                selected = currentScreen == Screen.PROFILE,
+                onClick = { onScreenSelected(Screen.PROFILE) }
+            )
+            NavigationBarItem(
+                icon = { Icon(Icons.Default.Settings, contentDescription = "Impostazioni") },
+                label = { Text("Impostazioni") },
+                selected = currentScreen == Screen.SETTINGS,
+                onClick = { onScreenSelected(Screen.SETTINGS) }
+            )
+        }
+    }
+
+    @Composable
+    private fun MapScreenWithFABs() {
         var fabsVisible by remember { mutableStateOf(true) }
 
         Box(modifier = Modifier.fillMaxSize()) {
