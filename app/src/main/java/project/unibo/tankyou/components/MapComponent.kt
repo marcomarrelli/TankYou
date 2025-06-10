@@ -2,6 +2,8 @@ package project.unibo.tankyou.components
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.ColorMatrixColorFilter
 import android.view.MotionEvent
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -20,7 +22,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.utils.Constants
-import project.unibo.tankyou.utils.DebounceManager
+import project.unibo.tankyou.utils.Debouncer
 import kotlin.math.abs
 
 /**
@@ -44,7 +46,7 @@ class MapComponent(
     private var mapInitialized = false
     private var currentZoomLevel: Double = Constants.Map.DEFAULT_ZOOM_LEVEL
     private var lastLoadedBounds: BoundingBox? = null
-    private val debounceHelper = DebounceManager()
+    private val debounceHelper = Debouncer()
 
     init {
         setupMapConfiguration()
@@ -79,11 +81,17 @@ class MapComponent(
 
             map.setScrollableAreaLimitDouble(Constants.Map.BOUNDS)
 
-            // Nascondere i controlli zoom di default
             map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
 
             map.controller.setZoom(Constants.Map.DEFAULT_ZOOM_LEVEL)
             map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
+
+            // map.overlayManager.tilesOverlay.setColorFilter(
+            //     getTintFilter(
+            //         "#FFA0A0A0".toColorInt(),
+            //         0.5f
+            //     )
+            // )
 
             setupClusterer()
             setupMapClickListener()
@@ -97,22 +105,21 @@ class MapComponent(
     }
 
     /**
-     * Configura il listener per i click sulla mappa
+     * Listener Configuration
      */
     private fun setupMapClickListener() {
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
-                // Chiamare il callback quando si clicca sulla mappa
                 onMapClick()
                 return true
             }
         }
 
-        map.overlays.add(0, mapClickOverlay) // Aggiungere all'inizio per avere priorità
+        map.overlays.add(0, mapClickOverlay)
     }
 
     /**
-     * Metodi pubblici per controllo zoom dai FAB
+     * Zoom In
      */
     fun zoomIn() {
         if (::map.isInitialized) {
@@ -120,6 +127,9 @@ class MapComponent(
         }
     }
 
+    /**
+     * Zoom Out
+     */
     fun zoomOut() {
         if (::map.isInitialized) {
             map.controller.zoomOut()
@@ -282,5 +292,43 @@ class MapComponent(
     fun onPause() {
         if (!mapInitialized) return
         map.onPause()
+    }
+
+    /**
+     * Map Color Filter Getter
+     *
+     * @param destinationColor Destination Monochromatic Color
+     * @param intensity Tint Intensity
+     *
+     * @return a [ColorMatrixColorFilter]
+     */
+    fun getTintFilter(
+        destinationColor: Int,
+        intensity: Float = 1.0f
+    ): ColorMatrixColorFilter {
+        val i = intensity.coerceIn(0.0f, 1.0f)
+
+        val r = Color.red(destinationColor) / 255.0f
+        val g = Color.green(destinationColor) / 255.0f
+        val b = Color.blue(destinationColor) / 255.0f
+
+        val lumR = 0.2126f
+        val lumG = 0.7152f
+        val lumB = 0.0722f
+
+        val colorMatrix = floatArrayOf(
+            lumR + (lumR * r - lumR) * i,
+            lumG + (lumG * r - lumG) * i,
+            lumB + (lumB * r - lumB) * i, 0f, 0f,
+            lumR + (lumR * g - lumR) * i,
+            lumG + (lumG * g - lumG) * i,
+            lumB + (lumB * g - lumB) * i, 0f, 0f,
+            lumR + (lumR * b - lumR) * i,
+            lumG + (lumG * b - lumG) * i,
+            lumB + (lumB * b - lumB) * i, 0f, 0f,
+            0f, 0f, 0f, 1f, 0f
+        )
+
+        return ColorMatrixColorFilter(colorMatrix)
     }
 }

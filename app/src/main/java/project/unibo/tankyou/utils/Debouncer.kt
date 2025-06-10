@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class DebounceManager {
+class Debouncer {
     private var debounceJob: Job? = null
     private var highPriorityJob: Job? = null
 

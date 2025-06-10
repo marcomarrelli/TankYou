@@ -58,7 +58,7 @@ object Constants {
         const val BOUNDS_BUFFER: Double = 0.5
 
         /** Default Geo Point, pointing Rome */
-        val DEFAULT_GEO_POINT: GeoPoint = GeoPoint(42.5, 12.5)
+        val DEFAULT_GEO_POINT: GeoPoint = GeoPoint(41.5335, 12.2858)
 
         /** Geo Bounds for Italy Region */
         val BOUNDS: BoundingBox = BoundingBox(
