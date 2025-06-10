@@ -22,7 +22,7 @@ class GasStationMarker(mapView: MapView, val gasStation: GasStation) : Marker(ma
     /**
      * Gets the geographical position of the gas station.
      *
-     * @return a GeoPoint representing the gas station's coordinates
+     * @return a [GeoPoint] representing the gas station's coordinates
      */
     override fun getPosition(): GeoPoint {
         return GeoPoint(gasStation.latitude, gasStation.longitude)
