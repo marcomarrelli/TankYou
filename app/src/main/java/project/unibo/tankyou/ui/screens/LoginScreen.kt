@@ -16,10 +16,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -170,16 +170,11 @@ fun LoginScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             /** Registration navigation button */
-            OutlinedButton(
+            TextButton(
                 onClick = onNavigateToRegister,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = ThemeManager.palette.secondary,
-                    containerColor = ThemeManager.palette.background
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    ThemeManager.palette.border
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ThemeManager.palette.secondary
                 )
             ) {
                 Text(
@@ -189,16 +184,11 @@ fun LoginScreen(
             }
 
             /** Guest access button for using app without authentication */
-            OutlinedButton(
+            TextButton(
                 onClick = onContinueAsGuest,
                 modifier = Modifier.weight(1f),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    contentColor = ThemeManager.palette.secondary,
-                    containerColor = ThemeManager.palette.background
-                ),
-                border = androidx.compose.foundation.BorderStroke(
-                    1.dp,
-                    ThemeManager.palette.border
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = ThemeManager.palette.secondary
                 )
             ) {
                 Text(

@@ -67,7 +67,7 @@ object Constants {
         )
 
         /** Gas Station Map Drawing Size (Diameter, pixels) */
-        const val GAS_STATION_SIZE: Int = 132
+        const val GAS_STATION_SIZE: Int = 112
 
         /**
          * Map Cluster Constants Global Object
@@ -82,10 +82,10 @@ object Constants {
             const val CLUSTER_MAX_COUNT: Int = 100
 
             /** Cluster Map Drawing Size (Diameter, pixels) */
-            const val CLUSTER_SIZE: Int = 175
+            const val CLUSTER_SIZE: Int = 160
 
             /** Cluster Group Size (Radius, pixels) */
-            const val CLUSTER_GROUP_RADIUS: Int = 250
+            const val CLUSTER_GROUP_RADIUS: Int = 320
 
             /** Default Font Size for Cluster Text */
             const val CLUSTER_TEXT_FONT_SIZE: Float = 48f
