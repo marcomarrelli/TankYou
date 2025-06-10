@@ -1,0 +1,313 @@
+package project.unibo.tankyou.ui.screens
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ColorLens
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import project.unibo.tankyou.R
+import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.ui.theme.ThemeMode
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen() {
+    var notificationsEnabled by remember { mutableStateOf(true) }
+    var locationEnabled by remember { mutableStateOf(true) }
+
+    val currentTheme by ThemeManager.themeMode
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+            .background(ThemeManager.palette.background)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        SettingsSection(
+            title = LocalContext.current.getString(R.string.appearance),
+            icon = Icons.Default.ColorLens
+        ) {
+            ThemeSelectionCard(currentTheme = currentTheme)
+        }
+
+        SettingsSection(
+            title = LocalContext.current.getString(R.string.notifications),
+            icon = Icons.Default.Notifications
+        ) {
+            SettingsToggleItem(
+                title = LocalContext.current.getString(R.string.push_notifications),
+                description = LocalContext.current.getString(R.string.push_notifications_desc),
+                checked = notificationsEnabled,
+                onCheckedChange = { notificationsEnabled = it }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = ThemeManager.palette.border
+            )
+
+            SettingsToggleItem(
+                title = LocalContext.current.getString(R.string.location_access),
+                description = LocalContext.current.getString(R.string.location_access_desc),
+                checked = locationEnabled,
+                onCheckedChange = { locationEnabled = it }
+            )
+        }
+
+        SettingsSection(
+            title = LocalContext.current.getString(R.string.information),
+            icon = Icons.Default.Info
+        ) {
+            SettingsInfoItem(
+                title = LocalContext.current.getString(R.string.app_version),
+                value = "1.0.0"
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = ThemeManager.palette.border
+            )
+
+            SettingsInfoItem(
+                title = LocalContext.current.getString(R.string.developer),
+                value = "Marco Marrelli e Margherita Zanchini"
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    icon: ImageVector,
+    content: @Composable () -> Unit
+) {
+    Column {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 8.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = ThemeManager.palette.title,
+                modifier = Modifier.size(20.dp)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = ThemeManager.palette.title
+            )
+        }
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = ThemeManager.palette.background
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp)
+            ) {
+                content()
+            }
+        }
+    }
+}
+
+@Composable
+private fun ThemeSelectionCard(currentTheme: ThemeMode) {
+    Column(
+        modifier = Modifier.selectableGroup()
+    ) {
+        Text(
+            text = LocalContext.current.getString(R.string.select_theme_mode),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 12.dp),
+            color = ThemeManager.palette.text
+        )
+
+        ThemeOption(
+            text = LocalContext.current.getString(R.string.light_mode),
+            selected = currentTheme == ThemeMode.LIGHT,
+            onClick = { ThemeManager.setTheme(ThemeMode.LIGHT) }
+        )
+
+        ThemeOption(
+            text = LocalContext.current.getString(R.string.dark_mode),
+            selected = currentTheme == ThemeMode.DARK,
+            onClick = { ThemeManager.setTheme(ThemeMode.DARK) }
+        )
+
+        ThemeOption(
+            text = LocalContext.current.getString(R.string.system_default_mode),
+            selected = currentTheme == ThemeMode.SYSTEM,
+            onClick = { ThemeManager.setTheme(ThemeMode.SYSTEM) }
+        )
+    }
+}
+
+@Composable
+private fun ThemeOption(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton
+            )
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = ThemeManager.palette.accent,
+                unselectedColor = ThemeManager.palette.primary,
+                disabledSelectedColor = ThemeManager.palette.disabledText,
+                disabledUnselectedColor = ThemeManager.palette.disabledBorder,
+            ),
+            onClick = null
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+            color = ThemeManager.palette.text
+        )
+
+        if (selected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = LocalContext.current.getString(R.string.selected),
+                tint = ThemeManager.palette.accent,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsToggleItem(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = ThemeManager.palette.title
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = ThemeManager.palette.text
+            )
+        }
+
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = ThemeManager.palette.white,
+                checkedTrackColor = ThemeManager.palette.accent,
+                uncheckedThumbColor = ThemeManager.palette.disabledText,
+                uncheckedTrackColor = ThemeManager.palette.disabledBackground,
+                uncheckedBorderColor = ThemeManager.palette.disabledBorder,
+                checkedBorderColor = ThemeManager.palette.accent
+            )
+        )
+    }
+}
+
+@Composable
+private fun SettingsInfoItem(
+    title: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.Medium,
+            color = ThemeManager.palette.title
+        )
+
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = ThemeManager.palette.text
+        )
+    }
+}

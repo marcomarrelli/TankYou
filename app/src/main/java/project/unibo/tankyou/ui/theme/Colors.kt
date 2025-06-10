@@ -3,7 +3,8 @@ package project.unibo.tankyou.ui.theme
 import androidx.compose.ui.graphics.Color
 
 object LightColors {
-    val Text = Color(0xFF1E1A01)
+    val Title = Color(0xFF131101)
+    val Text = Color(0xFF1D1D1D)
     val Background = Color(0xFFDAE7CA)
     val Border = Color(0xFF8D9C7D)
 
@@ -24,6 +25,7 @@ object LightColors {
 }
 
 object DarkColors {
+    val Title = Color(0xFFF8F3EC)
     val Text = Color(0xFFFEFAE1)
     val Background = Color(0xFF283518)
     val Border = Color(0xFF1E2912)

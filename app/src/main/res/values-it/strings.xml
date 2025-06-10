@@ -29,4 +29,21 @@
     <string name="zoom_in_icon_description">Più Zoom</string>
     <string name="zoom_out_icon_description">Meno Zoom</string>
     <string name="account_icon_description">Il Mio Account</string>
+
+    <!-- Settings Screen -->
+    <string name="settings">Impostazioni</string>
+    <string name="appearance">Aspetto</string>
+    <string name="notifications">Notifiche</string>
+    <string name="information">Informazioni</string>
+    <string name="select_theme_mode">Seleziona Modalità del Tema</string>
+    <string name="light_mode">Modalità Chiara</string>
+    <string name="dark_mode">Modalità Scura</string>
+    <string name="system_default_mode">Usa Impostazioni di Sistema</string>
+    <string name="push_notifications">Notifiche Push</string>
+    <string name="push_notifications_desc">Ricevi notifiche sui prezzi del carburante</string>
+    <string name="location_access">Accesso Posizione</string>
+    <string name="location_access_desc">Permetti l\'accesso alla posizione per trovare stazioni vicine</string>
+    <string name="app_version">Versione App</string>
+    <string name="developer">Sviluppatore</string>
+    <string xmlns:tools="http://schemas.android.com/tools" tools:override="true" name="selected">Selezionato</string>
 </resources>
