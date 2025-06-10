@@ -28,7 +28,7 @@ object DarkColors {
     val Title = Color(0xFFF8F3EC)
     val Text = Color(0xFFFEFAE1)
     val Background = Color(0xFF283518)
-    val Border = Color(0xFF1E2912)
+    val Border = Color(0xFF3A521F)
 
     val DisabledText = Color(0xFF8A8A8A)
     val DisabledBackground = Color(0xFF333F22)

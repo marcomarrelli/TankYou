@@ -145,21 +145,6 @@ class MapComponent(
                 val lastKnownLocation = overlay.myLocation
                 if (lastKnownLocation != null) {
                     map.controller.animateTo(lastKnownLocation)
-                } else {
-                    if (ContextCompat.checkSelfPermission(
-                            context,
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ) == PackageManager.PERMISSION_GRANTED
-                    ) {
-                        overlay.enableMyLocation()
-                        overlay.runOnFirstFix {
-                            context.runOnUiThread {
-                                overlay.myLocation?.let { location ->
-                                    map.controller.animateTo(location)
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }

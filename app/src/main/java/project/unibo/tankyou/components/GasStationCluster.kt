@@ -84,6 +84,16 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
             newIcon
         }
 
+        marker.setOnMarkerClickListener { marker, _ ->
+            // the last parameter is the zoom border padding
+            mapView.zoomToBoundingBox(
+                marker.bounds,
+                true,
+                Constants.Map.Cluster.CLUSTER_SIZE / 4
+            )
+            true
+        }
+
         marker.icon = icon
         return marker
     }
