@@ -137,6 +137,35 @@ class MapComponent(
     }
 
     /**
+     * Center map on user's current location
+     */
+    fun centerOnMyLocation() {
+        if (::map.isInitialized && locationOverlay != null) {
+            locationOverlay?.let { overlay ->
+                val lastKnownLocation = overlay.myLocation
+                if (lastKnownLocation != null) {
+                    map.controller.animateTo(lastKnownLocation)
+                } else {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        overlay.enableMyLocation()
+                        overlay.runOnFirstFix {
+                            context.runOnUiThread {
+                                overlay.myLocation?.let { location ->
+                                    map.controller.animateTo(location)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Sets up the marker clustering functionality for gas stations.
      */
     private fun setupClusterer() {
