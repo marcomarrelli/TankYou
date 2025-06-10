@@ -18,15 +18,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.twotone.Add
 import androidx.compose.material.icons.twotone.LocationOn
-import androidx.compose.material.icons.twotone.Person
+import androidx.compose.material.icons.twotone.MyLocation
 import androidx.compose.material.icons.twotone.Remove
-import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -170,16 +169,16 @@ class MainActivity : AppCompatActivity() {
 
             AnimatedVisibility(
                 visible = fabsVisible,
-                enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
+                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 16.dp, bottom = 32.dp)
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 16.dp, bottom = 32.dp)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    SmallFloatingActionButton(
+                    FloatingActionButton(
                         onClick = {
                             if (::mapComponent.isInitialized) {
                                 mapComponent.zoomIn()
@@ -194,7 +193,7 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
-                    SmallFloatingActionButton(
+                    FloatingActionButton(
                         onClick = {
                             if (::mapComponent.isInitialized) {
                                 mapComponent.zoomOut()
@@ -208,41 +207,19 @@ class MainActivity : AppCompatActivity() {
                             contentDescription = LocalContext.current.getString(R.string.zoom_out_icon_description)
                         )
                     }
-                }
-            }
 
-            AnimatedVisibility(
-                visible = fabsVisible,
-                enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
-                exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 16.dp, bottom = 32.dp)
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    SmallFloatingActionButton(
+                    FloatingActionButton(
                         onClick = {
-                            println("Search clicked")
+                            if (::mapComponent.isInitialized) {
+                                mapComponent.centerOnMyLocation()
+                            }
                         },
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                         contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                     ) {
                         Icon(
-                            imageVector = Icons.TwoTone.Search,
-                            contentDescription = LocalContext.current.getString(R.string.search_icon_description)
-                        )
-                    }
-
-                    SmallFloatingActionButton(
-                        onClick = onNavigateToProfile,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                    ) {
-                        Icon(
-                            imageVector = Icons.TwoTone.Person,
-                            contentDescription = LocalContext.current.getString(R.string.account_icon_description)
+                            imageVector = Icons.TwoTone.MyLocation,
+                            contentDescription = "Centra sulla mia posizione"
                         )
                     }
                 }
