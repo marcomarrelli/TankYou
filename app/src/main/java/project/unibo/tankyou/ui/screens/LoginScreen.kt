@@ -29,7 +29,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -41,6 +40,7 @@ import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.utils.getResourceString
 
 /**
  * Login screen composable that provides user authentication interface.
@@ -80,7 +80,7 @@ fun LoginScreen(
     ) {
         /** Application title text with primary color styling and bold font */
         Text(
-            text = LocalContext.current.getString(R.string.app_name),
+            text = getResourceString(R.string.app_name),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -94,7 +94,7 @@ fun LoginScreen(
             onValueChange = { email = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.email),
+                    getResourceString(R.string.email),
                     color = ThemeManager.palette.text
                 )
             },
@@ -117,7 +117,7 @@ fun LoginScreen(
             onValueChange = { password = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.password),
+                    getResourceString(R.string.password),
                     color = ThemeManager.palette.text
                 )
             },
@@ -156,7 +156,7 @@ fun LoginScreen(
                 )
             } else {
                 Text(
-                    LocalContext.current.getString(R.string.log_in),
+                    getResourceString(R.string.log_in),
                     fontSize = 18.sp
                 )
             }
@@ -178,7 +178,7 @@ fun LoginScreen(
                 )
             ) {
                 Text(
-                    LocalContext.current.getString(R.string.register_now),
+                    getResourceString(R.string.register_now),
                     textAlign = TextAlign.Left
                 )
             }
@@ -192,7 +192,7 @@ fun LoginScreen(
                 )
             ) {
                 Text(
-                    LocalContext.current.getString(R.string.enter_as_guest),
+                    getResourceString(R.string.enter_as_guest),
                     textAlign = TextAlign.Right
                 )
             }

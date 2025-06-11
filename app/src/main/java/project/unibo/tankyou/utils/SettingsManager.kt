@@ -9,8 +9,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import project.unibo.tankyou.utils.Constants.AppLanguage
 import java.util.Locale
 
@@ -22,13 +20,11 @@ object SettingsManager {
     private const val SHOW_MY_LOCATION_KEY = "show_my_location"
     private const val SHOW_GAS_PRICES_KEY = "show_gas_prices"
     private const val AUTO_CENTER_MAP_KEY = "auto_center_map"
-    private const val ENABLE_HAPTIC_FEEDBACK_KEY = "enable_haptic_feedback"
     private const val SHOW_TRAFFIC_KEY = "show_traffic"
 
     private lateinit var prefs: SharedPreferences
-    
+
     private val _currentLanguageFlow = MutableStateFlow(AppLanguage.ITALIAN)
-    val currentLanguageFlow: StateFlow<AppLanguage> = _currentLanguageFlow.asStateFlow()
 
     private val _currentLanguage = mutableStateOf(AppLanguage.ITALIAN)
     val currentLanguage: State<AppLanguage> = _currentLanguage
@@ -39,17 +35,7 @@ object SettingsManager {
     private val _showMyLocationOnMap = mutableStateOf(true)
     val showMyLocationOnMap: State<Boolean> = _showMyLocationOnMap
 
-    private val _showGasPrices = mutableStateOf(true)
-    val showGasPrices: State<Boolean> = _showGasPrices
-
     private val _autoCenterMap = mutableStateOf(false)
-    val autoCenterMap: State<Boolean> = _autoCenterMap
-
-    private val _hapticFeedbackEnabled = mutableStateOf(true)
-    val hapticFeedbackEnabled: State<Boolean> = _hapticFeedbackEnabled
-
-    private val _showTraffic = mutableStateOf(false)
-    val showTraffic: State<Boolean> = _showTraffic
 
     fun initialize(context: Context) {
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -65,10 +51,7 @@ object SettingsManager {
 
         _locationEnabled.value = prefs.getBoolean(LOCATION_ENABLED_KEY, true)
         _showMyLocationOnMap.value = prefs.getBoolean(SHOW_MY_LOCATION_KEY, true)
-        _showGasPrices.value = prefs.getBoolean(SHOW_GAS_PRICES_KEY, true)
         _autoCenterMap.value = prefs.getBoolean(AUTO_CENTER_MAP_KEY, false)
-        _hapticFeedbackEnabled.value = prefs.getBoolean(ENABLE_HAPTIC_FEEDBACK_KEY, true)
-        _showTraffic.value = prefs.getBoolean(SHOW_TRAFFIC_KEY, false)
     }
 
     fun setLanguage(language: AppLanguage, context: Context? = null) {
@@ -76,7 +59,6 @@ object SettingsManager {
         _currentLanguageFlow.value = language
         prefs.edit { putString(LANGUAGE_KEY, language.code) }
 
-        // Applica la lingua globalmente solo se il context è fornito
         context?.let { applyLanguage(it, language) }
     }
 
@@ -89,8 +71,7 @@ object SettingsManager {
 
         context.resources.updateConfiguration(config, context.resources.displayMetrics)
     }
-
-    // ... resto del codice rimane uguale
+    
     fun getCurrentLanguage(): AppLanguage = _currentLanguage.value
 
     fun setLocationEnabled(enabled: Boolean) {
@@ -112,40 +93,8 @@ object SettingsManager {
         prefs.edit { putBoolean(SHOW_MY_LOCATION_KEY, show) }
     }
 
-    fun setShowGasPrices(show: Boolean) {
-        _showGasPrices.value = show
-        prefs.edit { putBoolean(SHOW_GAS_PRICES_KEY, show) }
-    }
-
-    fun setAutoCenterMap(autoCenter: Boolean) {
-        _autoCenterMap.value = autoCenter
-        prefs.edit { putBoolean(AUTO_CENTER_MAP_KEY, autoCenter) }
-    }
-
-    fun setHapticFeedbackEnabled(enabled: Boolean) {
-        _hapticFeedbackEnabled.value = enabled
-        prefs.edit { putBoolean(ENABLE_HAPTIC_FEEDBACK_KEY, enabled) }
-    }
-
-    fun setShowTraffic(show: Boolean) {
-        _showTraffic.value = show
-        prefs.edit { putBoolean(SHOW_TRAFFIC_KEY, show) }
-    }
-
     fun resetToDefaults() {
         prefs.edit { clear() }
         loadAllSettings()
-    }
-
-    fun exportSettings(): Map<String, Any?> {
-        return mapOf(
-            "language" to _currentLanguage.value.code,
-            "locationEnabled" to _locationEnabled.value,
-            "showMyLocationOnMap" to _showMyLocationOnMap.value,
-            "showGasPrices" to _showGasPrices.value,
-            "autoCenterMap" to _autoCenterMap.value,
-            "hapticFeedbackEnabled" to _hapticFeedbackEnabled.value,
-            "showTraffic" to _showTraffic.value
-        )
     }
 }

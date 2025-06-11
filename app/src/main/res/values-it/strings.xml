@@ -3,6 +3,11 @@
     <!-- APP -->
     <string name="app_name">TankYou</string>
 
+    <!-- Settings -->
+    <string name="settings_map_setting_title">Mappa</string>
+    <string name="settings_own_position_title">Mostra la mia Posizione</string>
+    <string name="settings_own_position_desc">Visualizza la tua posizione sulla mappa</string>
+
     <!-- Pages -->
     <string name="map_page_title">Mappa</string>
     <string name="profile_page_title">Profilo</string>
