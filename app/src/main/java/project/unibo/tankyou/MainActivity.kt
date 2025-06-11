@@ -18,8 +18,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -91,11 +93,13 @@ class MainActivity : AppCompatActivity() {
     /**
      * Called when the activity is first created.
      *
-     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Otherwise it is null.
+     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Oth[...]
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        supportActionBar?.hide()
+
         ThemeManager.initialize(this)
         SettingsManager.initialize(this)
 
@@ -164,6 +168,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             Scaffold(
+                contentWindowInsets = WindowInsets(0), // Rimuove gli insets automatici
                 bottomBar = {
                     BottomNavigationBar(
                         currentScreen = currentScreen,
@@ -171,7 +176,11 @@ class MainActivity : AppCompatActivity() {
                     )
                 }
             ) { paddingValues ->
-                Box(modifier = Modifier.padding(paddingValues)) {
+                Box(
+                    modifier = Modifier
+                        .padding(paddingValues)
+                        .imePadding()
+                ) {
                     when (currentScreen) {
                         Screen.MAP -> {
                             MapScreenWithFABs()
@@ -428,6 +437,7 @@ class MainActivity : AppCompatActivity() {
                             shape = RoundedCornerShape(28.dp)
                         )
                         .padding(4.dp)
+                        .imePadding() // Aggiunto qui per gestire la tastiera nella search bar
                 ) {
                     OutlinedTextField(
                         value = searchText,
