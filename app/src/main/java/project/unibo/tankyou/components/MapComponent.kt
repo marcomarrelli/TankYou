@@ -1,13 +1,10 @@
 package project.unibo.tankyou.components
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.ColorMatrixColorFilter
 import android.view.MotionEvent
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
@@ -23,6 +20,7 @@ import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.Debouncer
+import project.unibo.tankyou.utils.SettingsManager
 import kotlin.math.abs
 
 /**
@@ -140,7 +138,9 @@ class MapComponent(
      * Center map on user's current location
      */
     fun centerOnMyLocation() {
-        if (::map.isInitialized && locationOverlay != null) {
+        if (::map.isInitialized && locationOverlay != null &&
+            SettingsManager.shouldUseLocation()
+        ) {
             locationOverlay?.let { overlay ->
                 val lastKnownLocation = overlay.myLocation
                 if (lastKnownLocation != null) {
@@ -277,26 +277,16 @@ class MapComponent(
     }
 
     private fun setupLocationOverlay() {
-        if (ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
+        if (SettingsManager.shouldUseLocation() &&
+            SettingsManager.isLocationPermissionGranted(context)
         ) {
-            try {
-                val locationProvider = GpsMyLocationProvider(context)
 
-                locationOverlay = MyLocationNewOverlay(locationProvider, map)
-                locationOverlay?.enableMyLocation()
-                locationOverlay?.enableFollowLocation()
-                locationOverlay?.isDrawAccuracyEnabled = true
-
-                map.overlays.add(locationOverlay)
-
-            } catch (e: Exception) {
-                e
-            }
+            locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
+            locationOverlay?.enableMyLocation()
+            map.overlays.add(locationOverlay)
         }
     }
+
 
     fun onResume() {
         if (!mapInitialized) return
