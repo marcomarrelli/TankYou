@@ -35,7 +35,6 @@
     <string name="passwords_dont_match">Passwords don\'t match</string>
 
     <!-- Map Controls Description -->
-    <string name="search_icon_description">Search Gas Stations</string>
     <string name="zoom_in_icon_description">Zoom In</string>
     <string name="zoom_out_icon_description">Zoom Out</string>
     <string name="account_icon_description">My Account</string>

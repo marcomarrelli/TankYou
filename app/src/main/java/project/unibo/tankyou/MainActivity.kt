@@ -60,10 +60,20 @@ import project.unibo.tankyou.utils.TankYouVocabulary
 import project.unibo.tankyou.utils.getResourceString
 import project.unibo.tankyou.utils.vocabulary
 
+/**
+ * Main activity for the TankYou application.
+ * Handles navigation between different screens and manages permissions.
+ */
 class MainActivity : AppCompatActivity() {
 
+    /** Reference to the [MapComponent] for managing map interactions. */
     private lateinit var mapComponent: MapComponent
 
+    /**
+     * Called when the activity is first created.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Otherwise it is null.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -72,8 +82,10 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.initialize(this)
         SettingsManager.initialize(this)
 
+        // Request necessary permissions for the app.
         requestPermissions()
 
+        // Set the content view to the main app composable.
         setContent {
             TankYouTheme {
                 TankYouVocabulary {
@@ -83,6 +95,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Composable function for the main application UI.
+     * Manages the current screen based on authentication state and user navigation.
+     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun MainApp() {
@@ -90,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         val authState by authViewModel.authState.collectAsState()
         var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
+        // Observe authentication state changes and navigate accordingly.
         LaunchedEffect(authState) {
             when (authState) {
                 is AuthState.Authenticated -> {
@@ -106,6 +123,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Display login/register screens or the main app content based on the current screen.
         if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
             when (currentScreen) {
                 Screen.LOGIN -> {
@@ -160,6 +178,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Composable function for the bottom navigation bar.
+     *
+     * @param currentScreen The currently selected screen.
+     * @param onScreenSelected Callback function when a screen is selected.
+     */
     @Composable
     private fun BottomNavigationBar(
         currentScreen: Screen,
@@ -220,12 +244,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Composable function for the map screen with Floating Action Buttons (FABs).
+     * Manages the visibility of FABs and handles their click events.
+     */
     @Composable
     private fun MapScreenWithFABs() {
         val strings = vocabulary()
         var fabsVisible by remember { mutableStateOf(true) }
 
         Box(modifier = Modifier.fillMaxSize()) {
+            // Embed the AndroidView containing the map.
             AndroidView(
                 factory = { context ->
                     RelativeLayout(context).apply {
@@ -241,6 +270,7 @@ class MainActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxSize()
             )
 
+            // Animated visibility for the FABs.
             AnimatedVisibility(
                 visible = fabsVisible,
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
@@ -263,7 +293,7 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.Add,
-                            contentDescription = "" // strings[R.string.zoom_in_icon_description]
+                            contentDescription = getResourceString(R.string.zoom_in_icon_description)
                         )
                     }
 
@@ -278,7 +308,7 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.Remove,
-                            contentDescription = "" //strings[R.string.zoom_out_icon_description]
+                            contentDescription = getResourceString(R.string.zoom_out_icon_description)
                         )
                     }
 
@@ -293,7 +323,7 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.MyLocation,
-                            contentDescription = "" //strings.get(R.string.center_on_location)
+                            contentDescription = getResourceString(R.string.show_my_location_desc)
                         )
                     }
                 }
@@ -301,7 +331,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ... resto del codice rimane uguale
+    /**
+     * Requests necessary permissions for the application.
+     * Filters out already granted permissions and requests the missing ones.
+     */
     private fun requestPermissions() {
         val permissions = Constants.App.PERMISSIONS
 
@@ -314,6 +347,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Called when the activity will start interacting with the user.
+     */
     override fun onResume() {
         super.onResume()
         if (::mapComponent.isInitialized) {
@@ -321,6 +357,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Called when the system is about to start resuming a previous activity.
+     */
     override fun onPause() {
         super.onPause()
         if (::mapComponent.isInitialized) {
