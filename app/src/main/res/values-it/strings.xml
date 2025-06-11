@@ -3,6 +3,11 @@
     <!-- APP -->
     <string name="app_name">TankYou</string>
 
+    <!-- Pages -->
+    <string name="map_page_title">Mappa</string>
+    <string name="profile_page_title">Profilo</string>
+    <string name="settings_page_title">Impostazioni</string>
+
     <!-- Login Screen -->
     <string name="email">Email</string>
     <string name="password">Password</string>
@@ -46,6 +51,13 @@
     <string name="app_version">Versione App</string>
     <string name="developer">Sviluppatore</string>
     <string name="select_language">Lingua</string>
+    <string name="map">Mappa</string>
+    <string name="show_my_location">Mostra la mia posizione</string>
+    <string name="show_my_location_desc">Visualizza la tua posizione sulla mappa</string>
+    <string name="show_gas_prices">Mostra prezzi carburanti</string>
+    <string name="show_gas_prices_desc">Visualizza i prezzi dei carburanti sulle stazioni</string>
+    <string name="haptic_feedback">Feedback aptico</string>
+    <string name="haptic_feedback_desc">Vibrazione quando si tocca la mappa</string>
     <string xmlns:tools="http://schemas.android.com/tools" tools:override="true" name="selected">Selezionato</string>
 
     <!-- Languages -->

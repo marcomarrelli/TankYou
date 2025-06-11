@@ -25,9 +25,9 @@ import androidx.compose.material.icons.twotone.Remove
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -57,6 +56,9 @@ import project.unibo.tankyou.ui.theme.TankYouTheme
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.SettingsManager
+import project.unibo.tankyou.utils.TankYouVocabulary
+import project.unibo.tankyou.utils.getResourceString
+import project.unibo.tankyou.utils.vocabulary
 
 class MainActivity : AppCompatActivity() {
 
@@ -74,7 +76,9 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             TankYouTheme {
-                MainApp()
+                TankYouVocabulary {
+                    MainApp()
+                }
             }
         }
     }
@@ -161,30 +165,64 @@ class MainActivity : AppCompatActivity() {
         currentScreen: Screen,
         onScreenSelected: (Screen) -> Unit
     ) {
-        NavigationBar {
+        NavigationBar(
+            containerColor = ThemeManager.palette.primary
+        ) {
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Map, contentDescription = "Mappa") },
-                label = { Text("Map") },
+                icon = { Icon(Icons.Default.Map, contentDescription = null) },
+                label = {
+                    Text(
+                        getResourceString(R.string.map_page_title)
+                    )
+                },
                 selected = currentScreen == Screen.MAP,
-                onClick = { onScreenSelected(Screen.MAP) }
+                onClick = { onScreenSelected(Screen.MAP) },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = ThemeManager.palette.secondary,
+                    selectedTextColor = ThemeManager.palette.secondary,
+                    selectedIndicatorColor = ThemeManager.palette.primary,
+                    unselectedIconColor = ThemeManager.palette.text,
+                    unselectedTextColor = ThemeManager.palette.text,
+                    disabledIconColor = ThemeManager.palette.disabledText,
+                    disabledTextColor = ThemeManager.palette.disabledText
+                )
             )
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Person, contentDescription = "Profilo") },
-                label = { Text("Profilo") },
+                icon = { Icon(Icons.Default.Person, contentDescription = null) },
+                label = { Text(getResourceString(R.string.profile_page_title)) },
                 selected = currentScreen == Screen.PROFILE,
-                onClick = { onScreenSelected(Screen.PROFILE) }
+                onClick = { onScreenSelected(Screen.PROFILE) },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = ThemeManager.palette.secondary,
+                    selectedTextColor = ThemeManager.palette.secondary,
+                    selectedIndicatorColor = ThemeManager.palette.primary,
+                    unselectedIconColor = ThemeManager.palette.text,
+                    unselectedTextColor = ThemeManager.palette.text,
+                    disabledIconColor = ThemeManager.palette.disabledText,
+                    disabledTextColor = ThemeManager.palette.disabledText
+                )
             )
             NavigationBarItem(
-                icon = { Icon(Icons.Default.Settings, contentDescription = "Impostazioni") },
-                label = { Text("Impostazioni") },
+                icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                label = { Text(getResourceString(R.string.settings_page_title)) },
                 selected = currentScreen == Screen.SETTINGS,
-                onClick = { onScreenSelected(Screen.SETTINGS) }
+                onClick = { onScreenSelected(Screen.SETTINGS) },
+                colors = NavigationBarItemColors(
+                    selectedIconColor = ThemeManager.palette.secondary,
+                    selectedTextColor = ThemeManager.palette.secondary,
+                    selectedIndicatorColor = ThemeManager.palette.primary,
+                    unselectedIconColor = ThemeManager.palette.text,
+                    unselectedTextColor = ThemeManager.palette.text,
+                    disabledIconColor = ThemeManager.palette.disabledText,
+                    disabledTextColor = ThemeManager.palette.disabledText
+                )
             )
         }
     }
 
     @Composable
     private fun MapScreenWithFABs() {
+        val strings = vocabulary()
         var fabsVisible by remember { mutableStateOf(true) }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -220,12 +258,12 @@ class MainActivity : AppCompatActivity() {
                                 mapComponent.zoomIn()
                             }
                         },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = ThemeManager.palette.background,
+                        contentColor = ThemeManager.palette.text
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.Add,
-                            contentDescription = LocalContext.current.getString(R.string.zoom_in_icon_description)
+                            contentDescription = "" // strings[R.string.zoom_in_icon_description]
                         )
                     }
 
@@ -235,12 +273,12 @@ class MainActivity : AppCompatActivity() {
                                 mapComponent.zoomOut()
                             }
                         },
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                        containerColor = ThemeManager.palette.background,
+                        contentColor = ThemeManager.palette.text
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.Remove,
-                            contentDescription = LocalContext.current.getString(R.string.zoom_out_icon_description)
+                            contentDescription = "" //strings[R.string.zoom_out_icon_description]
                         )
                     }
 
@@ -250,12 +288,12 @@ class MainActivity : AppCompatActivity() {
                                 mapComponent.centerOnMyLocation()
                             }
                         },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                        containerColor = ThemeManager.palette.background,
+                        contentColor = ThemeManager.palette.text
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.MyLocation,
-                            contentDescription = "Centra sulla mia posizione"
+                            contentDescription = "" //strings.get(R.string.center_on_location)
                         )
                     }
                 }
@@ -263,6 +301,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ... resto del codice rimane uguale
     private fun requestPermissions() {
         val permissions = Constants.App.PERMISSIONS
 
