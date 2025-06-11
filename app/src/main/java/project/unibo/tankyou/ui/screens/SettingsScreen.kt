@@ -34,6 +34,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,8 +58,8 @@ fun SettingsScreen() {
     val currentLanguage by SettingsManager.currentLanguage
 
     val locationEnabled by SettingsManager.locationEnabled
-    val showMyLocationOnMap by SettingsManager.showMyLocationOnMap
-
+    val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
+    
     val context = LocalContext.current
 
     Column(
@@ -89,7 +90,6 @@ fun SettingsScreen() {
             )
         }
 
-        // Sezione Mappa
         SettingsSection(
             title = getResourceString(R.string.settings_map_setting_title),
             icon = Icons.Default.Map
@@ -98,7 +98,10 @@ fun SettingsScreen() {
                 title = getResourceString(R.string.settings_own_position_title),
                 description = getResourceString(R.string.settings_own_position_desc),
                 checked = showMyLocationOnMap,
-                onCheckedChange = { SettingsManager.setShowMyLocationOnMap(it) }
+                onCheckedChange = {
+                    SettingsManager.setShowMyLocationOnMap(it)
+                    println("Switch changed: $it")
+                }
             )
 
             HorizontalDivider(
@@ -107,7 +110,6 @@ fun SettingsScreen() {
             )
         }
 
-        // Sezione Posizione
         SettingsSection(
             title = getResourceString(R.string.location_access),
             icon = Icons.Default.LocationOn

@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.osmdroid.config.Configuration
 import org.osmdroid.events.MapListener
 import org.osmdroid.events.ScrollEvent
@@ -48,6 +49,44 @@ class MapComponent(
 
     init {
         setupMapConfiguration()
+        setupSettingsObserver() // Aggiungi questa riga
+    }
+
+    /**
+     * Osserva i cambiamenti delle impostazioni e aggiorna l'overlay di conseguenza
+     */
+    private fun setupSettingsObserver() {
+        context.lifecycleScope.launch {
+            SettingsManager.showMyLocationOnMapFlow.collect { showLocation ->
+                if (mapInitialized) {
+                    updateLocationOverlay()
+                }
+            }
+        }
+    }
+
+    /**
+     * Aggiorna l'overlay della posizione basandosi sulle impostazioni attuali
+     */
+    private fun updateLocationOverlay() {
+        // Rimuovi l'overlay esistente se presente
+        locationOverlay?.let { overlay ->
+            overlay.disableMyLocation()
+            map.overlays.remove(overlay)
+            locationOverlay = null
+        }
+
+        // Ricrea l'overlay se le condizioni sono soddisfatte
+        if (SettingsManager.shouldUseLocation() &&
+            SettingsManager.isLocationPermissionGranted(context) &&
+            SettingsManager.showMyLocationOnMapFlow.value
+        ) {
+            locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
+            locationOverlay?.enableMyLocation()
+            map.overlays.add(locationOverlay)
+        }
+
+        map.invalidate()
     }
 
     /**
@@ -83,13 +122,6 @@ class MapComponent(
 
             map.controller.setZoom(Constants.Map.DEFAULT_ZOOM_LEVEL)
             map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
-
-            // map.overlayManager.tilesOverlay.setColorFilter(
-            //     getTintFilter(
-            //         "#FFA0A0A0".toColorInt(),
-            //         0.5f
-            //     )
-            // )
 
             setupClusterer()
             setupMapClickListener()
@@ -139,7 +171,8 @@ class MapComponent(
      */
     fun centerOnMyLocation() {
         if (::map.isInitialized && locationOverlay != null &&
-            SettingsManager.shouldUseLocation()
+            SettingsManager.shouldUseLocation() &&
+            SettingsManager.showMyLocationOnMapFlow.value
         ) {
             locationOverlay?.let { overlay ->
                 val lastKnownLocation = overlay.myLocation
@@ -278,15 +311,14 @@ class MapComponent(
 
     private fun setupLocationOverlay() {
         if (SettingsManager.shouldUseLocation() &&
-            SettingsManager.isLocationPermissionGranted(context)
+            SettingsManager.isLocationPermissionGranted(context) &&
+            SettingsManager.showMyLocationOnMapFlow.value
         ) {
-
             locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
             locationOverlay?.enableMyLocation()
             map.overlays.add(locationOverlay)
         }
     }
-
 
     fun onResume() {
         if (!mapInitialized) return
