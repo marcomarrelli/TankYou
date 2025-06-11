@@ -33,7 +33,7 @@
     <!-- Settings Screen -->
     <string name="settings">Impostazioni</string>
     <string name="appearance">Aspetto</string>
-    <string name="notifications">Notifiche</string>
+    <string name="access">Permessi</string>
     <string name="information">Informazioni</string>
     <string name="select_theme_mode">Seleziona Modalità del Tema</string>
     <string name="light_mode">Modalità Chiara</string>
@@ -45,5 +45,10 @@
     <string name="location_access_desc">Permetti l\'accesso alla posizione per trovare stazioni vicine</string>
     <string name="app_version">Versione App</string>
     <string name="developer">Sviluppatore</string>
+    <string name="select_language">Lingua</string>
     <string xmlns:tools="http://schemas.android.com/tools" tools:override="true" name="selected">Selezionato</string>
+
+    <!-- Languages -->
+    <string name="it_lang">Italiano</string>
+    <string name="en_lang">Inglese</string>
 </resources>

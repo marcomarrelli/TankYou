@@ -56,6 +56,7 @@ import project.unibo.tankyou.ui.screens.SettingsScreen
 import project.unibo.tankyou.ui.theme.TankYouTheme
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
+import project.unibo.tankyou.utils.SettingsManager
 
 class MainActivity : AppCompatActivity() {
 
@@ -67,6 +68,7 @@ class MainActivity : AppCompatActivity() {
         supportActionBar?.hide()
 
         ThemeManager.initialize(this)
+        SettingsManager.initialize(this)
 
         requestPermissions()
 

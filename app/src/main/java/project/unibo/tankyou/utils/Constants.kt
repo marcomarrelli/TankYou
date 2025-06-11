@@ -1,8 +1,10 @@
 package project.unibo.tankyou.utils
 
 import android.Manifest
+import android.content.Context
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import project.unibo.tankyou.R
 import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.utils.Constants.App.PERMISSIONS
 import project.unibo.tankyou.utils.Constants.App.REPOSITORY
@@ -125,5 +127,17 @@ object Constants {
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
+    }
+
+    enum class AppLanguage(val code: String, val displayName: String) {
+        ITALIAN("it", "it_lang"),
+        ENGLISH("en", "en_lang");
+
+        fun getDisplayName(context: Context): String {
+            return when (this) {
+                ITALIAN -> context.getString(R.string.it_lang)
+                ENGLISH -> context.getString(R.string.en_lang)
+            }
+        }
     }
 }
