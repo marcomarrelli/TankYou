@@ -38,6 +38,7 @@
     <string name="zoom_in_icon_description">Più Zoom</string>
     <string name="zoom_out_icon_description">Meno Zoom</string>
     <string name="account_icon_description">Il Mio Account</string>
+    <string name="search_icon_description">Ricerca</string>
 
     <!-- Settings Screen -->
     <string name="settings">Impostazioni</string>
@@ -67,4 +68,5 @@
     <!-- Languages -->
     <string name="it_lang">Italiano</string>
     <string name="en_lang">Inglese</string>
+    <string name="search_hint">Inserisci il Nome, la Città o la Provincia...</string>
 </resources>
