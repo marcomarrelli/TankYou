@@ -42,21 +42,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import project.unibo.tankyou.BuildConfig
 import project.unibo.tankyou.R
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.ui.theme.ThemeMode
 import project.unibo.tankyou.utils.Constants.AppLanguage
 import project.unibo.tankyou.utils.SettingsManager
+import project.unibo.tankyou.utils.getResourceString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
     val currentTheme by ThemeManager.themeMode
     val currentLanguage by SettingsManager.currentLanguage
+
     val locationEnabled by SettingsManager.locationEnabled
     val showMyLocationOnMap by SettingsManager.showMyLocationOnMap
-    val showGasPrices by SettingsManager.showGasPrices
-    val hapticFeedbackEnabled by SettingsManager.hapticFeedbackEnabled
+
     val context = LocalContext.current
 
     Column(
@@ -69,7 +71,7 @@ fun SettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SettingsSection(
-            title = LocalContext.current.getString(R.string.appearance),
+            title = getResourceString(R.string.appearance),
             icon = Icons.Default.ColorLens
         ) {
             ThemeSelectionCard(currentTheme = currentTheme)
@@ -89,31 +91,14 @@ fun SettingsScreen() {
 
         // Sezione Mappa
         SettingsSection(
-            title = "Mappa", // Aggiungi questa stringa in strings.xml
+            title = getResourceString(R.string.settings_map_setting_title),
             icon = Icons.Default.Map
         ) {
             SettingsToggleItem(
-                title = "Mostra la mia posizione",
-                description = "Visualizza la tua posizione sulla mappa",
+                title = getResourceString(R.string.settings_own_position_title),
+                description = getResourceString(R.string.settings_own_position_desc),
                 checked = showMyLocationOnMap,
                 onCheckedChange = { SettingsManager.setShowMyLocationOnMap(it) }
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                color = ThemeManager.palette.border
-            )
-
-            SettingsToggleItem(
-                title = "Mostra prezzi carburanti",
-                description = "Visualizza i prezzi dei carburanti sulle stazioni",
-                checked = showGasPrices,
-                onCheckedChange = { SettingsManager.setShowGasPrices(it) }
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                color = ThemeManager.palette.border
             )
 
             HorizontalDivider(
@@ -124,12 +109,12 @@ fun SettingsScreen() {
 
         // Sezione Posizione
         SettingsSection(
-            title = LocalContext.current.getString(R.string.location_access),
+            title = getResourceString(R.string.location_access),
             icon = Icons.Default.LocationOn
         ) {
             SettingsToggleItem(
-                title = LocalContext.current.getString(R.string.location_access),
-                description = LocalContext.current.getString(R.string.location_access_desc),
+                title = getResourceString(R.string.location_access),
+                description = getResourceString(R.string.location_access_desc),
                 checked = locationEnabled,
                 onCheckedChange = { SettingsManager.setLocationEnabled(it) }
             )
@@ -138,23 +123,15 @@ fun SettingsScreen() {
                 modifier = Modifier.padding(vertical = 8.dp),
                 color = ThemeManager.palette.border
             )
-
-            SettingsToggleItem(
-                title = "Feedback aptico",
-                description = "Vibrazione quando si tocca la mappa",
-                checked = hapticFeedbackEnabled,
-                onCheckedChange = { SettingsManager.setHapticFeedbackEnabled(it) }
-            )
         }
 
-        // Sezione Informazioni
         SettingsSection(
-            title = LocalContext.current.getString(R.string.information),
+            title = getResourceString(R.string.information),
             icon = Icons.Default.Info
         ) {
             SettingsInfoItem(
-                title = LocalContext.current.getString(R.string.app_version),
-                value = "1.0.0" // @TODO Fix This Hard-Coded Value
+                title = getResourceString(R.string.app_version),
+                value = BuildConfig.VERSION_NAME
             )
 
             HorizontalDivider(
@@ -163,8 +140,8 @@ fun SettingsScreen() {
             )
 
             SettingsInfoItem(
-                title = LocalContext.current.getString(R.string.developer),
-                value = "Marco Marrelli e Margherita Zanchini" // @TODO Fix This Hard-Coded Value
+                title = getResourceString(R.string.developer),
+                value = BuildConfig.AUTHORS.joinToString(", ")
             )
         }
     }
@@ -179,7 +156,7 @@ private fun LanguageSelectionCard(
         modifier = Modifier.selectableGroup()
     ) {
         Text(
-            text = LocalContext.current.getString(R.string.select_language),
+            text = getResourceString(R.string.select_language),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 12.dp),
@@ -202,7 +179,7 @@ private fun ThemeSelectionCard(currentTheme: ThemeMode) {
         modifier = Modifier.selectableGroup()
     ) {
         Text(
-            text = LocalContext.current.getString(R.string.select_theme_mode),
+            text = getResourceString(R.string.select_theme_mode),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 12.dp),
@@ -210,26 +187,25 @@ private fun ThemeSelectionCard(currentTheme: ThemeMode) {
         )
 
         OptionRow(
-            text = LocalContext.current.getString(R.string.light_mode),
+            text = getResourceString(R.string.light_mode),
             selected = currentTheme == ThemeMode.LIGHT,
             onClick = { ThemeManager.setTheme(ThemeMode.LIGHT) }
         )
 
         OptionRow(
-            text = LocalContext.current.getString(R.string.dark_mode),
+            text = getResourceString(R.string.dark_mode),
             selected = currentTheme == ThemeMode.DARK,
             onClick = { ThemeManager.setTheme(ThemeMode.DARK) }
         )
 
         OptionRow(
-            text = LocalContext.current.getString(R.string.system_default_mode),
+            text = getResourceString(R.string.system_default_mode),
             selected = currentTheme == ThemeMode.SYSTEM,
             onClick = { ThemeManager.setTheme(ThemeMode.SYSTEM) }
         )
     }
 }
 
-// Componente riutilizzabile per le opzioni radio
 @Composable
 private fun OptionRow(
     text: String,
@@ -270,7 +246,7 @@ private fun OptionRow(
         if (selected) {
             Icon(
                 imageVector = Icons.Default.Check,
-                contentDescription = LocalContext.current.getString(R.string.selected),
+                contentDescription = getResourceString(R.string.selected),
                 tint = ThemeManager.palette.accent,
                 modifier = Modifier.size(20.dp)
             )
