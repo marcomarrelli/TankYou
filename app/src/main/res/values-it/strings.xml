@@ -35,7 +35,6 @@
     <string name="passwords_dont_match">Le password non corrispondono</string>
 
     <!-- Map Controls Description -->
-    <string name="search_icon_description">Ricerca Impianti</string>
     <string name="zoom_in_icon_description">Più Zoom</string>
     <string name="zoom_out_icon_description">Meno Zoom</string>
     <string name="account_icon_description">Il Mio Account</string>

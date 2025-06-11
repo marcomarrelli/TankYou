@@ -47,9 +47,12 @@ class MapComponent(
     private var lastLoadedBounds: BoundingBox? = null
     private val debounceHelper = Debouncer()
 
+    private val isLocationOverlayActive: Boolean =
+        ::map.isInitialized && locationOverlay != null && SettingsManager.showMyLocationOnMapFlow.value
+
     init {
         setupMapConfiguration()
-        setupSettingsObserver() // Aggiungi questa riga
+        setupSettingsObserver()
     }
 
     /**
@@ -69,18 +72,13 @@ class MapComponent(
      * Aggiorna l'overlay della posizione basandosi sulle impostazioni attuali
      */
     private fun updateLocationOverlay() {
-        // Rimuovi l'overlay esistente se presente
         locationOverlay?.let { overlay ->
             overlay.disableMyLocation()
             map.overlays.remove(overlay)
             locationOverlay = null
         }
 
-        // Ricrea l'overlay se le condizioni sono soddisfatte
-        if (SettingsManager.shouldUseLocation() &&
-            SettingsManager.isLocationPermissionGranted(context) &&
-            SettingsManager.showMyLocationOnMapFlow.value
-        ) {
+        if (isLocationOverlayActive) {
             locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
             locationOverlay?.enableMyLocation()
             map.overlays.add(locationOverlay)
@@ -120,8 +118,13 @@ class MapComponent(
 
             map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
 
-            map.controller.setZoom(Constants.Map.DEFAULT_ZOOM_LEVEL)
-            map.controller.setCenter(Constants.Map.DEFAULT_GEO_POINT)
+            val savedCenter = SettingsManager.getSavedMapCenter()
+            val savedZoom = SettingsManager.getSavedZoomLevel()
+
+            map.controller.setZoom(savedZoom)
+            map.controller.setCenter(savedCenter)
+
+            currentZoomLevel = savedZoom
 
             setupClusterer()
             setupMapClickListener()
@@ -130,7 +133,21 @@ class MapComponent(
 
             mapInitialized = true
         } catch (e: Exception) {
-            e
+            e.printStackTrace()
+        }
+    }
+
+    /**
+     * Salva la posizione corrente della mappa
+     */
+    private fun saveCurrentMapPosition() {
+        if (::map.isInitialized) {
+            val currentCenter: GeoPoint = map.mapCenter as GeoPoint
+            val currentZoom: Double = map.zoomLevelDouble
+
+            debounceHelper.debounce(1000L, context.lifecycleScope) {
+                SettingsManager.saveMapPosition(currentCenter, currentZoom)
+            }
         }
     }
 
@@ -171,7 +188,6 @@ class MapComponent(
      */
     fun centerOnMyLocation() {
         if (::map.isInitialized && locationOverlay != null &&
-            SettingsManager.shouldUseLocation() &&
             SettingsManager.showMyLocationOnMapFlow.value
         ) {
             locationOverlay?.let { overlay ->
@@ -196,7 +212,7 @@ class MapComponent(
             }
 
         } catch (e: Exception) {
-            e
+            e.printStackTrace()
         }
     }
 
@@ -225,6 +241,9 @@ class MapComponent(
                 debounceHelper.debounce(200L, context.lifecycleScope) {
                     loadStationsInCurrentView()
                 }
+
+                // Salva la nuova posizione quando cambia lo zoom
+                saveCurrentMapPosition()
             }
         }
 
@@ -232,6 +251,8 @@ class MapComponent(
     }
 
     override fun onScroll(event: ScrollEvent?): Boolean {
+        saveCurrentMapPosition()
+
         lastLoadedBounds?.let { loadedBounds ->
             val currentCenter = map.mapCenter
             if (!loadedBounds.contains(currentCenter)) {
@@ -275,7 +296,7 @@ class MapComponent(
             loadGasStationMarkers(gasStations)
             lastLoadedBounds = currentBounds
         } catch (e: Exception) {
-            e
+            e.printStackTrace()
         }
     }
 
@@ -305,19 +326,16 @@ class MapComponent(
                 map.invalidate()
             }
         } catch (e: Exception) {
-            e
+            e.printStackTrace()
         }
     }
 
     private fun setupLocationOverlay() {
-        if (SettingsManager.shouldUseLocation() &&
-            SettingsManager.isLocationPermissionGranted(context) &&
-            SettingsManager.showMyLocationOnMapFlow.value
-        ) {
-            locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
-            locationOverlay?.enableMyLocation()
-            map.overlays.add(locationOverlay)
-        }
+        if (!isLocationOverlayActive) return
+
+        locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
+        locationOverlay?.enableMyLocation()
+        map.overlays.add(locationOverlay)
     }
 
     fun onResume() {
@@ -328,6 +346,7 @@ class MapComponent(
     fun onPause() {
         if (!mapInitialized) return
         map.onPause()
+        saveCurrentMapPosition()
     }
 
     /**

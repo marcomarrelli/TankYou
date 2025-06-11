@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,15 +50,16 @@ import project.unibo.tankyou.utils.Constants.AppLanguage
 import project.unibo.tankyou.utils.SettingsManager
 import project.unibo.tankyou.utils.getResourceString
 
+/**
+ * Composable function for the settings screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
     val currentTheme by ThemeManager.themeMode
     val currentLanguage by SettingsManager.currentLanguage
-
-    val locationEnabled by SettingsManager.locationEnabled
     val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
-    
+
     val context = LocalContext.current
 
     Column(
@@ -111,23 +111,6 @@ fun SettingsScreen() {
         }
 
         SettingsSection(
-            title = getResourceString(R.string.location_access),
-            icon = Icons.Default.LocationOn
-        ) {
-            SettingsToggleItem(
-                title = getResourceString(R.string.location_access),
-                description = getResourceString(R.string.location_access_desc),
-                checked = locationEnabled,
-                onCheckedChange = { SettingsManager.setLocationEnabled(it) }
-            )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                color = ThemeManager.palette.border
-            )
-        }
-
-        SettingsSection(
             title = getResourceString(R.string.information),
             icon = Icons.Default.Info
         ) {
@@ -149,6 +132,12 @@ fun SettingsScreen() {
     }
 }
 
+/**
+ * Composable function to display language selection options.
+ *
+ * @param currentLanguage The currently selected language.
+ * @param onLanguageChange Callback function to handle language changes.
+ */
 @Composable
 private fun LanguageSelectionCard(
     currentLanguage: AppLanguage,
@@ -175,6 +164,11 @@ private fun LanguageSelectionCard(
     }
 }
 
+/**
+ * Composable function to display theme selection options.
+ *
+ * @param currentTheme The currently selected theme.
+ */
 @Composable
 private fun ThemeSelectionCard(currentTheme: ThemeMode) {
     Column(
@@ -208,6 +202,13 @@ private fun ThemeSelectionCard(currentTheme: ThemeMode) {
     }
 }
 
+/**
+ * Composable function to display a selectable option row.
+ *
+ * @param text The text to display for the option.
+ * @param selected Whether the option is currently selected.
+ * @param onClick Callback function to handle option selection.
+ */
 @Composable
 private fun OptionRow(
     text: String,
@@ -256,6 +257,13 @@ private fun OptionRow(
     }
 }
 
+/**
+ * Composable function to display a settings section with a title and content.
+ *
+ * @param title The title of the settings section.
+ * @param icon The icon for the settings section.
+ * @param content The content of the settings section.
+ */
 @Composable
 private fun SettingsSection(
     title: String,
@@ -299,6 +307,14 @@ private fun SettingsSection(
     }
 }
 
+/**
+ * Composable function to display a settings item with a toggle switch.
+ *
+ * @param title The title of the settings item.
+ * @param description The description of the settings item.
+ * @param checked Whether the toggle switch is currently checked.
+ * @param onCheckedChange Callback function to handle toggle switch changes.
+ */
 @Composable
 private fun SettingsToggleItem(
     title: String,
@@ -344,6 +360,12 @@ private fun SettingsToggleItem(
     }
 }
 
+/**
+ * Composable function to display a settings item with a title and value.
+ *
+ * @param title The title of the settings item.
+ * @param value The value of the settings item.
+ */
 @Composable
 private fun SettingsInfoItem(
     title: String,

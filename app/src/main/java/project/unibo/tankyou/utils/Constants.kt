@@ -129,6 +129,11 @@ object Constants {
         )
     }
 
+    /**
+     * App Language Global Enumeration
+     *
+     * @param code Language Code
+     */
     enum class AppLanguage(val code: String) {
         ITALIAN("it"),
         ENGLISH("en");

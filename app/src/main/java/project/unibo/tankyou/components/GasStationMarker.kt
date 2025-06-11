@@ -16,12 +16,22 @@ import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
 
+/**
+ * Custom marker for displaying gas stations on the map.
+ *
+ * @property mapView The MapView to which this marker is added.
+ * @property gasStation The GasStation data to display.
+ * @property context The application context.
+ */
 class GasStationMarker(
     mapView: MapView,
     val gasStation: GasStation,
     private val context: Context
 ) : Marker(mapView) {
 
+    /**
+     * Initializes the marker with its position, title, snippet, icon, and anchor point.
+     */
     init {
         position = GeoPoint(gasStation.latitude, gasStation.longitude)
         title = gasStation.name
@@ -31,6 +41,11 @@ class GasStationMarker(
         setAnchor(ANCHOR_CENTER, ANCHOR_BOTTOM)
     }
 
+    /**
+     * Creates a custom icon for the gas station marker.
+     *
+     * @return A BitmapDrawable representing the custom icon.
+     */
     private fun createGasStationIcon(): BitmapDrawable {
         val size = Constants.Map.GAS_STATION_SIZE
         val bitmap = createBitmap(size, size)
@@ -62,6 +77,11 @@ class GasStationMarker(
         return bitmap.toDrawable(context.resources)
     }
 
+    /**
+     * Retrieves the geographical position of the gas station.
+     *
+     * @return A GeoPoint representing the latitude and longitude of the gas station.
+     */
     override fun getPosition(): GeoPoint {
         return GeoPoint(gasStation.latitude, gasStation.longitude)
     }
