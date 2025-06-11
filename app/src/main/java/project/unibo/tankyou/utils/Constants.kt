@@ -129,9 +129,9 @@ object Constants {
         )
     }
 
-    enum class AppLanguage(val code: String, val displayName: String) {
-        ITALIAN("it", "it_lang"),
-        ENGLISH("en", "en_lang");
+    enum class AppLanguage(val code: String) {
+        ITALIAN("it"),
+        ENGLISH("en");
 
         fun getDisplayName(context: Context): String {
             return when (this) {
