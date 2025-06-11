@@ -9,25 +9,40 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.twotone.Add
+import androidx.compose.material.icons.twotone.Close
 import androidx.compose.material.icons.twotone.MyLocation
 import androidx.compose.material.icons.twotone.Remove
+import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemColors
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,6 +54,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
@@ -58,7 +78,6 @@ import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.SettingsManager
 import project.unibo.tankyou.utils.TankYouVocabulary
 import project.unibo.tankyou.utils.getResourceString
-import project.unibo.tankyou.utils.vocabulary
 
 /**
  * Main activity for the TankYou application.
@@ -76,9 +95,7 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        supportActionBar?.hide()
-
+        
         ThemeManager.initialize(this)
         SettingsManager.initialize(this)
 
@@ -250,11 +267,21 @@ class MainActivity : AppCompatActivity() {
      */
     @Composable
     private fun MapScreenWithFABs() {
-        val strings = vocabulary()
         var fabsVisible by remember { mutableStateOf(true) }
+        var searchBarVisible by remember { mutableStateOf(false) }
+        var searchText by remember { mutableStateOf("") }
+        val focusRequester = remember { FocusRequester() }
+        // val focusManager = LocalFocusManager.current
+
+        // Request focus when search bar becomes visible
+        LaunchedEffect(searchBarVisible) {
+            if (searchBarVisible) {
+                focusRequester.requestFocus()
+            }
+        }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            // Embed the AndroidView containing the map.
+            // Embed the AndroidView containing the map with blur effect when search is active
             AndroidView(
                 factory = { context ->
                     RelativeLayout(context).apply {
@@ -262,17 +289,27 @@ class MainActivity : AppCompatActivity() {
                             context = this@MainActivity,
                             mapContainer = this,
                             onMapClick = {
-                                fabsVisible = !fabsVisible
+                                if (!searchBarVisible) {
+                                    fabsVisible = !fabsVisible
+                                }
                             }
                         )
                     }
                 },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (searchBarVisible) {
+                            Modifier.blur(radius = 8.dp)
+                        } else {
+                            Modifier
+                        }
+                    )
             )
 
-            // Animated visibility for the FABs.
+            // FABs (zoom e location) - nascosti quando search è attiva
             AnimatedVisibility(
-                visible = fabsVisible,
+                visible = fabsVisible && !searchBarVisible,
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
                 modifier = Modifier
@@ -324,6 +361,144 @@ class MainActivity : AppCompatActivity() {
                         Icon(
                             imageVector = Icons.TwoTone.MyLocation,
                             contentDescription = getResourceString(R.string.show_my_location_desc)
+                        )
+                    }
+                }
+            }
+
+            // FAB for search - sempre visibile in alto a sinistra
+            AnimatedVisibility(
+                visible = !searchBarVisible,
+                enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
+                exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 16.dp, top = 16.dp)
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        searchBarVisible = true
+                    },
+                    containerColor = ThemeManager.palette.background,
+                    contentColor = ThemeManager.palette.text
+                ) {
+                    Icon(
+                        Icons.TwoTone.Search,
+                        contentDescription = getResourceString(R.string.search_icon_description)
+                    )
+                }
+            }
+
+            // Overlay scuro semi-trasparente quando search è attiva (come Google Maps)
+            AnimatedVisibility(
+                visible = searchBarVisible,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.3f))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            // Click sull'overlay chiude la search
+                            searchText = ""
+                            searchBarVisible = false
+                            // focusManager.clearFocus()
+                        }
+                )
+            }
+
+            // Search bar modal (come popup)
+            AnimatedVisibility(
+                visible = searchBarVisible,
+                enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(horizontal = 16.dp, vertical = 48.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            color = ThemeManager.palette.background,
+                            shape = RoundedCornerShape(28.dp)
+                        )
+                        .padding(4.dp)
+                ) {
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        placeholder = {
+                            Text(
+                                getResourceString(R.string.search_hint),
+                                color = ThemeManager.palette.text.copy(alpha = 0.6f)
+                            )
+                        },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.TwoTone.Search,
+                                contentDescription = null,
+                                tint = ThemeManager.palette.text.copy(alpha = 0.6f)
+                            )
+                        },
+                        trailingIcon = {
+                            if (searchText.isNotEmpty()) {
+                                IconButton(
+                                    onClick = {
+                                        searchText = ""
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.TwoTone.Close,
+                                        contentDescription = "Clear text",
+                                        tint = ThemeManager.palette.text.copy(alpha = 0.6f)
+                                    )
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.Transparent,
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedTextColor = ThemeManager.palette.text,
+                            unfocusedTextColor = ThemeManager.palette.text,
+                            cursorColor = ThemeManager.palette.primary,
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent
+                        ),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Search
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onSearch = {
+                                // focusManager.clearFocus()
+                            }
+                        ),
+                        shape = RoundedCornerShape(24.dp)
+                    )
+
+                    // Pulsante indietro (freccia) in alto a sinistra del modal
+                    IconButton(
+                        onClick = {
+                            searchText = ""
+                            searchBarVisible = false
+                            // focusManager.clearFocus()
+                        },
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .padding(start = 8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Close search",
+                            tint = ThemeManager.palette.text
                         )
                     }
                 }
