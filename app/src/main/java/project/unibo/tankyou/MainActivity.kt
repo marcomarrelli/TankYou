@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -179,6 +180,7 @@ class MainActivity : AppCompatActivity() {
                 Box(
                     modifier = Modifier
                         .padding(paddingValues)
+                        .background(ThemeManager.palette.background)
                         .imePadding()
                 ) {
                     when (currentScreen) {
@@ -289,7 +291,11 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+            //.statusBarsPadding()
+        ) {
             // Embed the AndroidView containing the map with blur effect when search is active
             AndroidView(
                 factory = { context ->
@@ -382,7 +388,8 @@ class MainActivity : AppCompatActivity() {
                 exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .padding(start = 16.dp, top = 16.dp)
+                    .statusBarsPadding()
+                    .padding(start = 16.dp)
             ) {
                 FloatingActionButton(
                     onClick = {
