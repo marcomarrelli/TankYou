@@ -1,12 +1,9 @@
 package project.unibo.tankyou.data.repositories
 
 import android.util.LruCache
-
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
-
 import org.osmdroid.util.BoundingBox
-
 import project.unibo.tankyou.data.DatabaseClient
 import project.unibo.tankyou.data.database.entities.Fuel
 import project.unibo.tankyou.data.database.entities.GasStation

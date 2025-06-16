@@ -30,19 +30,20 @@ import kotlin.math.abs
  *
  * @param context the [AppCompatActivity] context
  * @param mapContainer the [RelativeLayout] container for the map
- * @param onMapClick callback chiamato quando si clicca sulla mappa
+ * @param onMapClick callback called when the map is clicked
+ * @param onGasStationClick callback called when a gas station marker is clicked
  */
 class MapComponent(
     private val context: AppCompatActivity,
     private val mapContainer: RelativeLayout,
-    private val onMapClick: () -> Unit = {}
+    private val onMapClick: () -> Unit = {},
+    private val onGasStationClick: (GasStation) -> Unit = {}
 ) : MapListener {
     /** Current TankYou Map */
     private lateinit var map: MapView
 
     private var locationOverlay: MyLocationNewOverlay? = null
     private var clusterer: GasStationCluster? = null
-    private var gasStationDetailCard: GasStationDetailCard? = null
     private var mapInitialized = false
     private var currentZoomLevel: Double = Constants.Map.DEFAULT_ZOOM_LEVEL
     private var lastLoadedBounds: BoundingBox? = null
@@ -53,12 +54,11 @@ class MapComponent(
 
     init {
         setupMapConfiguration()
-        setupGasStationDetailCard()
         setupSettingsObserver()
     }
 
     /**
-     * Osserva i cambiamenti delle impostazioni e aggiorna l'overlay di conseguenza
+     * Observes settings changes and updates the overlay accordingly
      */
     private fun setupSettingsObserver() {
         context.lifecycleScope.launch {
@@ -71,7 +71,7 @@ class MapComponent(
     }
 
     /**
-     * Aggiorna l'overlay della posizione basandosi sulle impostazioni attuali
+     * Updates the location overlay based on current settings
      */
     private fun updateLocationOverlay() {
         locationOverlay?.let { overlay ->
@@ -140,7 +140,7 @@ class MapComponent(
     }
 
     /**
-     * Salva la posizione corrente della mappa
+     * Saves the current map position
      */
     private fun saveCurrentMapPosition() {
         if (::map.isInitialized) {
@@ -159,7 +159,6 @@ class MapComponent(
     private fun setupMapClickListener() {
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
-                gasStationDetailCard?.hide()
                 onMapClick()
                 return true
             }
@@ -245,7 +244,6 @@ class MapComponent(
                     loadStationsInCurrentView()
                 }
 
-                // Salva la nuova posizione quando cambia lo zoom
                 saveCurrentMapPosition()
             }
         }
@@ -319,7 +317,7 @@ class MapComponent(
                     val marker = GasStationMarker(map, station, context)
 
                     marker.setOnMarkerClickListener { _, _ ->
-                        gasStationDetailCard?.showStationDetails(station)
+                        onGasStationClick(station)
                         true
                     }
 
@@ -398,7 +396,6 @@ class MapComponent(
             try {
                 val searchResults = Constants.App.REPOSITORY.searchStations(query)
 
-                // Clear existing markers
                 clusterer?.let { cluster ->
                     cluster.items.clear()
                     map.invalidate()
@@ -427,14 +424,6 @@ class MapComponent(
             longitudes.maxOrNull() ?: 0.0,
             latitudes.minOrNull() ?: 0.0,
             longitudes.minOrNull() ?: 0.0
-        )
-    }
-
-    private fun setupGasStationDetailCard() {
-        gasStationDetailCard = GasStationDetailCard(
-            context = context,
-            parentView = mapContainer,
-            lifecycleScope = context.lifecycleScope
         )
     }
 
