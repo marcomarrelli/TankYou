@@ -465,6 +465,9 @@ class MainActivity : AppCompatActivity() {
                                     onClick = {
                                         searchText = ""
                                         searchBarVisible = false
+                                        if (::mapComponent.isInitialized) {
+                                            mapComponent.clearSearch()
+                                        }
                                     },
                                 ) {
                                     Icon(
@@ -480,6 +483,9 @@ class MainActivity : AppCompatActivity() {
                                 IconButton(
                                     onClick = {
                                         searchText = ""
+                                        if (::mapComponent.isInitialized) {
+                                            mapComponent.clearSearch()
+                                        }
                                     }
                                 ) {
                                     Icon(
@@ -508,7 +514,16 @@ class MainActivity : AppCompatActivity() {
                         ),
                         keyboardActions = KeyboardActions(
                             onSearch = {
-
+                                if (searchText.isNotBlank()) {
+                                    if (::mapComponent.isInitialized) {
+                                        mapComponent.searchGasStations(searchText)
+                                    }
+                                } else {
+                                    if (::mapComponent.isInitialized) {
+                                        mapComponent.clearSearch()
+                                    }
+                                }
+                                searchBarVisible = false
                             }
                         ),
                         shape = RoundedCornerShape(24.dp)
