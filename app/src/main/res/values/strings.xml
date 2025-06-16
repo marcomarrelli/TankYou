@@ -68,5 +68,5 @@
     <!-- Languages -->
     <string name="it_lang">Italian</string>
     <string name="en_lang">English</string>
-    <string name="search_hint">Search by Name, City or Province...</string>
+    <string name="search_hint">"Search by Name, City or Flag…"</string>
 </resources>

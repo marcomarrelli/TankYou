@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity() {
 
             // FAB for search - sempre visibile in alto a sinistra
             AnimatedVisibility(
-                visible = !searchBarVisible,
+                visible = !searchBarVisible && fabsVisible,
                 enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
                 modifier = Modifier
@@ -405,7 +405,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // Overlay scuro semi-trasparente quando search è attiva (come Google Maps)
             AnimatedVisibility(
                 visible = searchBarVisible,
                 enter = fadeIn(),
@@ -419,21 +418,19 @@ class MainActivity : AppCompatActivity() {
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
                         ) {
-                            // Click sull'overlay chiude la search
                             searchText = ""
                             searchBarVisible = false
-                            // focusManager.clearFocus()
                         }
                 )
             }
 
-            // Search bar modal (come popup)
             AnimatedVisibility(
                 visible = searchBarVisible,
                 enter = slideInVertically(initialOffsetY = { -it }) + fadeIn(),
                 exit = slideOutVertically(targetOffsetY = { -it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopCenter)
+                    .padding(top = 16.dp)
                     .padding(horizontal = 16.dp, vertical = 48.dp)
             ) {
                 Box(
@@ -444,11 +441,12 @@ class MainActivity : AppCompatActivity() {
                             shape = RoundedCornerShape(28.dp)
                         )
                         .padding(4.dp)
-                        .imePadding() // Aggiunto qui per gestire la tastiera nella search bar
+                        .imePadding()
                 ) {
                     OutlinedTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
+                        maxLines = 1,
                         placeholder = {
                             Text(
                                 getResourceString(R.string.search_hint),
@@ -456,11 +454,26 @@ class MainActivity : AppCompatActivity() {
                             )
                         },
                         leadingIcon = {
-                            Icon(
-                                imageVector = Icons.TwoTone.Search,
-                                contentDescription = null,
-                                tint = ThemeManager.palette.text.copy(alpha = 0.6f)
-                            )
+                            if (searchText.isNotEmpty()) {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Search,
+                                    contentDescription = null,
+                                    tint = ThemeManager.palette.text.copy(alpha = 0.6f)
+                                )
+                            } else {
+                                IconButton(
+                                    onClick = {
+                                        searchText = ""
+                                        searchBarVisible = false
+                                    },
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Close search",
+                                        tint = ThemeManager.palette.text
+                                    )
+                                }
+                            }
                         },
                         trailingIcon = {
                             if (searchText.isNotEmpty()) {
@@ -495,29 +508,11 @@ class MainActivity : AppCompatActivity() {
                         ),
                         keyboardActions = KeyboardActions(
                             onSearch = {
-                                // focusManager.clearFocus()
+
                             }
                         ),
                         shape = RoundedCornerShape(24.dp)
                     )
-
-                    // Pulsante indietro (freccia) in alto a sinistra del modal
-                    IconButton(
-                        onClick = {
-                            searchText = ""
-                            searchBarVisible = false
-                            // focusManager.clearFocus()
-                        },
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .padding(start = 8.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Close search",
-                            tint = ThemeManager.palette.text
-                        )
-                    }
                 }
             }
         }

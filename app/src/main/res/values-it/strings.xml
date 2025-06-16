@@ -68,5 +68,5 @@
     <!-- Languages -->
     <string name="it_lang">Italiano</string>
     <string name="en_lang">Inglese</string>
-    <string name="search_hint">Inserisci il Nome, la Città o la Provincia...</string>
+    <string name="search_hint">Cerca per Nome, Città, Bandiera…</string>
 </resources>
