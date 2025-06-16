@@ -64,12 +64,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import project.unibo.tankyou.components.GasStationCard
 import project.unibo.tankyou.components.MapComponent
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
+import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.ui.screens.LoginScreen
 import project.unibo.tankyou.ui.screens.ProfileScreen
 import project.unibo.tankyou.ui.screens.RegisterScreen
@@ -94,7 +97,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Called when the activity is first created.
      *
-     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Oth[...]
+     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Otherwise it is null.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -169,7 +172,7 @@ class MainActivity : AppCompatActivity() {
             }
         } else {
             Scaffold(
-                contentWindowInsets = WindowInsets(0), // Rimuove gli insets automatici
+                contentWindowInsets = WindowInsets(0),
                 bottomBar = {
                     BottomNavigationBar(
                         currentScreen = currentScreen,
@@ -281,8 +284,8 @@ class MainActivity : AppCompatActivity() {
         var fabsVisible by remember { mutableStateOf(true) }
         var searchBarVisible by remember { mutableStateOf(false) }
         var searchText by remember { mutableStateOf("") }
+        var selectedGasStation by remember { mutableStateOf<GasStation?>(null) }
         val focusRequester = remember { FocusRequester() }
-        // val focusManager = LocalFocusManager.current
 
         // Request focus when search bar becomes visible
         LaunchedEffect(searchBarVisible) {
@@ -292,9 +295,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-            //.statusBarsPadding()
+            modifier = Modifier.fillMaxSize()
         ) {
             // Embed the AndroidView containing the map with blur effect when search is active
             AndroidView(
@@ -304,9 +305,12 @@ class MainActivity : AppCompatActivity() {
                             context = this@MainActivity,
                             mapContainer = this,
                             onMapClick = {
-                                if (!searchBarVisible) {
+                                if (!searchBarVisible && selectedGasStation == null) {
                                     fabsVisible = !fabsVisible
                                 }
+                            },
+                            onGasStationClick = { gasStation ->
+                                selectedGasStation = gasStation
                             }
                         )
                     }
@@ -320,16 +324,38 @@ class MainActivity : AppCompatActivity() {
                             Modifier
                         }
                     )
+                    .then(
+                        if (selectedGasStation != null) {
+                            Modifier.blur(radius = 2.dp)
+                        } else {
+                            Modifier
+                        }
+                    )
             )
 
-            // FABs (zoom e location) - nascosti quando search è attiva
+            // Gas Station Card - positioned above FABs
+            selectedGasStation?.let { gasStation ->
+                GasStationCard(
+                    gasStation = gasStation,
+                    onDismiss = { selectedGasStation = null },
+                    modifier = Modifier
+                        .zIndex(10f)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) { /* Prevent map clicks when card is visible */ }
+                )
+            }
+
+            // FABs (zoom e location) - hidden when search is active or gas station card is visible
             AnimatedVisibility(
-                visible = fabsVisible && !searchBarVisible,
+                visible = fabsVisible && !searchBarVisible && selectedGasStation == null,
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(end = 16.dp, bottom = 32.dp)
+                    .zIndex(5f)
             ) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -381,15 +407,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // FAB for search - sempre visibile in alto a sinistra
+            // FAB for search - always visible in top left when no gas station card is shown
             AnimatedVisibility(
-                visible = !searchBarVisible && fabsVisible,
+                visible = !searchBarVisible && fabsVisible && selectedGasStation == null,
                 enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
                 exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .statusBarsPadding()
                     .padding(start = 16.dp)
+                    .zIndex(5f)
             ) {
                 FloatingActionButton(
                     onClick = {
