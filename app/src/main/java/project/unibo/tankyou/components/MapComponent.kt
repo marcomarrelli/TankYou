@@ -42,6 +42,7 @@ class MapComponent(
 
     private var locationOverlay: MyLocationNewOverlay? = null
     private var clusterer: GasStationCluster? = null
+    private var gasStationDetailCard: GasStationDetailCard? = null
     private var mapInitialized = false
     private var currentZoomLevel: Double = Constants.Map.DEFAULT_ZOOM_LEVEL
     private var lastLoadedBounds: BoundingBox? = null
@@ -52,6 +53,7 @@ class MapComponent(
 
     init {
         setupMapConfiguration()
+        setupGasStationDetailCard()
         setupSettingsObserver()
     }
 
@@ -157,6 +159,7 @@ class MapComponent(
     private fun setupMapClickListener() {
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
+                gasStationDetailCard?.hide()
                 onMapClick()
                 return true
             }
@@ -315,8 +318,9 @@ class MapComponent(
                 for (station in validStations) {
                     val marker = GasStationMarker(map, station, context)
 
-                    marker.setOnMarkerClickListener { clickedMarker, _ ->
-                        false
+                    marker.setOnMarkerClickListener { _, _ ->
+                        gasStationDetailCard?.showStationDetails(station)
+                        true
                     }
 
                     cluster.add(marker)
@@ -385,5 +389,58 @@ class MapComponent(
         )
 
         return ColorMatrixColorFilter(colorMatrix)
+    }
+
+    fun searchGasStations(query: String) {
+        if (!mapInitialized) return
+
+        context.lifecycleScope.launch {
+            try {
+                val searchResults = Constants.App.REPOSITORY.searchStations(query)
+
+                // Clear existing markers
+                clusterer?.let { cluster ->
+                    cluster.items.clear()
+                    map.invalidate()
+                }
+
+                loadGasStationMarkers(searchResults)
+
+                if (searchResults.isNotEmpty()) {
+                    val bounds = calculateBounds(searchResults)
+                    map.zoomToBoundingBox(bounds, true, 100)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun calculateBounds(stations: List<GasStation>): BoundingBox {
+        if (stations.isEmpty()) return map.boundingBox
+
+        val latitudes = stations.map { it.latitude }
+        val longitudes = stations.map { it.longitude }
+
+        return BoundingBox(
+            latitudes.maxOrNull() ?: 0.0,
+            longitudes.maxOrNull() ?: 0.0,
+            latitudes.minOrNull() ?: 0.0,
+            longitudes.minOrNull() ?: 0.0
+        )
+    }
+
+    private fun setupGasStationDetailCard() {
+        gasStationDetailCard = GasStationDetailCard(
+            context = context,
+            parentView = mapContainer,
+            lifecycleScope = context.lifecycleScope
+        )
+    }
+
+    fun clearSearch() {
+        context.lifecycleScope.launch {
+            loadStationsInCurrentView()
+        }
     }
 }

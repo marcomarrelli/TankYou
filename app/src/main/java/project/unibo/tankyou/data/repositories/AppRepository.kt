@@ -226,6 +226,53 @@ class AppRepository {
     }
 
     /**
+     * Retrieves fuel prices for a specific gas station
+     * @param stationId The ID of the gas station
+     * @return List of fuel prices for the station
+     */
+    suspend fun getFuelPricesForStation(stationId: Long): List<Fuel> {
+        return try {
+            client.from("fuel")
+                .select {
+                    filter { eq("station_id", stationId) }
+                    order("type", Order.ASCENDING)
+                }
+                .decodeList<Fuel>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    /**
+     * Searches for gas stations based on a query string.
+     * @param query The search query
+     * @return List of matching gas stations
+     */
+    suspend fun searchStations(query: String): List<GasStation> {
+        if (query.isBlank()) return emptyList()
+
+        val searchQuery = "%${query.lowercase()}%"
+
+        return try {
+            client.from("gas_stations")
+                .select {
+                    filter {
+                        or {
+                            ilike("name", searchQuery)
+                            ilike("city", searchQuery)
+                            ilike("province", searchQuery)
+                        }
+                    }
+                }
+                .decodeList<GasStation>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    /**
      * Clears all cached data from the station cache.
      */
     fun clearCache() {
