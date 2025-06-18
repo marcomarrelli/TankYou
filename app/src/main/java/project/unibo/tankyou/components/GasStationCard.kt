@@ -63,10 +63,13 @@ import androidx.compose.ui.unit.sp
 import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.entities.Fuel
 import project.unibo.tankyou.data.database.entities.GasStation
+import project.unibo.tankyou.data.database.entities.toFlagLabel
+import project.unibo.tankyou.data.database.entities.toFuelTypeName
+import project.unibo.tankyou.data.database.entities.toLabel
 import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
+import project.unibo.tankyou.data.database.entities.toTypeLabel
 import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
-import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.getResourceString
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -204,7 +207,7 @@ fun GasStationCard(
                                     imageVector = Icons.Default.LocationOn,
                                     contentDescription = null,
                                     tint = ThemeManager.palette.accent,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Column {
@@ -250,7 +253,7 @@ fun GasStationCard(
                                     imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                     contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
                                     tint = if (isFavorite) ThemeManager.palette.alert else ThemeManager.palette.text,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
 
@@ -264,7 +267,7 @@ fun GasStationCard(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Close",
                                     tint = ThemeManager.palette.text,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(24.dp)
                                 )
                             }
                         }
@@ -297,8 +300,8 @@ fun GasStationCard(
                             ) {
                                 StationInfoItem(
                                     icon = Icons.Default.Flag,
-                                    label = "Brand",
-                                    value = Constants.getGasStationFlagName(gasStation.flag),
+                                    label = getResourceString(R.string.card_brand_title),
+                                    value = gasStation.flag.toFlagLabel(),
                                     modifier = Modifier.weight(1f)
                                 )
 
@@ -306,8 +309,8 @@ fun GasStationCard(
 
                                 StationInfoItem(
                                     icon = Icons.Default.LocalGasStation,
-                                    label = "Type",
-                                    value = Constants.getGasStationType(gasStation.type),
+                                    label = getResourceString(R.string.card_type_title),
+                                    value = gasStation.type.toTypeLabel(),
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -324,7 +327,7 @@ fun GasStationCard(
 
                                 StationInfoItem(
                                     icon = Icons.Default.Person,
-                                    label = "Owner",
+                                    label = getResourceString(R.string.card_owner_title),
                                     value = gasStation.owner,
                                     modifier = Modifier.fillMaxWidth()
                                 )
@@ -349,11 +352,11 @@ fun GasStationCard(
                             imageVector = Icons.Default.LocalGasStation,
                             contentDescription = null,
                             tint = ThemeManager.palette.accent,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(24.dp)
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Fuel Prices",
+                            text = getResourceString(R.string.fuel_prices_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = ThemeManager.palette.title
@@ -397,7 +400,7 @@ fun GasStationCard(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "No fuel prices available",
+                                    text = getResourceString(R.string.no_fuel_prices),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = ThemeManager.palette.disabledText
                                 )
@@ -437,7 +440,7 @@ private fun StationInfoItem(
             imageVector = icon,
             contentDescription = null,
             tint = ThemeManager.palette.accent,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(24.dp)
         )
 
         Spacer(modifier = Modifier.height(6.dp))
@@ -480,7 +483,7 @@ private fun FuelPriceItem(fuel: Fuel) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = Constants.getFuelTypeName(fuel.type),
+                    text = fuel.type.toFuelTypeName(),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = ThemeManager.palette.title
@@ -489,7 +492,7 @@ private fun FuelPriceItem(fuel: Fuel) {
                 Spacer(modifier = Modifier.height(3.dp))
 
                 Text(
-                    text = if (fuel.self) "Self Service" else "Full Service",
+                    text = fuel.self.toLabel(),
                     style = MaterialTheme.typography.bodySmall,
                     color = ThemeManager.palette.text
                 )
@@ -510,9 +513,8 @@ private fun FuelPriceItem(fuel: Fuel) {
 
                 Spacer(modifier = Modifier.height(1.dp))
 
-                val date = fuel.date.toLocalizedDateFormat()
                 Text(
-                    text = "Updated: $date",
+                    text = getResourceString(R.string.fuel_prices_last_update_title) + " " + fuel.date.toLocalizedDateFormat(),
                     style = MaterialTheme.typography.labelSmall,
                     color = ThemeManager.palette.text
                 )

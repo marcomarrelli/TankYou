@@ -82,4 +82,14 @@
 
     <!-- Errors -->
     <string name="not_available">N.D.</string>
+
+    <!-- Cards -->
+    <string name="card_brand_title">Bandiera</string>
+    <string name="card_type_title">Tipologia</string>
+    <string name="card_owner_title">Gestore</string>
+    <string name="fuel_prices_title">Prezzi dei Carburanti</string>
+    <string name="fuel_prices_last_update_title">Ultimo Aggiornamento:</string>
+    <string name="self_service_label">Self</string>
+    <string name="full_service_label">Servito</string>
+    <string name="no_fuel_prices">Carburanti non Disponibili</string>
 </resources>

@@ -82,4 +82,14 @@
 
     <!-- Errors -->
     <string name="not_available">N/A</string>
+
+    <!-- Cards -->
+    <string name="card_brand_title">Brand</string>
+    <string name="card_type_title">Type</string>
+    <string name="card_owner_title">Ownership</string>
+    <string name="fuel_prices_title">Fuel Prices</string>
+    <string name="fuel_prices_last_update_title">Last updated:</string>
+    <string name="self_service_label">Self Service</string>
+    <string name="full_service_label">Full Service</string>
+    <string name="no_fuel_prices">No Fuels to Display</string>
 </resources>

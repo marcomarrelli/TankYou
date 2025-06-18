@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.initialize(this)
         SettingsManager.initialize(this)
 
-        Constants.initializeDatabaseConstantsAsync()
+        Constants.initializeConstantLists()
 
         requestPermissions()
 
