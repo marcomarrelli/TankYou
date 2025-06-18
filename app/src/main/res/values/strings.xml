@@ -69,4 +69,14 @@
     <string name="it_lang">Italian</string>
     <string name="en_lang">English</string>
     <string name="search_hint">"Search by Name, City or Flag…"</string>
+
+    <!-- Fuel Types -->
+    <string name="fuel_type_g">Gasoline</string>
+    <string name="fuel_type_d">Diesel</string>
+    <string name="fuel_type_c">CNG</string>
+    <string name="fuel_type_l">LPG</string>
+
+    <!-- Gas Stations Type -->
+    <string name="gas_station_type_r">Road</string>
+    <string name="gas_station_type_h">Highway</string>
 </resources>

@@ -49,8 +49,8 @@ import androidx.compose.ui.unit.sp
 import project.unibo.tankyou.data.database.entities.Fuel
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
+import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
-import project.unibo.tankyou.utils.Constants
 
 @Composable
 fun GasStationCard(
@@ -60,20 +60,25 @@ fun GasStationCard(
 ) {
     var isVisible by remember { mutableStateOf(false) }
     var fuelPrices by remember { mutableStateOf<List<Fuel>>(emptyList()) }
+    var fuelTypeNames by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var isLoading by remember { mutableStateOf(true) }
 
-    val fuelTypeNames = arrayOf("", "Gasoline", "Diesel", "Methane", "LPG")
+    val repository = remember { AppRepository.getInstance() }
     val flagNames = arrayOf("", "Agip Eni", "Api-Ip", "Esso", "Independent", "Q8", "Tamoil")
 
     LaunchedEffect(gasStation) {
         isVisible = true
         isLoading = true
         try {
-            val prices = Constants.App.REPOSITORY.getFuelPricesForStation(gasStation.id)
+            val prices = repository.getFuelPricesForStation(gasStation.id)
+            val fuelTypes = repository.getFuelTypes()
+
             fuelPrices = prices
+            fuelTypeNames = fuelTypes.associate { it.id to it.name }
         } catch (e: Exception) {
             e.printStackTrace()
             fuelPrices = emptyList()
+            fuelTypeNames = emptyMap()
         } finally {
             isLoading = false
         }
@@ -82,7 +87,6 @@ fun GasStationCard(
     Box(
         modifier = modifier.fillMaxSize()
     ) {
-        // Background overlay to prevent map interactions
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -93,7 +97,6 @@ fun GasStationCard(
             color = Color.Transparent
         ) {}
 
-        // Gas Station Card
         AnimatedVisibility(
             visible = isVisible,
             enter = slideInVertically(initialOffsetY = { it }),
@@ -124,7 +127,6 @@ fun GasStationCard(
                         .fillMaxWidth()
                         .padding(24.dp)
                 ) {
-                    // Header with close button
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -154,7 +156,6 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Gas Station Info
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -169,7 +170,6 @@ fun GasStationCard(
                                 .fillMaxWidth()
                                 .padding(16.dp)
                         ) {
-                            // Station Name
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -192,7 +192,6 @@ fun GasStationCard(
 
                             Spacer(modifier = Modifier.height(8.dp))
 
-                            // Address
                             Row(
                                 verticalAlignment = Alignment.Top
                             ) {
@@ -223,7 +222,6 @@ fun GasStationCard(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            // Additional Info
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -269,7 +267,6 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Fuel Prices Section
                     Text(
                         text = "Fuel Prices",
                         style = MaterialTheme.typography.titleMedium,
@@ -335,7 +332,7 @@ fun GasStationCard(
 @Composable
 private fun FuelPriceItem(
     fuel: Fuel,
-    fuelTypeNames: Array<String>
+    fuelTypeNames: Map<Int, String>
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -354,11 +351,7 @@ private fun FuelPriceItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                val fuelTypeName = if (fuel.type > 0 && fuel.type < fuelTypeNames.size) {
-                    fuelTypeNames[fuel.type]
-                } else {
-                    "Unknown Fuel"
-                }
+                val fuelTypeName = fuelTypeNames[fuel.type] ?: "Unknown Fuel"
 
                 Text(
                     text = fuelTypeName,
@@ -385,7 +378,7 @@ private fun FuelPriceItem(
                     fontSize = 18.sp
                 )
 
-                val date = (fuel.date.toLocalizedDateFormat())
+                val date = fuel.date.toLocalizedDateFormat()
                 Text(
                     text = "Updated: $date",
                     style = MaterialTheme.typography.labelSmall,
