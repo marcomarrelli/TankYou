@@ -15,24 +15,6 @@ data class FuelType(
     val name: String
 )
 
-@Serializable
-data class GasStationType(
-    @SerialName("id")
-    val id: Int,
-
-    @SerialName("name")
-    val name: String
-)
-
-@Serializable
-data class GasStationFlag(
-    @SerialName("id")
-    val id: Int,
-
-    @SerialName("name")
-    val name: String
-)
-
 /**
  * Fuel Database Table/Entity
  */

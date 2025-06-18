@@ -219,7 +219,7 @@ object Constants {
      */
     @Composable
     fun getGasStationType(id: Int): String {
-        return when (FUEL_TYPES.find { it.id == id }?.name?.lowercase()) {
+        return when (GAS_STATION_TYPES.find { it.id == id }?.name?.lowercase()) {
             "r" -> getResourceString(R.string.gas_station_type_r)
             "h" -> getResourceString(R.string.gas_station_type_h)
             else -> getResourceString(R.string.not_available)

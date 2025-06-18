@@ -3,6 +3,24 @@ package project.unibo.tankyou.data.database.entities
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class GasStationType(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String
+)
+
+@Serializable
+data class GasStationFlag(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String
+)
+
 /**
  * Gas Station Database Table/Entity
  */
