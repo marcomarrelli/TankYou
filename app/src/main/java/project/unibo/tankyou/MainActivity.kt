@@ -90,7 +90,6 @@ import project.unibo.tankyou.utils.getResourceString
  * Handles navigation between different screens and manages permissions.
  */
 class MainActivity : AppCompatActivity() {
-
     /** Reference to the [MapComponent] for managing map interactions. */
     private lateinit var mapComponent: MapComponent
 

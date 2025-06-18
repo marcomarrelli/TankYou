@@ -6,6 +6,24 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
+@Serializable
+data class FuelType(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String
+)
+
+@Serializable
+data class Flag(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String
+)
+
 /**
  * Fuel Database Table/Entity
  */

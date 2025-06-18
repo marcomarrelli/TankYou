@@ -5,6 +5,7 @@ import android.content.Context
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import project.unibo.tankyou.R
+import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.utils.Constants.App.PERMISSIONS
 import project.unibo.tankyou.utils.Constants.App.REPOSITORY
@@ -145,4 +146,6 @@ object Constants {
             }
         }
     }
+
+    var FUEL_TYPES: List<FuelType> = emptyList()
 }

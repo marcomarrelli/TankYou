@@ -5,7 +5,9 @@ import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import org.osmdroid.util.BoundingBox
 import project.unibo.tankyou.data.DatabaseClient
+import project.unibo.tankyou.data.database.entities.Flag
 import project.unibo.tankyou.data.database.entities.Fuel
+import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
 
 /**
@@ -206,7 +208,7 @@ class AppRepository {
      * @return list of all [Fuel] types
      */
     suspend fun getAllFuelTypes(): List<Fuel> {
-        return client.from("fuel").select().decodeList<Fuel>()
+        return client.from("fuels").select().decodeList<Fuel>()
     }
 
     /**
@@ -217,7 +219,7 @@ class AppRepository {
      * @return the [Fuel] type if found, null otherwise
      */
     suspend fun getFuelById(id: String): Fuel? {
-        return client.from("fuel").select {
+        return client.from("fuels").select {
             filter { eq("id", id) }
         }.decodeSingleOrNull<Fuel>()
     }
@@ -229,12 +231,53 @@ class AppRepository {
      */
     suspend fun getFuelPricesForStation(stationId: Long): List<Fuel> {
         return try {
-            client.from("fuel")
+            client.from("fuels")
                 .select {
                     filter { eq("station_id", stationId) }
                     order("type", Order.ASCENDING)
                 }
                 .decodeList<Fuel>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    /**
+     * Retrieves the fuel type name by its type ID.
+     *
+     * @param typeId the unique identifier of the fuel type
+     * @return the fuel type name if found, null otherwise
+     */
+    suspend fun getFuelTypeName(typeId: Int): String? {
+        return try {
+            client.from("fuel_types")
+                .select {
+                    filter { eq("id", typeId) }
+                }
+                .decodeSingleOrNull<FuelType>()?.name
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun getFuelTypes(): List<FuelType> {
+        return try {
+            client.from("fuel_types")
+                .select()
+                .decodeList<FuelType>()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun getFlags(): List<Flag> {
+        return try {
+            client.from("gas_station_flags")
+                .select()
+                .decodeList<Flag>()
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
