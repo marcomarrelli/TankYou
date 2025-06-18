@@ -156,7 +156,7 @@ private fun LanguageSelectionCard(
 
         AppLanguage.entries.forEach { language ->
             OptionRow(
-                text = language.getDisplayName(LocalContext.current),
+                text = language.getDisplayName(),
                 selected = currentLanguage == language,
                 onClick = { onLanguageChange(language) }
             )

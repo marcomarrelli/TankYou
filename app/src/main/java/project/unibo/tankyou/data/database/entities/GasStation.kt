@@ -1,7 +1,12 @@
 package project.unibo.tankyou.data.database.entities
 
+import androidx.compose.runtime.Composable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import project.unibo.tankyou.R
+import project.unibo.tankyou.utils.Constants.GAS_STATION_FLAGS
+import project.unibo.tankyou.utils.Constants.GAS_STATION_TYPES
+import project.unibo.tankyou.utils.getResourceString
 
 @Serializable
 data class GasStationType(
@@ -66,3 +71,26 @@ data class GasStation(
     @SerialName("longitude")
     val longitude: Double
 )
+
+/**
+ * Gets a fuel type name by its ID, with fallback to "Unknown Fuel"
+ */
+@Composable
+fun Int.toTypeLabel(): String {
+    val id: Int = this
+    return when (GAS_STATION_TYPES.find { it.id == id }?.name?.lowercase()) {
+        "r" -> getResourceString(R.string.gas_station_type_r)
+        "h" -> getResourceString(R.string.gas_station_type_h)
+        else -> getResourceString(R.string.not_available)
+    }
+}
+
+/**
+ * Gets a gas station flag name by its ID, with fallback to "Independent"
+ */
+@Composable
+fun Int.toFlagLabel(): String {
+    val id: Int = this
+    return GAS_STATION_FLAGS.find { it.id == id }?.name
+        ?: getResourceString(R.string.not_available)
+}
