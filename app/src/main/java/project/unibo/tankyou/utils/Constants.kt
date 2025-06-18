@@ -2,10 +2,16 @@ package project.unibo.tankyou.utils
 
 import android.Manifest
 import android.content.Context
+import androidx.compose.runtime.Composable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
 import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.entities.FuelType
+import project.unibo.tankyou.data.database.entities.GasStationFlag
+import project.unibo.tankyou.data.database.entities.GasStationType
 import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.utils.Constants.App.PERMISSIONS
 import project.unibo.tankyou.utils.Constants.App.REPOSITORY
@@ -148,4 +154,84 @@ object Constants {
     }
 
     var FUEL_TYPES: List<FuelType> = emptyList()
+        private set
+
+    var GAS_STATION_TYPES: List<GasStationType> = emptyList()
+        private set
+
+    var GAS_STATION_FLAGS: List<GasStationFlag> = emptyList()
+        private set
+
+    private var isInitialized = false
+
+    /**
+     * Initializes database-dependent constants by loading data from the database.
+     * This should be called once during application startup.
+     */
+    suspend fun initializeDatabaseConstants() {
+        if (isInitialized) return
+
+        try {
+            val fuelTypes = REPOSITORY.getFuelTypes()
+            val flags = REPOSITORY.getFlags()
+            val gasStationTypes = REPOSITORY.getGasStationTypes()
+
+            FUEL_TYPES = fuelTypes
+            GAS_STATION_FLAGS = flags
+            GAS_STATION_TYPES = gasStationTypes
+
+            isInitialized = true
+        } catch (e: Exception) {
+            e.printStackTrace()
+
+            FUEL_TYPES = emptyList()
+            GAS_STATION_FLAGS = emptyList()
+            GAS_STATION_TYPES = emptyList()
+        }
+    }
+
+    /**
+     * Initializes database constants asynchronously in the background.
+     * This is a convenience method for calling from UI contexts.
+     */
+    fun initializeDatabaseConstantsAsync() {
+        CoroutineScope(Dispatchers.IO).launch {
+            initializeDatabaseConstants()
+        }
+    }
+
+    /**
+     * Gets a fuel type name by its ID, with fallback to "Unknown Fuel"
+     */
+    @Composable
+    fun getFuelTypeName(id: Int): String {
+        return when (FUEL_TYPES.find { it.id == id }?.name?.lowercase()) {
+            "g" -> getResourceString(R.string.fuel_type_g)
+            "d" -> getResourceString(R.string.fuel_type_d)
+            "c" -> getResourceString(R.string.fuel_type_c)
+            "l" -> getResourceString(R.string.fuel_type_l)
+            else -> getResourceString(R.string.not_available)
+        }
+    }
+
+    /**
+     * Gets a fuel type name by its ID, with fallback to "Unknown Fuel"
+     */
+    @Composable
+    fun getGasStationType(id: Int): String {
+        return when (FUEL_TYPES.find { it.id == id }?.name?.lowercase()) {
+            "r" -> getResourceString(R.string.gas_station_type_r)
+            "h" -> getResourceString(R.string.gas_station_type_h)
+            else -> getResourceString(R.string.not_available)
+        }
+    }
+
+    /**
+     * Gets a gas station flag name by its ID, with fallback to "Independent"
+     */
+    @Composable
+    fun getGasStationFlagName(id: Int): String {
+        return GAS_STATION_FLAGS.find { it.id == id }?.name
+            ?: getResourceString(R.string.not_available)
+    }
 }

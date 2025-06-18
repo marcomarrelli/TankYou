@@ -85,19 +85,9 @@ import project.unibo.tankyou.utils.SettingsManager
 import project.unibo.tankyou.utils.TankYouVocabulary
 import project.unibo.tankyou.utils.getResourceString
 
-/**
- * Main activity for the TankYou application.
- * Handles navigation between different screens and manages permissions.
- */
 class MainActivity : AppCompatActivity() {
-    /** Reference to the [MapComponent] for managing map interactions. */
     private lateinit var mapComponent: MapComponent
 
-    /**
-     * Called when the activity is first created.
-     *
-     * @param savedInstanceState If the activity is being re-initialized after previously being shut down then this Bundle contains the data it most recently supplied in [onSaveInstanceState]. Otherwise it is null.
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -106,10 +96,10 @@ class MainActivity : AppCompatActivity() {
         ThemeManager.initialize(this)
         SettingsManager.initialize(this)
 
-        // Request necessary permissions for the app.
+        Constants.initializeDatabaseConstantsAsync()
+
         requestPermissions()
 
-        // Set the content view to the main app composable.
         setContent {
             TankYouTheme {
                 TankYouVocabulary {
@@ -119,10 +109,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Composable function for the main application UI.
-     * Manages the current screen based on authentication state and user navigation.
-     */
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun MainApp() {
@@ -130,7 +116,6 @@ class MainActivity : AppCompatActivity() {
         val authState by authViewModel.authState.collectAsState()
         var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
-        // Observe authentication state changes and navigate accordingly.
         LaunchedEffect(authState) {
             when (authState) {
                 is AuthState.Authenticated -> {
@@ -147,7 +132,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        // Display login/register screens or the main app content based on the current screen.
         if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
             when (currentScreen) {
                 Screen.LOGIN -> {
@@ -208,12 +192,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Composable function for the bottom navigation bar.
-     *
-     * @param currentScreen The currently selected screen.
-     * @param onScreenSelected Callback function when a screen is selected.
-     */
     @Composable
     private fun BottomNavigationBar(
         currentScreen: Screen,
@@ -274,10 +252,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Composable function for the map screen with Floating Action Buttons (FABs).
-     * Manages the visibility of FABs and handles their click events.
-     */
     @Composable
     private fun MapScreenWithFABs() {
         var fabsVisible by remember { mutableStateOf(true) }
@@ -286,7 +260,6 @@ class MainActivity : AppCompatActivity() {
         var selectedGasStation by remember { mutableStateOf<GasStation?>(null) }
         val focusRequester = remember { FocusRequester() }
 
-        // Request focus when search bar becomes visible
         LaunchedEffect(searchBarVisible) {
             if (searchBarVisible) {
                 focusRequester.requestFocus()
@@ -296,7 +269,6 @@ class MainActivity : AppCompatActivity() {
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Embed the AndroidView containing the map with blur effect when search is active
             AndroidView(
                 factory = { context ->
                     RelativeLayout(context).apply {
@@ -332,7 +304,6 @@ class MainActivity : AppCompatActivity() {
                     )
             )
 
-            // Gas Station Card - positioned above FABs
             selectedGasStation?.let { gasStation ->
                 GasStationCard(
                     gasStation = gasStation,
@@ -342,11 +313,10 @@ class MainActivity : AppCompatActivity() {
                         .clickable(
                             indication = null,
                             interactionSource = remember { MutableInteractionSource() }
-                        ) { /* Prevent map clicks when card is visible */ }
+                        ) { }
                 )
             }
 
-            // FABs (zoom e location) - hidden when search is active or gas station card is visible
             AnimatedVisibility(
                 visible = fabsVisible && !searchBarVisible && selectedGasStation == null,
                 enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
@@ -406,7 +376,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
-            // FAB for search - always visible in top left when no gas station card is shown
             AnimatedVisibility(
                 visible = !searchBarVisible && fabsVisible && selectedGasStation == null,
                 enter = slideInHorizontally(initialOffsetX = { -it }) + fadeIn(),
@@ -559,10 +528,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Requests necessary permissions for the application.
-     * Filters out already granted permissions and requests the missing ones.
-     */
     private fun requestPermissions() {
         val permissions = Constants.App.PERMISSIONS
 
@@ -575,9 +540,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Called when the activity will start interacting with the user.
-     */
     override fun onResume() {
         super.onResume()
         if (::mapComponent.isInitialized) {
@@ -585,9 +547,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * Called when the system is about to start resuming a previous activity.
-     */
     override fun onPause() {
         super.onPause()
         if (::mapComponent.isInitialized) {

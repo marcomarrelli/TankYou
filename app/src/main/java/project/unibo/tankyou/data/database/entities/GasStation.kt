@@ -14,9 +14,9 @@ data class GasStation(
 
     /** Gas Station Owner */
     @SerialName("owner")
-    val owner: String? = "N/A",
+    val owner: String?,
 
-    /** Gas Station Flag Reference ID */
+    /** Gas Station GasStationFlag Reference ID */
     @SerialName("flag")
     val flag: Int,
 
@@ -26,19 +26,19 @@ data class GasStation(
 
     /** Gas Station Name */
     @SerialName("name")
-    val name: String? = "N/A",
+    val name: String?,
 
     /** Gas Station Address */
     @SerialName("address")
-    val address: String? = "N/A",
+    val address: String?,
 
     /** Gas Station City */
     @SerialName("city")
-    val city: String? = "N/A",
+    val city: String?,
 
     /** Gas Station Province */
     @SerialName("province")
-    val province: String? = "N/A",
+    val province: String?,
 
     /** Gas Station Latitude */
     @SerialName("latitude")
