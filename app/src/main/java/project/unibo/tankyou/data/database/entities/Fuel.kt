@@ -16,7 +16,16 @@ data class FuelType(
 )
 
 @Serializable
-data class Flag(
+data class GasStationType(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String
+)
+
+@Serializable
+data class GasStationFlag(
     @SerialName("id")
     val id: Int,
 
