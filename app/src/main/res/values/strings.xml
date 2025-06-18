@@ -92,4 +92,10 @@
     <string name="self_service_label">Self Service</string>
     <string name="full_service_label">Full Service</string>
     <string name="no_fuel_prices">No Fuels to Display</string>
+
+    <string name="add_notes_title">Add to Favorites</string>
+    <string name="add_notes_description">You can add optional notes about this gas station:</string>
+    <string name="notes_placeholder">Notes (optional)</string>
+    <string name="save_button">Save</string>
+    <string name="cancel_button">Cancel</string>
 </resources>

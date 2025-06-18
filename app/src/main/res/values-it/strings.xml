@@ -92,4 +92,10 @@
     <string name="self_service_label">Self</string>
     <string name="full_service_label">Servito</string>
     <string name="no_fuel_prices">Carburanti non Disponibili</string>
+
+    <string name="add_notes_title">Aggiungi ai Preferiti</string>
+    <string name="add_notes_description">Puoi aggiungere una nota personale per questo distributore:</string>
+    <string name="notes_placeholder">Annotazione (opzionale)</string>
+    <string name="save_button">Salva</string>
+    <string name="cancel_button">Cancella</string>
 </resources>

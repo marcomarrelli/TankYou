@@ -1,5 +1,6 @@
 package project.unibo.tankyou.components
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInVertically
@@ -47,6 +48,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,6 +62,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.entities.Fuel
 import project.unibo.tankyou.data.database.entities.GasStation
@@ -69,6 +72,7 @@ import project.unibo.tankyou.data.database.entities.toLabel
 import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
 import project.unibo.tankyou.data.database.entities.toTypeLabel
 import project.unibo.tankyou.data.repositories.AppRepository
+import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.getResourceString
 import java.util.Locale
@@ -85,9 +89,13 @@ fun GasStationCard(
     var isLoading by remember { mutableStateOf(true) }
     var isFavorite by remember { mutableStateOf(false) }
     var offsetY by remember { mutableFloatStateOf(0f) }
+    var showSaveDialog by remember { mutableStateOf(false) }
+    var isSaving by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
     val repository = remember { AppRepository.getInstance() }
+    val userRepository = remember { UserRepository.getInstance() }
+    val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(gasStation) {
         isVisible = true
@@ -96,11 +104,56 @@ fun GasStationCard(
         try {
             val prices = repository.getFuelPricesForStation(gasStation.id)
             fuelPrices = prices
+
+            isFavorite = userRepository.isGasStationSaved(gasStation.id)
         } catch (e: Exception) {
             e.printStackTrace()
             fuelPrices = emptyList()
         } finally {
             isLoading = false
+        }
+    }
+
+    fun handleFavoriteClick() {
+        if (isFavorite) {
+            coroutineScope.launch {
+                isSaving = true
+                try {
+                    val success = userRepository.removeSavedGasStation(gasStation.id)
+                    if (success) {
+                        isFavorite = false
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isSaving = false
+                }
+            }
+        } else {
+            showSaveDialog = true
+        }
+    }
+
+    fun handleSaveStation(notes: String) {
+        coroutineScope.launch {
+            isSaving = true
+            try {
+                val success = userRepository.saveGasStation(
+                    gasStation.id,
+                    notes.ifBlank { null }
+                )
+                if (success) {
+                    Log.d("GasStationCard", "Gas station saved successfully")
+                    isFavorite = true
+                    showSaveDialog = false
+                } else {
+                    Log.e("GasStationCard", "Error saving gas station")
+                }
+            } catch (e: Exception) {
+                Log.e("GasStationCard", "Error saving gas station", e)
+            } finally {
+                isSaving = false
+            }
         }
     }
 
@@ -244,17 +297,26 @@ fun GasStationCard(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             IconButton(
-                                onClick = { isFavorite = !isFavorite },
+                                onClick = { handleFavoriteClick() },
+                                enabled = !isSaving,
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .size(40.dp)
                             ) {
-                                Icon(
-                                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                    contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                                    tint = if (isFavorite) ThemeManager.palette.alert else ThemeManager.palette.text,
-                                    modifier = Modifier.size(24.dp)
-                                )
+                                if (isSaving) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        color = ThemeManager.palette.primary,
+                                        strokeWidth = 2.dp
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                        tint = if (isFavorite) ThemeManager.palette.alert else ThemeManager.palette.text,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
                             }
 
                             IconButton(
@@ -423,6 +485,13 @@ fun GasStationCard(
             }
         }
     }
+
+    SaveStationDialog(
+        isVisible = showSaveDialog,
+        stationName = gasStation.name ?: "Gas Station",
+        onDismiss = { showSaveDialog = false },
+        onSave = { notes -> handleSaveStation(notes) }
+    )
 }
 
 @Composable

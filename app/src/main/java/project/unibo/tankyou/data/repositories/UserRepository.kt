@@ -1,7 +1,6 @@
 package project.unibo.tankyou.data.repositories
 
 import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.serialization.json.buildJsonObject
@@ -29,18 +28,20 @@ class UserRepository(private val supabase: SupabaseClient) {
      */
     suspend fun getCurrentUser(): User? {
         return try {
-            val authUser = supabase.auth.retrieveUser("") // Nessun parametro richiesto
-            authUser.let {
-                supabase.from("users")
-                    .select() {
-                        filter {
-                            eq("auth_user_id", it.id)
-                        }
-                    }
-                    .decodeSingle<User>()
+            if (!AuthRepository.getInstance().isUserLoggedIn()) {
+                return null
             }
+
+            val authUser = AuthRepository.getInstance().currentUser ?: return null
+
+            supabase.from("users")
+                .select() {
+                    filter {
+                        eq("auth_user_id", authUser.id)
+                    }
+                }
+                .decodeSingle<User>()
         } catch (e: Exception) {
-            e
             null
         }
     }
@@ -76,21 +77,22 @@ class UserRepository(private val supabase: SupabaseClient) {
     suspend fun saveGasStation(stationId: Long, notes: String? = null): Boolean {
         return try {
             val currentUser = getCurrentUser()
-            currentUser?.let { user ->
-                supabase.from("user_saved_gas_stations")
-                    .insert(
-                        buildJsonObject {
-                            put("user_id", user.id)
-                            put("station_id", stationId)
-                            if (notes != null) {
-                                put("notes", notes)
-                            }
+            if (currentUser == null) {
+                return false
+            }
+
+            supabase.from("user_saved_gas_stations")
+                .insert(
+                    buildJsonObject {
+                        put("user_id", currentUser.id)
+                        put("station_id", stationId)
+                        if (notes != null) {
+                            put("notes", notes)
                         }
-                    )
-                true
-            } == true
+                    }
+                )
+            true
         } catch (e: Exception) {
-            e
             false
         }
     }
