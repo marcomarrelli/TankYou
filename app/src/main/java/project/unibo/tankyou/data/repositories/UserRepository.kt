@@ -1,5 +1,6 @@
 package project.unibo.tankyou.data.repositories
 
+import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
@@ -63,7 +64,7 @@ class UserRepository(private val supabase: SupabaseClient) {
                     .decodeList<UserSavedGasStation>()
             } ?: emptyList()
         } catch (e: Exception) {
-            e
+            Log.e("UserRepository", "Error getting user saved stations", e)
             emptyList()
         }
     }
@@ -78,9 +79,21 @@ class UserRepository(private val supabase: SupabaseClient) {
         return try {
             val currentUser = getCurrentUser()
             if (currentUser == null) {
+                Log.w("UserRepository", "Cannot save gas station: user not logged in")
                 return false
             }
 
+            // Check if station is already saved
+            val isAlreadySaved = isGasStationSaved(stationId)
+            if (isAlreadySaved) {
+                Log.i(
+                    "UserRepository",
+                    "Gas station $stationId is already saved for user ${currentUser.id}"
+                )
+                return true // Return true since the desired state is already achieved
+            }
+
+            // Insert new saved station
             supabase.from("user_saved_gas_stations")
                 .insert(
                     buildJsonObject {
@@ -91,8 +104,14 @@ class UserRepository(private val supabase: SupabaseClient) {
                         }
                     }
                 )
+
+            Log.d(
+                "UserRepository",
+                "Successfully saved gas station $stationId for user ${currentUser.id}"
+            )
             true
         } catch (e: Exception) {
+            Log.e("UserRepository", "Error saving gas station $stationId", e)
             false
         }
     }
@@ -113,10 +132,17 @@ class UserRepository(private val supabase: SupabaseClient) {
                             eq("station_id", stationId)
                         }
                     }
+                Log.d(
+                    "UserRepository",
+                    "Successfully removed gas station $stationId for user ${user.id}"
+                )
                 true
-            } == true
+            } ?: run {
+                Log.w("UserRepository", "Cannot remove gas station: user not logged in")
+                false
+            }
         } catch (e: Exception) {
-            e
+            Log.e("UserRepository", "Error removing gas station $stationId", e)
             false
         }
     }
@@ -136,43 +162,14 @@ class UserRepository(private val supabase: SupabaseClient) {
                             eq("user_id", user.id)
                             eq("station_id", stationId)
                         }
+                        limit(1)
                     }
-                    .decodeList<Map<String, Any>>()
-                result.isNotEmpty()
-            } == true
-        } catch (e: Exception) {
-            e
-            false
-        }
-    }
+                    .decodeList<UserSavedGasStation>()
 
-    /**
-     * Updates user profile information
-     * @param name User's first name
-     * @param surname User's surname
-     * @param username User's username
-     * @return true if successful, false otherwise
-     */
-    suspend fun updateUserProfile(name: String, surname: String, username: String): Boolean {
-        return try {
-            val currentUser = getCurrentUser()
-            currentUser?.let { user ->
-                supabase.from("users")
-                    .update(
-                        buildJsonObject {
-                            put("name", name)
-                            put("surname", surname)
-                            put("username", username)
-                        }
-                    ) {
-                        filter {
-                            eq("id", user.id)
-                        }
-                    }
-                true
-            } == true
+                result.isNotEmpty()
+            } ?: false
         } catch (e: Exception) {
-            e
+            Log.e("UserRepository", "Error checking if gas station $stationId is saved", e)
             false
         }
     }
@@ -195,7 +192,7 @@ class UserRepository(private val supabase: SupabaseClient) {
                     .decodeList<UserSavedGasStation>()
             } ?: emptyList()
         } catch (e: Exception) {
-            e
+            Log.e("UserRepository", "Error getting ordered saved stations", e)
             emptyList()
         }
     }
@@ -221,10 +218,14 @@ class UserRepository(private val supabase: SupabaseClient) {
                             eq("station_id", stationId)
                         }
                     }
+                Log.d("UserRepository", "Successfully updated notes for gas station $stationId")
                 true
-            } == true
+            } ?: run {
+                Log.w("UserRepository", "Cannot update notes: user not logged in")
+                false
+            }
         } catch (e: Exception) {
-            e
+            Log.e("UserRepository", "Error updating notes for gas station $stationId", e)
             false
         }
     }

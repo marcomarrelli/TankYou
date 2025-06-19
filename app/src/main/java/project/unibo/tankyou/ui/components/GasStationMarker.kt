@@ -1,4 +1,4 @@
-package project.unibo.tankyou.components
+package project.unibo.tankyou.ui.components
 
 import android.content.Context
 import android.graphics.Canvas

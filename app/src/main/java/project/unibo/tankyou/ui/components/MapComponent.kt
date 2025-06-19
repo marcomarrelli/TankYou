@@ -1,4 +1,4 @@
-package project.unibo.tankyou.components
+package project.unibo.tankyou.ui.components
 
 import android.graphics.Color
 import android.graphics.ColorMatrixColorFilter
@@ -14,6 +14,7 @@ import org.osmdroid.events.ZoomEvent
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
@@ -118,7 +119,7 @@ class MapComponent(
 
             map.setScrollableAreaLimitDouble(Constants.Map.BOUNDS)
 
-            map.zoomController.setVisibility(org.osmdroid.views.CustomZoomButtonsController.Visibility.NEVER)
+            map.zoomController.setVisibility(CustomZoomButtonsController.Visibility.NEVER)
 
             val savedCenter = SettingsManager.getSavedMapCenter()
             val savedZoom = SettingsManager.getSavedZoomLevel()

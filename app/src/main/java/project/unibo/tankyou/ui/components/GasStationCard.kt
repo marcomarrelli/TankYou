@@ -1,4 +1,4 @@
-package project.unibo.tankyou.components
+package project.unibo.tankyou.ui.components
 
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
@@ -106,32 +106,63 @@ fun GasStationCard(
             val prices = repository.getFuelPricesForStation(gasStation.id)
             fuelPrices = prices
 
+            // Always check the current state from database
             isFavorite = userRepository.isGasStationSaved(gasStation.id)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("GasStationCard", "Error loading gas station data", e)
             fuelPrices = emptyList()
         } finally {
             isLoading = false
         }
     }
 
+    fun refreshFavoriteState() {
+        coroutineScope.launch {
+            try {
+                isFavorite = userRepository.isGasStationSaved(gasStation.id)
+            } catch (e: Exception) {
+                Log.e("GasStationCard", "Error refreshing favorite state", e)
+            }
+        }
+    }
+
     fun handleFavoriteClick() {
-        if (isFavorite) {
-            coroutineScope.launch {
-                isSaving = true
-                try {
+        if (isSaving) return // Prevent multiple clicks during operation
+
+        coroutineScope.launch {
+            isSaving = true
+            try {
+                // Re-check current state before proceeding
+                val currentlyFavorite = userRepository.isGasStationSaved(gasStation.id)
+
+                if (currentlyFavorite) {
+                    // Remove from favorites
                     val success = userRepository.removeSavedGasStation(gasStation.id)
                     if (success) {
                         isFavorite = false
+                        Log.d(
+                            "GasStationCard",
+                            "Successfully removed gas station ${gasStation.id} from favorites"
+                        )
+                    } else {
+                        Log.e(
+                            "GasStationCard",
+                            "Failed to remove gas station ${gasStation.id} from favorites"
+                        )
+                        // Refresh state in case of error
+                        refreshFavoriteState()
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    isSaving = false
+                } else {
+                    // Show save dialog to add to favorites
+                    showSaveDialog = true
                 }
+            } catch (e: Exception) {
+                Log.e("GasStationCard", "Error handling favorite click", e)
+                // Refresh state in case of error
+                refreshFavoriteState()
+            } finally {
+                isSaving = false
             }
-        } else {
-            showSaveDialog = true
         }
     }
 
@@ -139,19 +170,33 @@ fun GasStationCard(
         coroutineScope.launch {
             isSaving = true
             try {
+                // Double-check that the station isn't already saved
+                val alreadySaved = userRepository.isGasStationSaved(gasStation.id)
+                if (alreadySaved) {
+                    Log.i("GasStationCard", "Gas station ${gasStation.id} is already saved")
+                    isFavorite = true
+                    showSaveDialog = false
+                    return@launch
+                }
+
                 val success = userRepository.saveGasStation(
                     gasStation.id,
                     notes.ifBlank { null }
                 )
+
                 if (success) {
-                    Log.d("GasStationCard", "Gas station saved successfully")
+                    Log.d("GasStationCard", "Gas station ${gasStation.id} saved successfully")
                     isFavorite = true
                     showSaveDialog = false
                 } else {
-                    Log.e("GasStationCard", "Error saving gas station")
+                    Log.e("GasStationCard", "Failed to save gas station ${gasStation.id}")
+                    // Refresh state to ensure consistency
+                    refreshFavoriteState()
                 }
             } catch (e: Exception) {
-                Log.e("GasStationCard", "Error saving gas station", e)
+                Log.e("GasStationCard", "Error saving gas station ${gasStation.id}", e)
+                // Refresh state to ensure consistency
+                refreshFavoriteState()
             } finally {
                 isSaving = false
             }
@@ -319,7 +364,6 @@ fun GasStationCard(
                                             modifier = Modifier.size(24.dp)
                                         )
                                     }
-
                                 }
                             }
                             IconButton(
@@ -492,7 +536,10 @@ fun GasStationCard(
     SaveStationDialog(
         isVisible = showSaveDialog,
         stationName = gasStation.name ?: "Gas Station",
-        onDismiss = { showSaveDialog = false },
+        onDismiss = {
+            showSaveDialog = false
+            isSaving = false // Reset saving state when dialog is dismissed
+        },
         onSave = { notes -> handleSaveStation(notes) }
     )
 }
