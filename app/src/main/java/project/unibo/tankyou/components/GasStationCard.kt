@@ -72,6 +72,7 @@ import project.unibo.tankyou.data.database.entities.toLabel
 import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
 import project.unibo.tankyou.data.database.entities.toTypeLabel
 import project.unibo.tankyou.data.repositories.AppRepository
+import project.unibo.tankyou.data.repositories.AuthRepository
 import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.getResourceString
@@ -296,29 +297,31 @@ fun GasStationCard(
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            IconButton(
-                                onClick = { handleFavoriteClick() },
-                                enabled = !isSaving,
-                                modifier = Modifier
-                                    .clip(CircleShape)
-                                    .size(40.dp)
-                            ) {
-                                if (isSaving) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(20.dp),
-                                        color = ThemeManager.palette.primary,
-                                        strokeWidth = 2.dp
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                                        contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
-                                        tint = if (isFavorite) ThemeManager.palette.alert else ThemeManager.palette.text,
-                                        modifier = Modifier.size(24.dp)
-                                    )
+                            if (AuthRepository.getInstance().isUserLoggedIn()) {
+                                IconButton(
+                                    onClick = { handleFavoriteClick() },
+                                    enabled = !isSaving,
+                                    modifier = Modifier
+                                        .clip(CircleShape)
+                                        .size(40.dp)
+                                ) {
+                                    if (isSaving) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(20.dp),
+                                            color = ThemeManager.palette.primary,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                            contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
+                                            tint = if (isFavorite) ThemeManager.palette.alert else ThemeManager.palette.text,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+
                                 }
                             }
-
                             IconButton(
                                 onClick = onDismiss,
                                 modifier = Modifier
