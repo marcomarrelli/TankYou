@@ -1,4 +1,4 @@
-package project.unibo.tankyou.components
+package project.unibo.tankyou.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

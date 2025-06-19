@@ -68,11 +68,11 @@ import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import project.unibo.tankyou.components.GasStationCard
-import project.unibo.tankyou.components.MapComponent
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.GasStation
+import project.unibo.tankyou.ui.components.GasStationCard
+import project.unibo.tankyou.ui.components.MapComponent
 import project.unibo.tankyou.ui.screens.LoginScreen
 import project.unibo.tankyou.ui.screens.ProfileScreen
 import project.unibo.tankyou.ui.screens.RegisterScreen
