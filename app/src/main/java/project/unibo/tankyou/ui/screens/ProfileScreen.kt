@@ -1,5 +1,7 @@
 package project.unibo.tankyou.ui.screens
 
+import android.Manifest
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,7 +31,9 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,6 +63,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
@@ -66,6 +72,10 @@ import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.User
 import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +93,7 @@ fun ProfileScreen(
     var isSaving by remember { mutableStateOf(false) }
     var isUploadingPhoto by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var showPhotoDialog by remember { mutableStateOf(false) }
 
     var editedName by remember { mutableStateOf("") }
     var editedSurname by remember { mutableStateOf("") }
@@ -91,32 +102,73 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    val imagePickerLauncher = rememberLauncherForActivityResult(
+    // Create a file for camera capture
+    val photoFile = remember {
+        createImageFile(context)
+    }
+
+    val photoUri = remember {
+        FileProvider.getUriForFile(
+            context,
+            "${context.packageName}.provider",
+            photoFile
+        )
+    }
+
+    // Camera launcher
+    val cameraLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.TakePicture()
+    ) { success ->
+        if (success) {
+            coroutineScope.launch {
+                uploadPhoto(photoUri, userRepository, context, currentUser) { result ->
+                    when (result) {
+                        is PhotoUploadResult.Success -> {
+                            currentUser = result.updatedUser
+                            Log.d("ProfileScreen", "Profile photo updated successfully via camera")
+                        }
+
+                        is PhotoUploadResult.Error -> {
+                            errorMessage = result.message
+                        }
+                    }
+                    isUploadingPhoto = false
+                }
+            }
+        }
+    }
+
+    // Gallery launcher
+    val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
             coroutineScope.launch {
-                isUploadingPhoto = true
-                errorMessage = null
-                try {
-                    val photoUrl = userRepository.uploadProfilePhoto(it, context)
-                    val updatedUser = currentUser?.copy(profilePicture = photoUrl)
-                    updatedUser?.let { user ->
-                        val success = userRepository.updateUser(user)
-                        if (success) {
-                            currentUser = user
-                            Log.d("ProfileScreen", "Profile photo updated successfully")
-                        } else {
-                            errorMessage = "Failed to update profile photo"
+                uploadPhoto(it, userRepository, context, currentUser) { result ->
+                    when (result) {
+                        is PhotoUploadResult.Success -> {
+                            currentUser = result.updatedUser
+                            Log.d("ProfileScreen", "Profile photo updated successfully via gallery")
+                        }
+
+                        is PhotoUploadResult.Error -> {
+                            errorMessage = result.message
                         }
                     }
-                } catch (e: Exception) {
-                    Log.e("ProfileScreen", "Error uploading profile photo", e)
-                    errorMessage = "Error uploading photo: ${e.message}"
-                } finally {
                     isUploadingPhoto = false
                 }
             }
+        }
+    }
+
+    // Permission launcher for camera
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            cameraLauncher.launch(photoUri)
+        } else {
+            errorMessage = "Camera permission is required to take photos"
         }
     }
 
@@ -169,7 +221,7 @@ fun ProfileScreen(
                 onEmailChange = { editedEmail = it },
                 onEditToggle = { isEditing = !isEditing },
                 isUploadingPhoto = isUploadingPhoto,
-                onPhotoClick = { imagePickerLauncher.launch("image/*") }
+                onPhotoClick = { showPhotoDialog = true }
             )
 
             errorMessage?.let { message ->
@@ -302,6 +354,137 @@ fun ProfileScreen(
                 Text("Logout", color = ThemeManager.palette.white)
             }
         }
+    }
+
+    // Photo selection dialog
+    if (showPhotoDialog) {
+        PhotoSelectionDialog(
+            onDismiss = { showPhotoDialog = false },
+            onCameraSelected = {
+                showPhotoDialog = false
+                isUploadingPhoto = true
+                errorMessage = null
+                cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+            },
+            onGallerySelected = {
+                showPhotoDialog = false
+                isUploadingPhoto = true
+                errorMessage = null
+                galleryLauncher.launch("image/*")
+            }
+        )
+    }
+}
+
+@Composable
+private fun PhotoSelectionDialog(
+    onDismiss: () -> Unit,
+    onCameraSelected: () -> Unit,
+    onGallerySelected: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Select Photo Source",
+                color = ThemeManager.palette.title,
+                style = MaterialTheme.typography.titleLarge
+            )
+        },
+        text = {
+            Text(
+                text = "Choose how you want to add your profile photo",
+                color = ThemeManager.palette.text,
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = onCameraSelected,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemeManager.palette.primary
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Camera")
+                }
+
+                Button(
+                    onClick = onGallerySelected,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemeManager.palette.accent
+                    ),
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PhotoLibrary,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Gallery")
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Cancel",
+                    color = ThemeManager.palette.text
+                )
+            }
+        },
+        containerColor = ThemeManager.palette.background,
+        shape = RoundedCornerShape(16.dp)
+    )
+}
+
+// Helper functions and classes
+private fun createImageFile(context: Context): File {
+    val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+    val imageFileName = "JPEG_${timeStamp}_"
+    val storageDir = File(context.cacheDir, "images")
+    if (!storageDir.exists()) {
+        storageDir.mkdirs()
+    }
+    return File.createTempFile(imageFileName, ".jpg", storageDir)
+}
+
+private sealed class PhotoUploadResult {
+    data class Success(val updatedUser: User) : PhotoUploadResult()
+    data class Error(val message: String) : PhotoUploadResult()
+}
+
+private suspend fun uploadPhoto(
+    uri: Uri,
+    userRepository: UserRepository,
+    context: Context,
+    currentUser: User?,
+    onResult: (PhotoUploadResult) -> Unit
+) {
+    try {
+        val photoUrl = userRepository.uploadProfilePhoto(uri, context)
+        val updatedUser = currentUser?.copy(profilePicture = photoUrl)
+        updatedUser?.let { user ->
+            val success = userRepository.updateUser(user)
+            if (success) {
+                onResult(PhotoUploadResult.Success(user))
+            } else {
+                onResult(PhotoUploadResult.Error("Failed to update profile photo"))
+            }
+        } ?: onResult(PhotoUploadResult.Error("User not found"))
+    } catch (e: Exception) {
+        Log.e("ProfileScreen", "Error uploading profile photo", e)
+        onResult(PhotoUploadResult.Error("Error uploading photo: ${e.message}"))
     }
 }
 
