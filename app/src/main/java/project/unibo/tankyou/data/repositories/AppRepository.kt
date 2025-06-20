@@ -2,6 +2,7 @@ package project.unibo.tankyou.data.repositories
 
 import android.util.LruCache
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Columns.Companion.raw
 import io.github.jan.supabase.postgrest.query.Order
 import org.osmdroid.util.BoundingBox
 import project.unibo.tankyou.data.DatabaseClient
@@ -11,11 +12,12 @@ import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.GasStationFlag
 import project.unibo.tankyou.data.database.entities.GasStationType
 
-/**
- * Repository class that handles data access for [GasStation]s and fuel information.
- *
- * Implements singleton pattern and provides caching functionality for improved performance.
- */
+data class SearchFilters(
+    val flags: List<GasStationFlag> = emptyList(),
+    val fuelTypes: List<FuelType> = emptyList(),
+    val serviceTypes: List<Boolean> = emptyList()
+)
+
 class AppRepository {
     private val client = DatabaseClient.client
     private val stationCache = LruCache<String, List<GasStation>>(50)
@@ -24,11 +26,6 @@ class AppRepository {
         @Volatile
         private var INSTANCE: AppRepository? = null
 
-        /**
-         * Returns the singleton instance of AppRepository.
-         *
-         * @return the singleton [AppRepository] instance
-         */
         fun getInstance(): AppRepository {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: AppRepository().also { INSTANCE = it }
@@ -36,11 +33,6 @@ class AppRepository {
         }
     }
 
-    /**
-     * Retrieves all [GasStation]s from the database using batch processing.
-     *
-     * @return list of all [GasStation]s
-     */
     suspend fun getAllStations(): List<GasStation> {
         val allStations = mutableListOf<GasStation>()
         var lastId = 0L
@@ -69,16 +61,6 @@ class AppRepository {
         return allStations
     }
 
-    /**
-     * Retrieves [GasStation]s within specified geographical bounds with caching support.
-     *
-     * @param minLat minimum latitude boundary
-     * @param maxLat maximum latitude boundary
-     * @param minLon minimum longitude boundary
-     * @param maxLon maximum longitude boundary
-     *
-     * @return list of [GasStation]s within the specified bounds
-     */
     suspend fun getStationsInBounds(
         minLat: Double,
         maxLat: Double,
@@ -113,14 +95,6 @@ class AppRepository {
         }
     }
 
-    /**
-     * Retrieves [GasStation]s optimized for specific zoom levels with adaptive limits.
-     *
-     * @param bounds the geographical bounding box
-     * @param zoomLevel the map zoom level for optimization
-     *
-     * @return list of [GasStation]s optimized for the zoom level
-     */
     suspend fun getStationsForZoomLevel(
         bounds: BoundingBox,
         zoomLevel: Double
@@ -165,13 +139,6 @@ class AppRepository {
         }
     }
 
-    /**
-     * Retrieves [GasStation]s filtered by specific provinces.
-     *
-     * @param provinces list of province names to filter by
-     *
-     * @return list of [GasStation]s in the specified provinces
-     */
     suspend fun getStationsByProvinces(provinces: List<String>): List<GasStation> {
         return client.from("gas_stations")
             .select {
@@ -182,54 +149,26 @@ class AppRepository {
             .decodeList<GasStation>()
     }
 
-    /**
-     * Retrieves a specific [GasStation] by its ID.
-     *
-     * @param id the unique identifier of the [GasStation]
-     * @return the [GasStation] if found, null otherwise
-     */
     suspend fun getStationById(id: String): GasStation? {
         return client.from("gas_stations").select {
             filter { eq("id", id) }
         }.decodeSingleOrNull<GasStation>()
     }
 
-    /**
-     * Retrieves the total count of [GasStation]s in the database.
-     *
-     * @return the total number of [GasStation]s
-     */
     suspend fun getStationCount(): Long {
         return client.from("gas_stations").select().countOrNull() ?: 0L
     }
 
-    /**
-     * Retrieves all available [Fuel] types from the database.
-     *
-     * @return list of all [Fuel] types
-     */
     suspend fun getAllFuelTypes(): List<Fuel> {
         return client.from("fuels").select().decodeList<Fuel>()
     }
 
-    /**
-     * Retrieves a specific [Fuel] type by its ID.
-     *
-     * @param id the unique identifier of the [Fuel] type
-     *
-     * @return the [Fuel] type if found, null otherwise
-     */
     suspend fun getFuelById(id: String): Fuel? {
         return client.from("fuels").select {
             filter { eq("id", id) }
         }.decodeSingleOrNull<Fuel>()
     }
 
-    /**
-     * Retrieves fuel prices for a specific gas station
-     * @param stationId The ID of the gas station
-     * @return List of fuel prices for the station
-     */
     suspend fun getFuelPricesForStation(stationId: Long): List<Fuel> {
         return try {
             client.from("fuels")
@@ -277,11 +216,6 @@ class AppRepository {
         }
     }
 
-    /**
-     * Searches for gas stations based on a query string.
-     * @param query The search query
-     * @return List of matching gas stations
-     */
     suspend fun searchStations(query: String): List<GasStation> {
         if (query.isBlank()) return emptyList()
 
@@ -305,9 +239,63 @@ class AppRepository {
         }
     }
 
-    /**
-     * Clears all cached data from the station cache.
-     */
+    suspend fun searchStationsWithFilters(
+        query: String,
+        filters: SearchFilters
+    ): List<GasStation> {
+        if (query.isBlank() && filters.flags.isEmpty() && filters.fuelTypes.isEmpty() && filters.serviceTypes.isEmpty()) {
+            return emptyList()
+        }
+
+        return try {
+            val conditions = mutableListOf<String>()
+
+            if (query.isNotBlank()) {
+                val searchQuery = "%${query.lowercase()}%"
+                conditions.add("(name.ilike.$searchQuery,city.ilike.$searchQuery,province.ilike.$searchQuery)")
+            }
+
+            if (filters.flags.isNotEmpty()) {
+                val flagConditions = filters.flags.joinToString(",") { "flag.eq.$it" }
+                conditions.add("($flagConditions)")
+            }
+
+            if (filters.serviceTypes.isNotEmpty()) {
+                val serviceConditions =
+                    filters.serviceTypes.joinToString(",") { "service_type.eq.$it" }
+                conditions.add("($serviceConditions)")
+            }
+
+            var stations = if (conditions.isNotEmpty()) {
+                client.from("gas_stations").select {
+                    filter {
+                        or {
+                            conditions.forEach { condition ->
+                                raw(condition)
+                            }
+                        }
+                    }
+                }.decodeList<GasStation>()
+            } else {
+                client.from("gas_stations").select().decodeList<GasStation>()
+            }
+
+            if (filters.fuelTypes.isNotEmpty()) {
+                stations = stations.filter { station ->
+                    val stationFuels = getFuelPricesForStation(station.id.toLong())
+                    filters.fuelTypes.any { fuelType ->
+                        stationFuels.any { fuel -> fuel.type.equals(fuelType) }
+                    }
+                }
+            }
+
+            stations
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
     fun clearCache() {
         stationCache.evictAll()
     }
