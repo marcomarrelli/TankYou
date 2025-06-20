@@ -35,7 +35,8 @@ class MapComponent(
     private val onMapClick: () -> Unit = {},
     private val onGasStationClick: (GasStation) -> Unit = {},
     private val onFollowModeChanged: (Boolean) -> Unit = {},
-    private val onLocationOverlayAvailabilityChanged: (Boolean) -> Unit = {}
+    private val onLocationOverlayAvailabilityChanged: (Boolean) -> Unit = {},
+    private val onSearchStateChanged: (Boolean) -> Unit = {}
 ) : MapListener, IMyLocationConsumer {
     private lateinit var map: MapView
 
@@ -533,6 +534,7 @@ class MapComponent(
         }
 
         context.lifecycleScope.launch {
+            onSearchStateChanged(true)
             try {
                 val searchResults = Constants.App.REPOSITORY.searchStations(query)
 
@@ -549,6 +551,8 @@ class MapComponent(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                onSearchStateChanged(false)
             }
         }
     }
@@ -575,6 +579,7 @@ class MapComponent(
         }
 
         context.lifecycleScope.launch {
+            onSearchStateChanged(true)
             try {
                 val searchResults =
                     Constants.App.REPOSITORY.searchStationsWithFilters(query, filters)
@@ -592,6 +597,8 @@ class MapComponent(
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+            } finally {
+                onSearchStateChanged(false)
             }
         }
     }

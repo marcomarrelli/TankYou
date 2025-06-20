@@ -30,8 +30,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -49,6 +51,7 @@ import androidx.compose.material.icons.twotone.Remove
 import androidx.compose.material.icons.twotone.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -66,9 +69,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -78,6 +83,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -85,6 +91,7 @@ import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.FuelType
@@ -276,6 +283,7 @@ class MainActivity : AppCompatActivity() {
     @OptIn(ExperimentalLayoutApi::class)
     @Composable
     private fun MapScreenWithFABs() {
+        val coroutineScope = rememberCoroutineScope()
         var fabsVisible by remember { mutableStateOf(true) }
         var searchBarVisible by remember { mutableStateOf(false) }
         var searchText by remember { mutableStateOf("") }
@@ -286,13 +294,25 @@ class MainActivity : AppCompatActivity() {
         var selectedFlags by remember { mutableStateOf(setOf<GasStationFlag>()) }
         var selectedFuelTypes by remember { mutableStateOf(setOf<FuelType>()) }
         var selectedServiceTypes by remember { mutableStateOf(setOf<Boolean>()) }
+        var isSearching by remember { mutableStateOf(false) }
         val focusRequester = remember { FocusRequester() }
 
         val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
 
         val availableFlags: List<GasStationFlag> = Constants.GAS_STATION_FLAGS
         val availableFuelTypes: List<FuelType> = Constants.FUEL_TYPES
-        // val availableServiceTypes: List<Boolean> = Constants.GAS_STATION_SERVICES
+
+        val hasActiveFilters by remember {
+            derivedStateOf {
+                selectedFlags.isNotEmpty() || selectedFuelTypes.isNotEmpty() || selectedServiceTypes.isNotEmpty()
+            }
+        }
+
+        val activeFilterCount by remember {
+            derivedStateOf {
+                selectedFlags.size + selectedFuelTypes.size + selectedServiceTypes.size
+            }
+        }
 
         LaunchedEffect(selectedGasStation) {
             if (selectedGasStation != null) {
@@ -326,6 +346,9 @@ class MainActivity : AppCompatActivity() {
                             },
                             onLocationOverlayAvailabilityChanged = { isAvailable ->
                                 isLocationOverlayAvailable = isAvailable
+                            },
+                            onSearchStateChanged = { searching ->
+                                isSearching = searching
                             }
                         )
                     }
@@ -359,6 +382,34 @@ class MainActivity : AppCompatActivity() {
                             interactionSource = remember { MutableInteractionSource() }
                         ) { }
                 )
+            }
+
+            if (isSearching) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.5f))
+                        .zIndex(15f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(48.dp),
+                            color = ThemeManager.palette.primary,
+                            strokeWidth = 4.dp
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Searching...",
+                            color = Color.White,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
             }
 
             AnimatedVisibility(
@@ -438,17 +489,45 @@ class MainActivity : AppCompatActivity() {
                     .padding(start = 16.dp)
                     .zIndex(5f)
             ) {
-                FloatingActionButton(
-                    onClick = {
-                        searchBarVisible = true
-                    },
-                    containerColor = ThemeManager.palette.background,
-                    contentColor = ThemeManager.palette.text
-                ) {
-                    Icon(
-                        Icons.TwoTone.Search,
-                        contentDescription = getResourceString(R.string.search_icon_description)
-                    )
+                Box {
+                    FloatingActionButton(
+                        onClick = {
+                            searchBarVisible = true
+                        },
+                        containerColor = if (hasActiveFilters) {
+                            ThemeManager.palette.primary
+                        } else {
+                            ThemeManager.palette.background
+                        },
+                        contentColor = ThemeManager.palette.text
+                    ) {
+                        Icon(
+                            Icons.TwoTone.Search,
+                            contentDescription = getResourceString(R.string.search_icon_description)
+                        )
+                    }
+
+                    if (hasActiveFilters) {
+                        Box(
+                            modifier = Modifier
+                                .size(24.dp)
+                                .background(
+                                    color = ThemeManager.palette.accent,
+                                    shape = CircleShape
+                                )
+                                .align(Alignment.TopEnd)
+                                .zIndex(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (activeFilterCount > 9) "9+" else activeFilterCount.toString(),
+                                color = ThemeManager.palette.white,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
                 }
             }
 
@@ -562,13 +641,15 @@ class MainActivity : AppCompatActivity() {
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                             keyboardActions = KeyboardActions(
                                 onSearch = {
-                                    performSearch(
-                                        searchText,
-                                        selectedFlags,
-                                        selectedFuelTypes,
-                                        selectedServiceTypes
-                                    )
-                                    searchBarVisible = false
+                                    coroutineScope.launch {
+                                        performSearch(
+                                            searchText,
+                                            selectedFlags,
+                                            selectedFuelTypes,
+                                            selectedServiceTypes
+                                        )
+                                        searchBarVisible = false
+                                    }
                                 }
                             ),
                             shape = RoundedCornerShape(24.dp)
@@ -589,6 +670,25 @@ class MainActivity : AppCompatActivity() {
                                 text = "More Filters",
                                 color = ThemeManager.palette.primary
                             )
+                            if (hasActiveFilters) {
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .size(20.dp)
+                                        .background(
+                                            color = ThemeManager.palette.accent,
+                                            shape = CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = if (activeFilterCount > 9) "9+" else activeFilterCount.toString(),
+                                        color = ThemeManager.palette.white,
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
                             Spacer(modifier = Modifier.width(4.dp))
                             Icon(
                                 imageVector = if (showAdvancedFilters) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
@@ -599,23 +699,34 @@ class MainActivity : AppCompatActivity() {
 
                         Button(
                             onClick = {
-                                performSearch(
-                                    searchText,
-                                    selectedFlags,
-                                    selectedFuelTypes,
-                                    selectedServiceTypes
-                                )
-                                searchBarVisible = false
+                                coroutineScope.launch {
+                                    performSearch(
+                                        searchText,
+                                        selectedFlags,
+                                        selectedFuelTypes,
+                                        selectedServiceTypes
+                                    )
+                                    searchBarVisible = false
+                                }
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = ThemeManager.palette.primary
-                            )
+                            ),
+                            enabled = !isSearching
                         ) {
-                            Icon(
-                                imageVector = Icons.TwoTone.Search,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
+                            if (isSearching) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.TwoTone.Search,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            }
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Search", color = Color.White)
                         }
@@ -695,47 +806,6 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             }
-
-                            /*
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Text(
-                                text = "Service Type",
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = ThemeManager.palette.text
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            FlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                availableServiceTypes.forEach { serviceType ->
-                                    FilterChip(
-                                        onClick = {
-                                            selectedServiceTypes =
-                                                if (selectedServiceTypes.contains(serviceType)) {
-                                                    selectedServiceTypes - serviceType
-                                                } else {
-                                                    selectedServiceTypes + serviceType
-                                                }
-                                        },
-                                        label = {
-                                            Text(
-                                                text = if (serviceType) getResourceString(R.string.self_service_label)
-                                                else getResourceString(R.string.full_service_label)
-                                            )
-                                        },
-                                        selected = selectedServiceTypes.contains(serviceType),
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = ThemeManager.palette.primary,
-                                            selectedLabelColor = Color.White
-                                        )
-                                    )
-                                }
-                            }
-                            */
                         }
                     }
                 }
