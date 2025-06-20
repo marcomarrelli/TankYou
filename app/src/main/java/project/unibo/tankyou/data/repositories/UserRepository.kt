@@ -235,10 +235,14 @@ class UserRepository(private val supabase: SupabaseClient) {
 
     suspend fun uploadProfilePhoto(uri: Uri, context: Context): String {
         return try {
-            val authUser = AuthRepository.getInstance().currentUser
+            var authUser = AuthRepository.getInstance().currentUser
+
             if (authUser == null) {
+                Log.e("UserRepository", "User not authenticated after retries")
                 throw Exception("User not logged in")
             }
+
+            Log.d("UserRepository", "Auth user found: ${authUser.id}")
 
             val fileName = "${authUser.id}/profile_${System.currentTimeMillis()}.jpg"
             val inputStream = context.contentResolver.openInputStream(uri)
