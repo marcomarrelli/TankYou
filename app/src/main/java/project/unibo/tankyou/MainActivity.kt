@@ -292,7 +292,7 @@ class MainActivity : AppCompatActivity() {
 
         val availableFlags: List<GasStationFlag> = Constants.GAS_STATION_FLAGS
         val availableFuelTypes: List<FuelType> = Constants.FUEL_TYPES
-        val availableServiceTypes: List<Boolean> = Constants.GAS_STATION_SERVICES
+        // val availableServiceTypes: List<Boolean> = Constants.GAS_STATION_SERVICES
 
         LaunchedEffect(selectedGasStation) {
             if (selectedGasStation != null) {
@@ -696,6 +696,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
 
+                            /*
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
@@ -734,6 +735,7 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             }
+                            */
                         }
                     }
                 }
