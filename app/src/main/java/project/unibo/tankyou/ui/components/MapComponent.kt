@@ -23,6 +23,7 @@ import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer
 import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import project.unibo.tankyou.data.database.entities.GasStation
+import project.unibo.tankyou.data.repositories.SearchFilters
 import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.Debouncer
 import project.unibo.tankyou.utils.SettingsManager
@@ -564,6 +565,35 @@ class MapComponent(
             latitudes.minOrNull() ?: 0.0,
             longitudes.minOrNull() ?: 0.0
         )
+    }
+
+    fun searchGasStationsWithFilters(query: String, filters: SearchFilters) {
+        if (!mapInitialized) return
+
+        if (isFollowingLocation) {
+            disableFollowMode()
+        }
+
+        context.lifecycleScope.launch {
+            try {
+                val searchResults =
+                    Constants.App.REPOSITORY.searchStationsWithFilters(query, filters)
+
+                clusterer?.let { cluster ->
+                    cluster.items.clear()
+                    map.invalidate()
+                }
+
+                loadGasStationMarkers(searchResults)
+
+                if (searchResults.isNotEmpty()) {
+                    val bounds = calculateBounds(searchResults)
+                    map.zoomToBoundingBox(bounds, true, 100)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     fun clearSearch() {

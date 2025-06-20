@@ -6,8 +6,10 @@ import android.widget.RelativeLayout
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -18,17 +20,25 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
@@ -37,7 +47,11 @@ import androidx.compose.material.icons.twotone.Close
 import androidx.compose.material.icons.twotone.MyLocation
 import androidx.compose.material.icons.twotone.Remove
 import androidx.compose.material.icons.twotone.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,6 +62,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -61,8 +76,10 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import androidx.core.app.ActivityCompat
@@ -70,7 +87,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
+import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
+import project.unibo.tankyou.data.database.entities.GasStationFlag
+import project.unibo.tankyou.data.repositories.AppRepository
+import project.unibo.tankyou.data.repositories.SearchFilters
 import project.unibo.tankyou.ui.components.GasStationCard
 import project.unibo.tankyou.ui.components.MapComponent
 import project.unibo.tankyou.ui.screens.LoginScreen
@@ -252,6 +273,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(ExperimentalLayoutApi::class)
     @Composable
     private fun MapScreenWithFABs() {
         var fabsVisible by remember { mutableStateOf(true) }
@@ -260,9 +282,23 @@ class MainActivity : AppCompatActivity() {
         var selectedGasStation by remember { mutableStateOf<GasStation?>(null) }
         var isFollowModeActive by remember { mutableStateOf(false) }
         var isLocationOverlayAvailable by remember { mutableStateOf(false) }
+        var showAdvancedFilters by remember { mutableStateOf(false) }
+        var selectedFlags by remember { mutableStateOf(setOf<GasStationFlag>()) }
+        var selectedFuelTypes by remember { mutableStateOf(setOf<FuelType>()) }
+        var selectedServiceTypes by remember { mutableStateOf(setOf<Boolean>()) }
         val focusRequester = remember { FocusRequester() }
 
         val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
+
+        var availableFlags: List<GasStationFlag> = emptyList()
+        var availableFuelTypes: List<FuelType> = emptyList()
+        var availableServiceTypes: List<Boolean> = emptyList()
+
+        LaunchedEffect(null) {
+            availableFlags = AppRepository.getInstance().getFlags()
+            availableFuelTypes = AppRepository.getInstance().getFuelTypes()
+            availableServiceTypes = listOf(false, true)
+        }
 
         LaunchedEffect(selectedGasStation) {
             if (selectedGasStation != null) {
@@ -437,6 +473,10 @@ class MainActivity : AppCompatActivity() {
                         ) {
                             searchText = ""
                             searchBarVisible = false
+                            showAdvancedFilters = false
+                            selectedFlags = emptySet()
+                            selectedFuelTypes = emptySet()
+                            selectedServiceTypes = emptySet()
                         }
                 )
             }
@@ -450,102 +490,280 @@ class MainActivity : AppCompatActivity() {
                     .padding(top = 16.dp)
                     .padding(horizontal = 16.dp, vertical = 48.dp)
             ) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
                             color = ThemeManager.palette.background,
                             shape = RoundedCornerShape(28.dp)
                         )
-                        .padding(4.dp)
+                        .padding(16.dp)
                         .imePadding()
                 ) {
-                    OutlinedTextField(
-                        value = searchText,
-                        onValueChange = { searchText = it },
-                        maxLines = 1,
-                        placeholder = {
-                            Text(
-                                getResourceString(R.string.search_hint),
-                                color = ThemeManager.palette.text.copy(alpha = 0.6f)
-                            )
-                        },
-                        leadingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                Icon(
-                                    imageVector = Icons.TwoTone.Search,
-                                    contentDescription = null,
-                                    tint = ThemeManager.palette.text.copy(alpha = 0.6f)
-                                )
-                            } else {
-                                IconButton(
-                                    onClick = {
-                                        searchText = ""
-                                        searchBarVisible = false
-                                        if (::mapComponent.isInitialized) {
-                                            mapComponent.clearSearch()
-                                        }
-                                    },
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Close search",
-                                        tint = ThemeManager.palette.text
-                                    )
-                                }
-                            }
-                        },
-                        trailingIcon = {
-                            if (searchText.isNotEmpty()) {
-                                IconButton(
-                                    onClick = {
-                                        searchText = ""
-                                        if (::mapComponent.isInitialized) {
-                                            mapComponent.clearSearch()
-                                        }
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.TwoTone.Close,
-                                        contentDescription = "Clear text",
-                                        tint = ThemeManager.palette.text.copy(alpha = 0.6f)
-                                    )
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(focusRequester),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent,
-                            focusedTextColor = ThemeManager.palette.text,
-                            unfocusedTextColor = ThemeManager.palette.text,
-                            cursorColor = ThemeManager.palette.primary,
-                            focusedContainerColor = Color.Transparent,
-                            unfocusedContainerColor = Color.Transparent
-                        ),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Search
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onSearch = {
-                                if (searchText.isNotBlank()) {
-                                    if (::mapComponent.isInitialized) {
-                                        mapComponent.searchGasStations(searchText)
-                                    }
-                                } else {
-                                    if (::mapComponent.isInitialized) {
-                                        mapComponent.clearSearch()
-                                    }
-                                }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = {
+                                searchText = ""
                                 searchBarVisible = false
+                                showAdvancedFilters = false
+                                selectedFlags = emptySet()
+                                selectedFuelTypes = emptySet()
+                                selectedServiceTypes = emptySet()
+                                if (::mapComponent.isInitialized) {
+                                    mapComponent.clearSearch()
+                                }
                             }
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    )
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Close search",
+                                tint = ThemeManager.palette.text
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            maxLines = 1,
+                            placeholder = {
+                                Text(
+                                    getResourceString(R.string.search_hint),
+                                    color = ThemeManager.palette.text.copy(alpha = 0.6f)
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchText.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            searchText = ""
+                                            if (::mapComponent.isInitialized) {
+                                                mapComponent.clearSearch()
+                                            }
+                                        }
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.TwoTone.Close,
+                                            contentDescription = "Clear text",
+                                            tint = ThemeManager.palette.text.copy(alpha = 0.6f)
+                                        )
+                                    }
+                                }
+                            },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(focusRequester),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color.Transparent,
+                                unfocusedBorderColor = Color.Transparent,
+                                focusedTextColor = ThemeManager.palette.text,
+                                unfocusedTextColor = ThemeManager.palette.text,
+                                cursorColor = ThemeManager.palette.primary,
+                                focusedContainerColor = Color.Transparent,
+                                unfocusedContainerColor = Color.Transparent
+                            ),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    performSearch(
+                                        searchText,
+                                        selectedFlags,
+                                        selectedFuelTypes,
+                                        selectedServiceTypes
+                                    )
+                                    searchBarVisible = false
+                                }
+                            ),
+                            shape = RoundedCornerShape(24.dp)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(
+                            onClick = { showAdvancedFilters = !showAdvancedFilters }
+                        ) {
+                            Text(
+                                text = "More Filters",
+                                color = ThemeManager.palette.primary
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Icon(
+                                imageVector = if (showAdvancedFilters) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                contentDescription = null,
+                                tint = ThemeManager.palette.primary
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                performSearch(
+                                    searchText,
+                                    selectedFlags,
+                                    selectedFuelTypes,
+                                    selectedServiceTypes
+                                )
+                                searchBarVisible = false
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ThemeManager.palette.primary
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.TwoTone.Search,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Search", color = Color.White)
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = showAdvancedFilters,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut()
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Flags",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ThemeManager.palette.text
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                availableFlags.forEach { flag ->
+                                    FilterChip(
+                                        onClick = {
+                                            selectedFlags = if (selectedFlags.contains(flag)) {
+                                                selectedFlags - flag
+                                            } else {
+                                                selectedFlags + flag
+                                            }
+                                        },
+                                        label = { Text(flag.name) },
+                                        selected = selectedFlags.contains(flag),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = ThemeManager.palette.primary,
+                                            selectedLabelColor = Color.White
+                                        )
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Fuel Types",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ThemeManager.palette.text
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                availableFuelTypes.forEach { fuelType ->
+                                    FilterChip(
+                                        onClick = {
+                                            selectedFuelTypes =
+                                                if (selectedFuelTypes.contains(fuelType)) {
+                                                    selectedFuelTypes - fuelType
+                                                } else {
+                                                    selectedFuelTypes + fuelType
+                                                }
+                                        },
+                                        label = { Text(fuelType.name) },
+                                        selected = selectedFuelTypes.contains(fuelType),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = ThemeManager.palette.primary,
+                                            selectedLabelColor = Color.White
+                                        )
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Service Type",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ThemeManager.palette.text
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FlowRow(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                availableServiceTypes.forEach { serviceType ->
+                                    FilterChip(
+                                        onClick = {
+                                            selectedServiceTypes =
+                                                if (selectedServiceTypes.contains(serviceType)) {
+                                                    selectedServiceTypes - serviceType
+                                                } else {
+                                                    selectedServiceTypes + serviceType
+                                                }
+                                        },
+                                        label = {
+                                            Text(
+                                                text = if (serviceType) getResourceString(R.string.self_service_label)
+                                                else getResourceString(R.string.full_service_label)
+                                            )
+                                        },
+                                        selected = selectedServiceTypes.contains(serviceType),
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = ThemeManager.palette.primary,
+                                            selectedLabelColor = Color.White
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+
+    private fun performSearch(
+        query: String,
+        flags: Set<GasStationFlag>,
+        fuelTypes: Set<FuelType>,
+        serviceTypes: Set<Boolean>
+    ) {
+        if (::mapComponent.isInitialized) {
+            val filters = SearchFilters(
+                flags = flags.toList(),
+                fuelTypes = fuelTypes.toList(),
+                serviceTypes = serviceTypes.toList()
+            )
+
+            if (query.isNotBlank() || flags.isNotEmpty() || fuelTypes.isNotEmpty() || serviceTypes.isNotEmpty()) {
+                mapComponent.searchGasStationsWithFilters(query, filters)
+            } else {
+                mapComponent.clearSearch()
             }
         }
     }
