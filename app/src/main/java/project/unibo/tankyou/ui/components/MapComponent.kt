@@ -33,7 +33,8 @@ class MapComponent(
     private val mapContainer: RelativeLayout,
     private val onMapClick: () -> Unit = {},
     private val onGasStationClick: (GasStation) -> Unit = {},
-    private val onFollowModeChanged: (Boolean) -> Unit = {}
+    private val onFollowModeChanged: (Boolean) -> Unit = {},
+    private val onLocationOverlayAvailabilityChanged: (Boolean) -> Unit = {}
 ) : MapListener, IMyLocationConsumer {
     private lateinit var map: MapView
 
@@ -46,6 +47,9 @@ class MapComponent(
 
     private var isFollowingLocation = false
     private var lastLocationUpdate: Long = 0
+
+    private var hasUserTouchInteraction = false
+    private var lastUserTouchTime = 0L
 
     init {
         setupMapConfiguration()
@@ -75,6 +79,8 @@ class MapComponent(
         if (shouldShowLocationOverlay()) {
             setupLocationOverlay()
         }
+
+        onLocationOverlayAvailabilityChanged(locationOverlay != null)
 
         map.invalidate()
     }
@@ -120,14 +126,41 @@ class MapComponent(
             currentZoomLevel = savedZoom
 
             setupClusterer()
-            setupMapClickListener()
-            map.addMapListener(this)
             setupLocationOverlay()
+            setupMapClickListener()
+            setupTouchDetectionOverlay()
+            map.addMapListener(this)
 
             mapInitialized = true
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun setupTouchDetectionOverlay() {
+        val touchDetectionOverlay = object : Overlay() {
+            override fun onTouchEvent(event: MotionEvent?, mapView: MapView?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        hasUserTouchInteraction = true
+                        lastUserTouchTime = System.currentTimeMillis()
+                    }
+
+                    MotionEvent.ACTION_MOVE -> {
+                        if (hasUserTouchInteraction) {
+                            lastUserTouchTime = System.currentTimeMillis()
+                        }
+                    }
+
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        hasUserTouchInteraction = false
+                    }
+                }
+                return false
+            }
+        }
+
+        map.overlays.add(touchDetectionOverlay)
     }
 
     private fun saveCurrentMapPosition() {
@@ -149,7 +182,7 @@ class MapComponent(
             }
         }
 
-        map.overlays.add(0, mapClickOverlay)
+        map.overlays.add(mapClickOverlay)
     }
 
     fun zoomIn() {
@@ -271,6 +304,13 @@ class MapComponent(
     }
 
     override fun onScroll(event: ScrollEvent?): Boolean {
+        val currentTime = System.currentTimeMillis()
+        val wasRecentUserTouch = (currentTime - lastUserTouchTime) <= 100L
+
+        if (isFollowingLocation && hasUserTouchInteraction && wasRecentUserTouch) {
+            disableFollowMode()
+        }
+
         saveCurrentMapPosition()
 
         lastLoadedBounds?.let { loadedBounds ->
@@ -363,11 +403,16 @@ class MapComponent(
     }
 
     private fun setupLocationOverlay() {
-        if (!shouldShowLocationOverlay()) return
+        if (!shouldShowLocationOverlay()) {
+            onLocationOverlayAvailabilityChanged(false)
+            return
+        }
 
         locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
         locationOverlay?.enableMyLocation()
         map.overlays.add(locationOverlay)
+
+        onLocationOverlayAvailabilityChanged(true)
     }
 
     fun onResume() {
