@@ -77,10 +77,4 @@ class AuthViewModel : ViewModel() {
     fun isEmailVerified(): Boolean {
         return authRepository.isEmailVerified()
     }
-
-    fun resendEmailVerification() {
-        viewModelScope.launch {
-            authRepository.resendEmailVerification()
-        }
-    }
 }

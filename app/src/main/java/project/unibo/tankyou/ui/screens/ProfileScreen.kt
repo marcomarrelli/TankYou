@@ -103,6 +103,7 @@ fun ProfileScreen(
     var isUploadingPhoto by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showPhotoDialog by remember { mutableStateOf(false) }
+    var isEmailVerified by remember { mutableStateOf(true) }
 
     var editedName by remember { mutableStateOf("") }
     var editedSurname by remember { mutableStateOf("") }
@@ -181,10 +182,16 @@ fun ProfileScreen(
         if (!isGuestMode) {
             isLoading = true
             try {
-                currentUser = userRepository.getCurrentUser()
+                isEmailVerified = authViewModel.isEmailVerified()
+
+                if (isEmailVerified) {
+                    currentUser = userRepository.getCurrentUser()
+                }
             } catch (e: Exception) {
                 Log.e("ProfileScreen", "Error loading user", e)
-                errorMessage = "Error loading profile"
+                if (isEmailVerified) {
+                    errorMessage = "Error loading profile"
+                }
             } finally {
                 isLoading = false
             }
@@ -215,11 +222,8 @@ fun ProfileScreen(
                 GuestModeContent(onNavigateToLogin = onNavigateToLogin)
             }
 
-            currentUser != null && !authViewModel.isEmailVerified() -> {
-                EmailNotVerifiedContent(
-                    onResendEmail = { authViewModel.resendEmailVerification() },
-                    onLogout = onLogout
-                )
+            !isGuestMode && !isEmailVerified -> {
+                EmailNotVerifiedContent(onLogout = onLogout)
             }
 
             isLoading -> {
@@ -460,7 +464,6 @@ private fun GuestModeContent(
 
 @Composable
 private fun EmailNotVerifiedContent(
-    onResendEmail: () -> Unit,
     onLogout: () -> Unit
 ) {
     Column(
@@ -506,40 +509,27 @@ private fun EmailNotVerifiedContent(
             lineHeight = 20.sp
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(48.dp))
 
         Button(
-            onClick = onResendEmail,
+            onClick = onLogout,
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = ThemeManager.palette.primary
+                containerColor = ThemeManager.palette.alert
             ),
             shape = RoundedCornerShape(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Email,
-                contentDescription = null,
+                imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                contentDescription = "Sign out",
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Didn't receive the email? Verify now",
+                text = "Sign out",
                 color = ThemeManager.palette.white,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(
-            onClick = onLogout,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Sign out",
-                color = ThemeManager.palette.text,
-                fontSize = 14.sp
             )
         }
     }
