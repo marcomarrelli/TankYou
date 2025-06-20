@@ -39,6 +39,7 @@ class MapComponent(
     private lateinit var map: MapView
 
     private var locationOverlay: MyLocationNewOverlay? = null
+    private var locationProvider: GpsMyLocationProvider? = null
     private var clusterer: GasStationCluster? = null
     private var mapInitialized = false
     private var currentZoomLevel: Double = Constants.Map.DEFAULT_ZOOM_LEVEL
@@ -69,12 +70,7 @@ class MapComponent(
     }
 
     private fun updateLocationOverlay() {
-        locationOverlay?.let { overlay ->
-            overlay.disableMyLocation()
-            overlay.disableFollowLocation()
-            map.overlays.remove(overlay)
-            locationOverlay = null
-        }
+        cleanupLocationOverlay()
 
         if (shouldShowLocationOverlay()) {
             setupLocationOverlay()
@@ -82,6 +78,22 @@ class MapComponent(
 
         onLocationOverlayAvailabilityChanged(locationOverlay != null)
         map.invalidate()
+    }
+
+    private fun cleanupLocationOverlay() {
+        locationOverlay?.let { overlay ->
+            try {
+                overlay.disableMyLocation()
+                overlay.disableFollowLocation()
+                map.overlays.remove(overlay)
+            } catch (e: Exception) {
+                // Ignore cleanup errors
+            }
+            locationOverlay = null
+        }
+
+        locationProvider?.stopLocationProvider()
+        locationProvider = null
     }
 
     private fun shouldShowLocationOverlay(): Boolean {
@@ -124,17 +136,15 @@ class MapComponent(
 
             currentZoomLevel = savedZoom
 
-            // Setup overlays in correct order
-            setupClusterer()          // Gas station markers first
-            setupLocationOverlay()   // Location overlay second
-            setupTouchDetectionOverlay() // Touch detection third
-            setupMapClickListener()  // Map click handler last
+            setupClusterer()
+            setupLocationOverlay()
+            setupTouchDetectionOverlay()
+            setupMapClickListener()
 
             map.addMapListener(this)
 
             mapInitialized = true
 
-            // Load initial stations
             context.lifecycleScope.launch {
                 loadStationsInCurrentView()
             }
@@ -162,7 +172,7 @@ class MapComponent(
                         hasUserTouchInteraction = false
                     }
                 }
-                return false // Don't consume the event
+                return false
             }
         }
 
@@ -184,7 +194,7 @@ class MapComponent(
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
                 onMapClick()
-                return false // Don't consume the event to allow marker clicks
+                return false
             }
         }
 
@@ -222,7 +232,6 @@ class MapComponent(
                 if (lastKnownLocation != null) {
                     enableFollowMode()
                     map.controller.animateTo(lastKnownLocation)
-                    // Load stations around the new location
                     context.lifecycleScope.launch {
                         loadStationsInCurrentView()
                     }
@@ -233,7 +242,6 @@ class MapComponent(
                             if (currentLocation != null) {
                                 enableFollowMode()
                                 map.controller.animateTo(currentLocation)
-                                // Load stations around the new location
                                 context.lifecycleScope.launch {
                                     loadStationsInCurrentView()
                                 }
@@ -252,14 +260,9 @@ class MapComponent(
 
         locationOverlay?.enableFollowLocation()
 
-        locationOverlay?.let { overlay ->
-            val provider = overlay.myLocationProvider
-            provider?.let {
-                if (it is GpsMyLocationProvider) {
-                    it.locationUpdateMinTime = 1000L
-                    it.locationUpdateMinDistance = 1.0f
-                }
-            }
+        locationProvider?.let { provider ->
+            provider.locationUpdateMinTime = 1000L
+            provider.locationUpdateMinDistance = 1.0f
         }
 
         onFollowModeChanged(true)
@@ -348,7 +351,6 @@ class MapComponent(
 
         val currentTime = System.currentTimeMillis()
 
-        // Only update if enough time has passed since last update
         if (currentTime - lastLocationUpdate < 2000L) return
 
         lastLocationUpdate = currentTime
@@ -357,7 +359,6 @@ class MapComponent(
         context.runOnUiThread {
             map.controller.animateTo(geoPoint)
 
-            // Load stations around the new location with a delay
             context.lifecycleScope.launch {
                 debounceHelper.debounce(500L, context.lifecycleScope) {
                     loadStationsInCurrentView()
@@ -434,29 +435,63 @@ class MapComponent(
             return
         }
 
-        locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
-        locationOverlay?.enableMyLocation()
-        map.overlays.add(locationOverlay)
+        try {
+            cleanupLocationOverlay()
 
-        onLocationOverlayAvailabilityChanged(true)
+            locationProvider = GpsMyLocationProvider(context)
+            locationOverlay = MyLocationNewOverlay(locationProvider, map)
+
+            locationOverlay?.let { overlay ->
+                overlay.enableMyLocation()
+                map.overlays.add(overlay)
+                onLocationOverlayAvailabilityChanged(true)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            onLocationOverlayAvailabilityChanged(false)
+        }
     }
 
     fun onResume() {
         if (!mapInitialized) return
-        map.onResume()
-        locationOverlay?.enableMyLocation()
 
-        if (isFollowingLocation) {
-            locationOverlay?.enableFollowLocation()
+        try {
+            map.onResume()
+
+            if (shouldShowLocationOverlay()) {
+                locationOverlay?.let { overlay ->
+                    if (overlay.myLocationProvider != null) {
+                        overlay.enableMyLocation()
+
+                        if (isFollowingLocation) {
+                            overlay.enableFollowLocation()
+                        }
+                    } else {
+                        setupLocationOverlay()
+                    }
+                } ?: run {
+                    setupLocationOverlay()
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
     fun onPause() {
         if (!mapInitialized) return
-        map.onPause()
-        saveCurrentMapPosition()
-        locationOverlay?.disableMyLocation()
-        locationOverlay?.disableFollowLocation()
+
+        try {
+            map.onPause()
+            saveCurrentMapPosition()
+
+            locationOverlay?.let { overlay ->
+                overlay.disableMyLocation()
+                overlay.disableFollowLocation()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     fun getTintFilter(

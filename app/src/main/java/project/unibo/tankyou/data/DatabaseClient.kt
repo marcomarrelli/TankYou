@@ -4,6 +4,7 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
 import io.github.jan.supabase.realtime.Realtime
+import io.github.jan.supabase.storage.Storage
 import project.unibo.tankyou.BuildConfig
 
 /**
@@ -49,5 +50,6 @@ object DatabaseClient {
         install(Postgrest)
         install(Realtime)
         install(Auth)
+        install(Storage)
     }
 }

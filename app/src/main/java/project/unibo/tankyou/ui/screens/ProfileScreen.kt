@@ -1,6 +1,7 @@
 package project.unibo.tankyou.ui.screens
 
 import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -51,7 +52,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +60,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.User
@@ -81,6 +82,7 @@ fun ProfileScreen(
     var isEditing by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
     var isUploadingPhoto by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     var editedName by remember { mutableStateOf("") }
     var editedSurname by remember { mutableStateOf("") }
@@ -95,15 +97,22 @@ fun ProfileScreen(
         uri?.let {
             coroutineScope.launch {
                 isUploadingPhoto = true
+                errorMessage = null
                 try {
                     val photoUrl = userRepository.uploadProfilePhoto(it, context)
                     val updatedUser = currentUser?.copy(profilePicture = photoUrl)
                     updatedUser?.let { user ->
-                        userRepository.updateUser(user)
-                        currentUser = user
+                        val success = userRepository.updateUser(user)
+                        if (success) {
+                            currentUser = user
+                            Log.d("ProfileScreen", "Profile photo updated successfully")
+                        } else {
+                            errorMessage = "Failed to update profile photo"
+                        }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.e("ProfileScreen", "Error uploading profile photo", e)
+                    errorMessage = "Error uploading photo: ${e.message}"
                 } finally {
                     isUploadingPhoto = false
                 }
@@ -113,8 +122,14 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         isLoading = true
-        currentUser = userRepository.getCurrentUser()
-        isLoading = false
+        try {
+            currentUser = userRepository.getCurrentUser()
+        } catch (e: Exception) {
+            Log.e("ProfileScreen", "Error loading user", e)
+            errorMessage = "Error loading profile"
+        } finally {
+            isLoading = false
+        }
     }
 
     LaunchedEffect(currentUser) {
@@ -157,6 +172,15 @@ fun ProfileScreen(
                 onPhotoClick = { imagePickerLauncher.launch("image/*") }
             )
 
+            errorMessage?.let { message ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = message,
+                    color = ThemeManager.palette.alert,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             if (isEditing) {
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -178,6 +202,7 @@ fun ProfileScreen(
                             isEditing = false
                             newPassword = ""
                             confirmPassword = ""
+                            errorMessage = null
                             currentUser?.let { user ->
                                 editedName = user.name
                                 editedSurname = user.surname
@@ -197,16 +222,28 @@ fun ProfileScreen(
                         onClick = {
                             coroutineScope.launch {
                                 isSaving = true
+                                errorMessage = null
                                 try {
-                                    kotlinx.coroutines.delay(1000)
-
-                                    isEditing = false
-                                    newPassword = ""
-                                    confirmPassword = ""
-
-                                    currentUser = userRepository.getCurrentUser()
+                                    currentUser?.let { user ->
+                                        val updatedUser = user.copy(
+                                            name = editedName,
+                                            surname = editedSurname,
+                                            username = editedUsername,
+                                            email = editedEmail
+                                        )
+                                        val success = userRepository.updateUser(updatedUser)
+                                        if (success) {
+                                            currentUser = updatedUser
+                                            isEditing = false
+                                            newPassword = ""
+                                            confirmPassword = ""
+                                        } else {
+                                            errorMessage = "Failed to save changes"
+                                        }
+                                    }
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Log.e("ProfileScreen", "Error saving profile", e)
+                                    errorMessage = "Error saving changes: ${e.message}"
                                 } finally {
                                     isSaving = false
                                 }
@@ -328,16 +365,27 @@ private fun ProfileInfoCard(
                         color = ThemeManager.palette.accent
                     )
                 } else {
-                    if (currentUser?.profilePicture != null) {
+                    val hasValidProfilePicture = !currentUser?.profilePicture.isNullOrBlank()
+
+                    if (hasValidProfilePicture) {
                         AsyncImage(
-                            model = currentUser.profilePicture,
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(currentUser?.profilePicture)
+                                .crossfade(true)
+                                .build(),
                             contentDescription = "Profile Photo",
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
                                 .border(2.dp, ThemeManager.palette.accent, CircleShape)
                                 .clickable { onPhotoClick() },
-                            contentScale = ContentScale.Crop
+                            contentScale = ContentScale.Crop,
+                            onError = {
+                                Log.e(
+                                    "ProfileScreen",
+                                    "Error loading profile image: ${currentUser?.profilePicture}"
+                                )
+                            }
                         )
                     } else {
                         Box(
@@ -406,8 +454,8 @@ private fun ProfileInfoCard(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = ThemeManager.palette.text,
+                        unfocusedTextColor = ThemeManager.palette.text,
                         focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
                         cursorColor = ThemeManager.palette.secondary
@@ -424,8 +472,8 @@ private fun ProfileInfoCard(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = ThemeManager.palette.text,
+                        unfocusedTextColor = ThemeManager.palette.text,
                         focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
                         cursorColor = ThemeManager.palette.secondary
@@ -443,8 +491,8 @@ private fun ProfileInfoCard(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
+                        focusedTextColor = ThemeManager.palette.text,
+                        unfocusedTextColor = ThemeManager.palette.text,
                         focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
                         cursorColor = ThemeManager.palette.secondary
@@ -512,8 +560,8 @@ private fun PasswordChangeCard(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ThemeManager.palette.secondary,
                     unfocusedBorderColor = ThemeManager.palette.border,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
+                    focusedTextColor = ThemeManager.palette.text,
+                    unfocusedTextColor = ThemeManager.palette.text,
                     focusedLabelColor = ThemeManager.palette.secondary,
                     unfocusedLabelColor = ThemeManager.palette.text,
                     cursorColor = ThemeManager.palette.secondary
@@ -532,8 +580,8 @@ private fun PasswordChangeCard(
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = ThemeManager.palette.secondary,
                     unfocusedBorderColor = ThemeManager.palette.border,
-                    focusedTextColor = Color.Black,
-                    unfocusedTextColor = Color.Black,
+                    focusedTextColor = ThemeManager.palette.text,
+                    unfocusedTextColor = ThemeManager.palette.text,
                     focusedLabelColor = ThemeManager.palette.secondary,
                     unfocusedLabelColor = ThemeManager.palette.text,
                     cursorColor = ThemeManager.palette.secondary
