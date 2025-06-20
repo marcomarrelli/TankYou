@@ -81,7 +81,6 @@ class MapComponent(
         }
 
         onLocationOverlayAvailabilityChanged(locationOverlay != null)
-
         map.invalidate()
     }
 
@@ -125,13 +124,20 @@ class MapComponent(
 
             currentZoomLevel = savedZoom
 
-            setupClusterer()
-            setupLocationOverlay()
-            setupMapClickListener()
-            setupTouchDetectionOverlay()
+            // Setup overlays in correct order
+            setupClusterer()          // Gas station markers first
+            setupLocationOverlay()   // Location overlay second
+            setupTouchDetectionOverlay() // Touch detection third
+            setupMapClickListener()  // Map click handler last
+
             map.addMapListener(this)
 
             mapInitialized = true
+
+            // Load initial stations
+            context.lifecycleScope.launch {
+                loadStationsInCurrentView()
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -156,7 +162,7 @@ class MapComponent(
                         hasUserTouchInteraction = false
                     }
                 }
-                return false
+                return false // Don't consume the event
             }
         }
 
@@ -178,7 +184,7 @@ class MapComponent(
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
                 onMapClick()
-                return true
+                return false // Don't consume the event to allow marker clicks
             }
         }
 
@@ -216,6 +222,10 @@ class MapComponent(
                 if (lastKnownLocation != null) {
                     enableFollowMode()
                     map.controller.animateTo(lastKnownLocation)
+                    // Load stations around the new location
+                    context.lifecycleScope.launch {
+                        loadStationsInCurrentView()
+                    }
                 } else {
                     overlay.runOnFirstFix {
                         context.runOnUiThread {
@@ -223,6 +233,10 @@ class MapComponent(
                             if (currentLocation != null) {
                                 enableFollowMode()
                                 map.controller.animateTo(currentLocation)
+                                // Load stations around the new location
+                                context.lifecycleScope.launch {
+                                    loadStationsInCurrentView()
+                                }
                             }
                         }
                     }
@@ -332,11 +346,23 @@ class MapComponent(
     override fun onLocationChanged(location: Location?, source: IMyLocationProvider?) {
         if (location == null || !isFollowingLocation) return
 
-        lastLocationUpdate = System.currentTimeMillis()
+        val currentTime = System.currentTimeMillis()
+
+        // Only update if enough time has passed since last update
+        if (currentTime - lastLocationUpdate < 2000L) return
+
+        lastLocationUpdate = currentTime
 
         val geoPoint = GeoPoint(location.latitude, location.longitude)
         context.runOnUiThread {
             map.controller.animateTo(geoPoint)
+
+            // Load stations around the new location with a delay
+            context.lifecycleScope.launch {
+                debounceHelper.debounce(500L, context.lifecycleScope) {
+                    loadStationsInCurrentView()
+                }
+            }
         }
     }
 

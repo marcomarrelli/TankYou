@@ -21,5 +21,8 @@ data class User(
     val username: String,
 
     @SerialName("email")
-    val email: String
+    val email: String,
+
+    @SerialName("profile_picture")
+    val profilePicture: String? = ""
 )

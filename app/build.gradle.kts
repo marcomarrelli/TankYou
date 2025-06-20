@@ -111,7 +111,7 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.coordinatorlayout)
     implementation(libs.androidx.recyclerview)
-    
+
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended) // version 1.7.8
     implementation(libs.material)
@@ -167,4 +167,7 @@ dependencies {
 
     // DateTime
     implementation(libs.kotlinx.datetime)
+
+    // Image Processing and Optimization
+    implementation(libs.coil.compose)
 }
