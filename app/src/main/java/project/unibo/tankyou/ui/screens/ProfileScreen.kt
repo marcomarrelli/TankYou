@@ -31,6 +31,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Save
@@ -50,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +66,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
@@ -82,11 +87,14 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(
     onLogout: () -> Unit,
+    onNavigateToLogin: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     val userRepository = remember { UserRepository.getInstance() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    val isGuestMode by authViewModel.isGuestMode.collectAsState()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -103,7 +111,6 @@ fun ProfileScreen(
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
 
-    // Create a file for camera capture
     val photoFile = remember {
         createImageFile(context)
     }
@@ -116,7 +123,6 @@ fun ProfileScreen(
         )
     }
 
-    // Camera launcher
     val cameraLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.TakePicture()
     ) { success ->
@@ -139,7 +145,6 @@ fun ProfileScreen(
         }
     }
 
-    // Gallery launcher
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -162,7 +167,6 @@ fun ProfileScreen(
         }
     }
 
-    // Permission launcher for camera
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -173,15 +177,17 @@ fun ProfileScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        isLoading = true
-        try {
-            currentUser = userRepository.getCurrentUser()
-        } catch (e: Exception) {
-            Log.e("ProfileScreen", "Error loading user", e)
-            errorMessage = "Error loading profile"
-        } finally {
-            isLoading = false
+    LaunchedEffect(isGuestMode) {
+        if (!isGuestMode) {
+            isLoading = true
+            try {
+                currentUser = userRepository.getCurrentUser()
+            } catch (e: Exception) {
+                Log.e("ProfileScreen", "Error loading user", e)
+                errorMessage = "Error loading profile"
+            } finally {
+                isLoading = false
+            }
         }
     }
 
@@ -204,161 +210,172 @@ fun ProfileScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        if (isLoading) {
-            CircularProgressIndicator(
-                modifier = Modifier.padding(32.dp),
-                color = ThemeManager.palette.primary
-            )
-        } else {
-            ProfileInfoCard(
-                currentUser = currentUser,
-                isEditing = isEditing,
-                editedName = editedName,
-                editedSurname = editedSurname,
-                editedUsername = editedUsername,
-                editedEmail = editedEmail,
-                onNameChange = { editedName = it },
-                onSurnameChange = { editedSurname = it },
-                onUsernameChange = { editedUsername = it },
-                onEmailChange = { editedEmail = it },
-                onEditToggle = { isEditing = !isEditing },
-                isUploadingPhoto = isUploadingPhoto,
-                onPhotoClick = { showPhotoDialog = true }
-            )
+        when {
+            isGuestMode -> {
+                GuestModeContent(onNavigateToLogin = onNavigateToLogin)
+            }
 
-            errorMessage?.let { message ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    text = message,
-                    color = ThemeManager.palette.alert,
-                    style = MaterialTheme.typography.bodySmall
+            currentUser != null && !authViewModel.isEmailVerified() -> {
+                EmailNotVerifiedContent(
+                    onResendEmail = { authViewModel.resendEmailVerification() },
+                    onLogout = onLogout
                 )
             }
 
-            if (isEditing) {
-                Spacer(modifier = Modifier.height(16.dp))
+            isLoading -> {
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(32.dp),
+                    color = ThemeManager.palette.primary
+                )
+            }
 
-                PasswordChangeCard(
-                    newPassword = newPassword,
-                    confirmPassword = confirmPassword,
-                    onNewPasswordChange = { newPassword = it },
-                    onConfirmPasswordChange = { confirmPassword = it }
+            else -> {
+                ProfileInfoCard(
+                    currentUser = currentUser,
+                    isEditing = isEditing,
+                    editedName = editedName,
+                    editedSurname = editedSurname,
+                    editedUsername = editedUsername,
+                    editedEmail = editedEmail,
+                    onNameChange = { editedName = it },
+                    onSurnameChange = { editedSurname = it },
+                    onUsernameChange = { editedUsername = it },
+                    onEmailChange = { editedEmail = it },
+                    onEditToggle = { isEditing = !isEditing },
+                    isUploadingPhoto = isUploadingPhoto,
+                    onPhotoClick = { showPhotoDialog = true }
                 )
 
-                Spacer(modifier = Modifier.height(24.dp))
+                errorMessage?.let { message ->
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = message,
+                        color = ThemeManager.palette.alert,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    TextButton(
-                        onClick = {
-                            isEditing = false
-                            newPassword = ""
-                            confirmPassword = ""
-                            errorMessage = null
-                            currentUser?.let { user ->
-                                editedName = user.name
-                                editedSurname = user.surname
-                                editedUsername = user.username
-                                editedEmail = user.email
-                            }
-                        },
-                        modifier = Modifier.weight(1f)
+                if (isEditing) {
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    PasswordChangeCard(
+                        newPassword = newPassword,
+                        confirmPassword = confirmPassword,
+                        onNewPasswordChange = { newPassword = it },
+                        onConfirmPasswordChange = { confirmPassword = it }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            "Cancel",
-                            color = ThemeManager.palette.text
-                        )
-                    }
-
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                isSaving = true
+                        TextButton(
+                            onClick = {
+                                isEditing = false
+                                newPassword = ""
+                                confirmPassword = ""
                                 errorMessage = null
-                                try {
-                                    currentUser?.let { user ->
-                                        val updatedUser = user.copy(
-                                            name = editedName,
-                                            surname = editedSurname,
-                                            username = editedUsername,
-                                            email = editedEmail
-                                        )
-                                        val success = userRepository.updateUser(updatedUser)
-                                        if (success) {
-                                            currentUser = updatedUser
-                                            isEditing = false
-                                            newPassword = ""
-                                            confirmPassword = ""
-                                        } else {
-                                            errorMessage = "Failed to save changes"
-                                        }
-                                    }
-                                } catch (e: Exception) {
-                                    Log.e("ProfileScreen", "Error saving profile", e)
-                                    errorMessage = "Error saving changes: ${e.message}"
-                                } finally {
-                                    isSaving = false
+                                currentUser?.let { user ->
+                                    editedName = user.name
+                                    editedSurname = user.surname
+                                    editedUsername = user.username
+                                    editedEmail = user.email
                                 }
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text(
+                                "Cancel",
+                                color = ThemeManager.palette.text
+                            )
+                        }
+
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    isSaving = true
+                                    errorMessage = null
+                                    try {
+                                        currentUser?.let { user ->
+                                            val updatedUser = user.copy(
+                                                name = editedName,
+                                                surname = editedSurname,
+                                                username = editedUsername,
+                                                email = editedEmail
+                                            )
+                                            val success = userRepository.updateUser(updatedUser)
+                                            if (success) {
+                                                currentUser = updatedUser
+                                                isEditing = false
+                                                newPassword = ""
+                                                confirmPassword = ""
+                                            } else {
+                                                errorMessage = "Failed to save changes"
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("ProfileScreen", "Error saving profile", e)
+                                        errorMessage = "Error saving changes: ${e.message}"
+                                    } finally {
+                                        isSaving = false
+                                    }
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = ThemeManager.palette.primary,
+                                contentColor = ThemeManager.palette.text,
+                                disabledContainerColor = ThemeManager.palette.disabledBackground,
+                                disabledContentColor = ThemeManager.palette.disabledText
+                            ),
+                            enabled = !isSaving &&
+                                    editedName.isNotBlank() &&
+                                    editedSurname.isNotBlank() &&
+                                    editedUsername.isNotBlank() &&
+                                    editedEmail.isNotBlank() &&
+                                    (newPassword.isEmpty() || (newPassword == confirmPassword && newPassword.length >= 6))
+                        ) {
+                            if (isSaving) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    color = ThemeManager.palette.white
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Save,
+                                    contentDescription = "Save",
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Save Changes")
                             }
-                        },
-                        modifier = Modifier.weight(1f),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = ThemeManager.palette.primary,
-                            contentColor = ThemeManager.palette.text,
-                            disabledContainerColor = ThemeManager.palette.disabledBackground,
-                            disabledContentColor = ThemeManager.palette.disabledText
-                        ),
-                        enabled = !isSaving &&
-                                editedName.isNotBlank() &&
-                                editedSurname.isNotBlank() &&
-                                editedUsername.isNotBlank() &&
-                                editedEmail.isNotBlank() &&
-                                (newPassword.isEmpty() || (newPassword == confirmPassword && newPassword.length >= 6))
-                    ) {
-                        if (isSaving) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = ThemeManager.palette.white
-                            )
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Save,
-                                contentDescription = "Save",
-                                modifier = Modifier.size(18.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Save Changes")
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = {
-                    authViewModel.signOut()
-                    onLogout()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = ThemeManager.palette.alert
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Logout",
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Logout", color = ThemeManager.palette.white)
+                Button(
+                    onClick = onLogout,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = ThemeManager.palette.alert
+                    )
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                        contentDescription = "Logout",
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Logout", color = ThemeManager.palette.white)
+                }
             }
         }
     }
 
-    // Photo selection dialog
     if (showPhotoDialog) {
         PhotoSelectionDialog(
             onDismiss = { showPhotoDialog = false },
@@ -375,6 +392,156 @@ fun ProfileScreen(
                 galleryLauncher.launch("image/*")
             }
         )
+    }
+}
+
+@Composable
+private fun GuestModeContent(
+    onNavigateToLogin: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Person,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = ThemeManager.palette.accent
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Guest Mode",
+            style = MaterialTheme.typography.headlineMedium,
+            color = ThemeManager.palette.title,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "You're currently using the app as a guest. Sign up or log in to unlock additional features and save your preferences.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = ThemeManager.palette.text,
+            textAlign = TextAlign.Center,
+            lineHeight = 24.sp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onNavigateToLogin,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ThemeManager.palette.primary
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Login,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Want more? Join now",
+                color = ThemeManager.palette.white,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmailNotVerifiedContent(
+    onResendEmail: () -> Unit,
+    onLogout: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Default.Email,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = ThemeManager.palette.warning
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "Email Verification Required",
+            style = MaterialTheme.typography.headlineMedium,
+            color = ThemeManager.palette.title,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "User Registered but not verified",
+            style = MaterialTheme.typography.bodyLarge,
+            color = ThemeManager.palette.text,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Please check your email and click the verification link to activate your account.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = ThemeManager.palette.text.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center,
+            lineHeight = 20.sp
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        Button(
+            onClick = onResendEmail,
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = ThemeManager.palette.primary
+            ),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Email,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Didn't receive the email? Verify now",
+                color = ThemeManager.palette.white,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        TextButton(
+            onClick = onLogout,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "Sign out",
+                color = ThemeManager.palette.text,
+                fontSize = 14.sp
+            )
+        }
     }
 }
 
@@ -450,7 +617,6 @@ private fun PhotoSelectionDialog(
     )
 }
 
-// Helper functions and classes
 private fun createImageFile(context: Context): File {
     val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
     val imageFileName = "JPEG_${timeStamp}_"

@@ -187,7 +187,10 @@ fun LoginScreen(
 
             /** Guest access button for using app without authentication */
             TextButton(
-                onClick = onContinueAsGuest,
+                onClick = {
+                    authViewModel.continueAsGuest()
+                    onContinueAsGuest()
+                },
                 modifier = Modifier.weight(1f),
                 colors = ButtonDefaults.textButtonColors(
                     contentColor = ThemeManager.palette.secondary

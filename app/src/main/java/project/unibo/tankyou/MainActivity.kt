@@ -142,21 +142,26 @@ class MainActivity : AppCompatActivity() {
     private fun MainApp() {
         val authViewModel: AuthViewModel = viewModel()
         val authState by authViewModel.authState.collectAsState()
+        val isGuestMode by authViewModel.isGuestMode.collectAsState()
         var currentScreen by remember { mutableStateOf(Screen.LOGIN) }
 
-        LaunchedEffect(authState) {
-            when (authState) {
-                is AuthState.Authenticated -> {
+        LaunchedEffect(authState, isGuestMode) {
+            when {
+                authState is AuthState.Authenticated && !isGuestMode -> {
                     if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
                         currentScreen = Screen.MAP
                     }
                 }
 
-                is AuthState.Unauthenticated -> {
-                    currentScreen = Screen.LOGIN
+                authState is AuthState.Unauthenticated && isGuestMode -> {
+                    if (currentScreen == Screen.LOGIN || currentScreen == Screen.REGISTER) {
+                        currentScreen = Screen.MAP
+                    }
                 }
 
-                else -> {}
+                authState is AuthState.Unauthenticated && !isGuestMode -> {
+                    currentScreen = Screen.LOGIN
+                }
             }
         }
 
@@ -166,7 +171,10 @@ class MainActivity : AppCompatActivity() {
                     LoginScreen(
                         onNavigateToRegister = { currentScreen = Screen.REGISTER },
                         onLoginSuccess = { currentScreen = Screen.MAP },
-                        onContinueAsGuest = { currentScreen = Screen.MAP },
+                        onContinueAsGuest = {
+                            authViewModel.continueAsGuest()
+                            currentScreen = Screen.MAP
+                        },
                         authViewModel = authViewModel
                     )
                 }
@@ -204,7 +212,14 @@ class MainActivity : AppCompatActivity() {
 
                         Screen.PROFILE -> {
                             ProfileScreen(
-                                onLogout = { currentScreen = Screen.LOGIN },
+                                onLogout = {
+                                    authViewModel.signOut()
+                                    currentScreen = Screen.LOGIN
+                                },
+                                onNavigateToLogin = {
+                                    authViewModel.signOut()
+                                    currentScreen = Screen.LOGIN
+                                },
                                 authViewModel = authViewModel
                             )
                         }
