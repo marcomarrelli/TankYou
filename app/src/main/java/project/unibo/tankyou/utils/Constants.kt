@@ -162,6 +162,9 @@ object Constants {
     var GAS_STATION_FLAGS: List<GasStationFlag> = emptyList()
         private set
 
+    var GAS_STATION_SERVICES: List<Boolean> = emptyList()
+        private set
+
     private var isInitialized = false
 
     /**
@@ -177,13 +180,10 @@ object Constants {
             if (isInitialized) return
 
             try {
-                val fuelTypes = REPOSITORY.getFuelTypes()
-                val flags = REPOSITORY.getFlags()
-                val gasStationTypes = REPOSITORY.getGasStationTypes()
-
-                FUEL_TYPES = fuelTypes
-                GAS_STATION_FLAGS = flags
-                GAS_STATION_TYPES = gasStationTypes
+                FUEL_TYPES = REPOSITORY.getFuelTypes()
+                GAS_STATION_FLAGS = REPOSITORY.getFlags()
+                GAS_STATION_TYPES = REPOSITORY.getGasStationTypes()
+                GAS_STATION_SERVICES = listOf(true, false)
 
                 isInitialized = true
             } catch (e: Exception) {
