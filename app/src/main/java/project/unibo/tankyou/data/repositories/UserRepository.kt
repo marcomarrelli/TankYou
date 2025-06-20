@@ -1,14 +1,18 @@
 package project.unibo.tankyou.data.repositories
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.postgrest.from
 import io.github.jan.supabase.postgrest.query.Order
+import io.github.jan.supabase.storage.storage
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import project.unibo.tankyou.data.DatabaseClient
 import project.unibo.tankyou.data.database.entities.User
 import project.unibo.tankyou.data.database.entities.UserSavedGasStation
+import java.util.UUID
 
 class UserRepository(private val supabase: SupabaseClient) {
 
@@ -228,5 +232,75 @@ class UserRepository(private val supabase: SupabaseClient) {
             Log.e("UserRepository", "Error updating notes for gas station $stationId", e)
             false
         }
+    }
+
+    /**
+     * Uploads a profile photo to Supabase Storage
+     * @param uri The URI of the image to upload
+     * @param context The Android context
+     * @return The public URL of the uploaded image
+     */
+    suspend fun uploadProfilePhoto(uri: Uri, context: Context): String {
+        return try {
+            val currentUser = getCurrentUser()
+            if (currentUser == null) {
+                throw Exception("User not logged in")
+            }
+
+            val fileName = "profile_${currentUser.id}_${UUID.randomUUID()}.jpg"
+            val inputStream = context.contentResolver.openInputStream(uri)
+                ?: throw Exception("Cannot open image file")
+
+            val bytes = inputStream.readBytes()
+            inputStream.close()
+
+            supabase.storage
+                .from("profile-photos")
+                .upload(fileName, bytes)
+
+            val publicUrl = supabase.storage
+                .from("profile-photos")
+                .publicUrl(fileName)
+
+            Log.d("UserRepository", "Successfully uploaded profile photo: $publicUrl")
+            publicUrl
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error uploading profile photo", e)
+            throw e
+        }
+    }
+
+    /**
+     * Updates user information in the database
+     * @param user The updated user object
+     * @return true if successful, false otherwise
+     */
+    suspend fun updateUser(user: User): Boolean {
+        return try {
+            supabase.from("users")
+                .update(
+                    buildJsonObject {
+                        put("name", user.name)
+                        put("surname", user.surname)
+                        put("username", user.username)
+                        put("email", user.email)
+                        user.profilePicture?.let { put("profile_photo_url", it) }
+                    }
+                ) {
+                    filter {
+                        eq("id", user.id)
+                    }
+                }
+
+            Log.d("UserRepository", "Successfully updated user ${user.id}")
+            true
+        } catch (e: Exception) {
+            Log.e("UserRepository", "Error updating user ${user.id}", e)
+            false
+        }
+    }
+
+    suspend fun updateUserProfilePhoto(userId: Int, photoUrl: String) {
+        supabase.from("users").update(mapOf("profile_photo_url" to photoUrl))
     }
 }

@@ -26,7 +26,8 @@ import project.unibo.tankyou.utils.Constants
 class GasStationMarker(
     mapView: MapView,
     val gasStation: GasStation,
-    private val context: Context
+    private val context: Context,
+    onMarkerClick: ((GasStation) -> Unit)? = null
 ) : Marker(mapView) {
 
     /**
@@ -39,6 +40,13 @@ class GasStationMarker(
 
         icon = createGasStationIcon()
         setAnchor(ANCHOR_CENTER, ANCHOR_BOTTOM)
+
+        onMarkerClick?.let { clickHandler ->
+            setOnMarkerClickListener { _, _ ->
+                clickHandler(gasStation)
+                true
+            }
+        }
     }
 
     /**

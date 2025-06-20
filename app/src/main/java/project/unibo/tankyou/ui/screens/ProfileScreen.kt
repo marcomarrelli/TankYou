@@ -1,7 +1,13 @@
 package project.unibo.tankyou.ui.screens
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,10 +19,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Save
@@ -42,12 +50,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.User
@@ -62,11 +74,13 @@ fun ProfileScreen(
 ) {
     val userRepository = remember { UserRepository.getInstance() }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
 
     var currentUser by remember { mutableStateOf<User?>(null) }
     var isLoading by remember { mutableStateOf(false) }
     var isEditing by remember { mutableStateOf(false) }
     var isSaving by remember { mutableStateOf(false) }
+    var isUploadingPhoto by remember { mutableStateOf(false) }
 
     var editedName by remember { mutableStateOf("") }
     var editedSurname by remember { mutableStateOf("") }
@@ -74,6 +88,28 @@ fun ProfileScreen(
     var editedEmail by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            coroutineScope.launch {
+                isUploadingPhoto = true
+                try {
+                    val photoUrl = userRepository.uploadProfilePhoto(it, context)
+                    val updatedUser = currentUser?.copy(profilePicture = photoUrl)
+                    updatedUser?.let { user ->
+                        userRepository.updateUser(user)
+                        currentUser = user
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                } finally {
+                    isUploadingPhoto = false
+                }
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         isLoading = true
@@ -116,7 +152,9 @@ fun ProfileScreen(
                 onSurnameChange = { editedSurname = it },
                 onUsernameChange = { editedUsername = it },
                 onEmailChange = { editedEmail = it },
-                onEditToggle = { isEditing = !isEditing }
+                onEditToggle = { isEditing = !isEditing },
+                isUploadingPhoto = isUploadingPhoto,
+                onPhotoClick = { imagePickerLauncher.launch("image/*") }
             )
 
             if (isEditing) {
@@ -156,7 +194,7 @@ fun ProfileScreen(
                     }
 
                     Button(
-                        onClick = { // TODO: Fix with backend logic please :(
+                        onClick = {
                             coroutineScope.launch {
                                 isSaving = true
                                 try {
@@ -242,7 +280,9 @@ private fun ProfileInfoCard(
     onSurnameChange: (String) -> Unit,
     onUsernameChange: (String) -> Unit,
     onEmailChange: (String) -> Unit,
-    onEditToggle: () -> Unit
+    onEditToggle: () -> Unit,
+    isUploadingPhoto: Boolean,
+    onPhotoClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -278,12 +318,64 @@ private fun ProfileInfoCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Profile",
+            Box(
                 modifier = Modifier.size(80.dp),
-                tint = ThemeManager.palette.accent
-            )
+                contentAlignment = Alignment.Center
+            ) {
+                if (isUploadingPhoto) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(80.dp),
+                        color = ThemeManager.palette.accent
+                    )
+                } else {
+                    if (currentUser?.profilePicture != null) {
+                        AsyncImage(
+                            model = currentUser.profilePicture,
+                            contentDescription = "Profile Photo",
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .border(2.dp, ThemeManager.palette.accent, CircleShape)
+                                .clickable { onPhotoClick() },
+                            contentScale = ContentScale.Crop
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                                .background(ThemeManager.palette.accent.copy(alpha = 0.1f))
+                                .border(2.dp, ThemeManager.palette.accent, CircleShape)
+                                .clickable { onPhotoClick() },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = "Default Profile",
+                                modifier = Modifier.size(40.dp),
+                                tint = ThemeManager.palette.accent
+                            )
+                        }
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(ThemeManager.palette.secondary)
+                        .clickable { onPhotoClick() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CameraAlt,
+                        contentDescription = "Change Photo",
+                        modifier = Modifier.size(12.dp),
+                        tint = ThemeManager.palette.white
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(20.dp))
 
