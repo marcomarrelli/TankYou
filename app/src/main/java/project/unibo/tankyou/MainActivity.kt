@@ -90,7 +90,7 @@ import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.GasStationFlag
-import project.unibo.tankyou.data.repositories.AppRepository
+import project.unibo.tankyou.data.database.entities.toFuelTypeName
 import project.unibo.tankyou.data.repositories.SearchFilters
 import project.unibo.tankyou.ui.components.GasStationCard
 import project.unibo.tankyou.ui.components.MapComponent
@@ -290,15 +290,9 @@ class MainActivity : AppCompatActivity() {
 
         val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
 
-        var availableFlags: List<GasStationFlag> = emptyList()
-        var availableFuelTypes: List<FuelType> = emptyList()
-        var availableServiceTypes: List<Boolean> = emptyList()
-
-        LaunchedEffect(null) {
-            availableFlags = AppRepository.getInstance().getFlags()
-            availableFuelTypes = AppRepository.getInstance().getFuelTypes()
-            availableServiceTypes = listOf(false, true)
-        }
+        val availableFlags: List<GasStationFlag> = Constants.GAS_STATION_FLAGS
+        val availableFuelTypes: List<FuelType> = Constants.FUEL_TYPES
+        val availableServiceTypes: List<Boolean> = Constants.GAS_STATION_SERVICES
 
         LaunchedEffect(selectedGasStation) {
             if (selectedGasStation != null) {
@@ -692,7 +686,7 @@ class MainActivity : AppCompatActivity() {
                                                     selectedFuelTypes + fuelType
                                                 }
                                         },
-                                        label = { Text(fuelType.name) },
+                                        label = { Text(fuelType.id.toFuelTypeName()) },
                                         selected = selectedFuelTypes.contains(fuelType),
                                         colors = FilterChipDefaults.filterChipColors(
                                             selectedContainerColor = ThemeManager.palette.primary,
