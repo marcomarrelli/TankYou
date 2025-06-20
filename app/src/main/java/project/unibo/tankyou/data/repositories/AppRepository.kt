@@ -2,7 +2,6 @@ package project.unibo.tankyou.data.repositories
 
 import android.util.LruCache
 import io.github.jan.supabase.postgrest.from
-import io.github.jan.supabase.postgrest.query.Columns.Companion.raw
 import io.github.jan.supabase.postgrest.query.Order
 import org.osmdroid.util.BoundingBox
 import project.unibo.tankyou.data.DatabaseClient
@@ -139,16 +138,6 @@ class AppRepository {
         }
     }
 
-    suspend fun getStationsByProvinces(provinces: List<String>): List<GasStation> {
-        return client.from("gas_stations")
-            .select {
-                filter {
-                    isIn("province", provinces)
-                }
-            }
-            .decodeList<GasStation>()
-    }
-
     suspend fun getStationById(id: String): GasStation? {
         return client.from("gas_stations").select {
             filter { eq("id", id) }
@@ -243,53 +232,68 @@ class AppRepository {
         query: String,
         filters: SearchFilters
     ): List<GasStation> {
-        if (query.isBlank() && filters.flags.isEmpty() && filters.fuelTypes.isEmpty() && filters.serviceTypes.isEmpty()) {
+        if (filters.flags.isEmpty() && filters.fuelTypes.isEmpty()) {
             return emptyList()
         }
 
         return try {
-            val conditions = mutableListOf<String>()
-
-            if (query.isNotBlank()) {
+            val baseStations = if (query.isNotBlank()) {
                 val searchQuery = "%${query.lowercase()}%"
-                conditions.add("(name.ilike.$searchQuery,city.ilike.$searchQuery,province.ilike.$searchQuery)")
-            }
-
-            if (filters.flags.isNotEmpty()) {
-                val flagConditions = filters.flags.joinToString(",") { "flag.eq.$it" }
-                conditions.add("($flagConditions)")
-            }
-
-            if (filters.serviceTypes.isNotEmpty()) {
-                val serviceConditions =
-                    filters.serviceTypes.joinToString(",") { "service_type.eq.$it" }
-                conditions.add("($serviceConditions)")
-            }
-
-            var stations = if (conditions.isNotEmpty()) {
-                client.from("gas_stations").select {
-                    filter {
-                        or {
-                            conditions.forEach { condition ->
-                                raw(condition)
+                client.from("gas_stations")
+                    .select {
+                        filter {
+                            or {
+                                ilike("name", searchQuery)
+                                ilike("city", searchQuery)
+                                ilike("province", searchQuery)
                             }
                         }
                     }
-                }.decodeList<GasStation>()
+                    .decodeList<GasStation>()
             } else {
-                client.from("gas_stations").select().decodeList<GasStation>()
+                client.from("gas_stations")
+                    .select()
+                    .decodeList<GasStation>()
             }
 
-            if (filters.fuelTypes.isNotEmpty()) {
-                stations = stations.filter { station ->
-                    val stationFuels = getFuelPricesForStation(station.id.toLong())
-                    filters.fuelTypes.any { fuelType ->
-                        stationFuels.any { fuel -> fuel.type.equals(fuelType) }
-                    }
+            var filteredStations = baseStations
+
+            if (filters.flags.isNotEmpty()) {
+                val flagIds = filters.flags.map { it.id }
+                filteredStations = filteredStations.filter { station ->
+                    station.flag in flagIds
                 }
             }
 
-            stations
+            if (filters.fuelTypes.isNotEmpty()) {
+                val fuelTypeIds = filters.fuelTypes.map { it.id }
+                val stationsWithRequiredFuels = mutableListOf<GasStation>()
+
+                for (station in filteredStations) {
+                    val stationFuels = try {
+                        client.from("fuels")
+                            .select {
+                                filter { eq("station_id", station.id.toLong()) }
+                            }
+                            .decodeList<Fuel>()
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+
+                    val hasRequiredFuel = fuelTypeIds.any { fuelTypeId ->
+                        stationFuels.any { fuel -> fuel.type == fuelTypeId }
+                    }
+
+                    if (hasRequiredFuel) {
+                        stationsWithRequiredFuels.add(station)
+                    }
+                }
+
+                filteredStations = stationsWithRequiredFuels
+            }
+
+            filteredStations
+
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
