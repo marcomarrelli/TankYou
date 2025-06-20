@@ -83,7 +83,6 @@ fun TankYouTheme(
         }
     }
 
-    // Provide the selected TankYouColors through CompositionLocal
     CompositionLocalProvider(LocalTankYouColors provides tankYouColors) {
         MaterialTheme(
             colorScheme = colorScheme,

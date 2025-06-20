@@ -2,6 +2,7 @@ package project.unibo.tankyou.ui.components
 
 import android.graphics.Color
 import android.graphics.ColorMatrixColorFilter
+import android.location.Location
 import android.view.MotionEvent
 import android.widget.RelativeLayout
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +19,8 @@ import org.osmdroid.views.CustomZoomButtonsController
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Overlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import org.osmdroid.views.overlay.mylocation.IMyLocationConsumer
+import org.osmdroid.views.overlay.mylocation.IMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.utils.Constants
@@ -25,22 +28,13 @@ import project.unibo.tankyou.utils.Debouncer
 import project.unibo.tankyou.utils.SettingsManager
 import kotlin.math.abs
 
-/**
- * Component that manages the OpenStreetMap view and gas station markers.
- * Handles map initialization, clustering, location services, and user interactions.
- *
- * @param context the [AppCompatActivity] context
- * @param mapContainer the [RelativeLayout] container for the map
- * @param onMapClick callback called when the map is clicked
- * @param onGasStationClick callback called when a gas station marker is clicked
- */
 class MapComponent(
     private val context: AppCompatActivity,
     private val mapContainer: RelativeLayout,
     private val onMapClick: () -> Unit = {},
-    private val onGasStationClick: (GasStation) -> Unit = {}
-) : MapListener {
-    /** Current TankYou Map */
+    private val onGasStationClick: (GasStation) -> Unit = {},
+    private val onFollowModeChanged: (Boolean) -> Unit = {}
+) : MapListener, IMyLocationConsumer {
     private lateinit var map: MapView
 
     private var locationOverlay: MyLocationNewOverlay? = null
@@ -50,17 +44,16 @@ class MapComponent(
     private var lastLoadedBounds: BoundingBox? = null
     private val debounceHelper = Debouncer()
 
-    private val isLocationOverlayActive: Boolean =
-        ::map.isInitialized && locationOverlay != null && SettingsManager.showMyLocationOnMapFlow.value
+    private var isFollowingLocation = false
+    private var lastLocationUpdate: Long = 0
 
     init {
         setupMapConfiguration()
         setupSettingsObserver()
     }
 
-    /**
-     * Observes settings changes and updates the overlay accordingly
-     */
+    fun isFollowModeActive(): Boolean = isFollowingLocation
+
     private fun setupSettingsObserver() {
         context.lifecycleScope.launch {
             SettingsManager.showMyLocationOnMapFlow.collect { showLocation ->
@@ -71,28 +64,25 @@ class MapComponent(
         }
     }
 
-    /**
-     * Updates the location overlay based on current settings
-     */
     private fun updateLocationOverlay() {
         locationOverlay?.let { overlay ->
             overlay.disableMyLocation()
+            overlay.disableFollowLocation()
             map.overlays.remove(overlay)
             locationOverlay = null
         }
 
-        if (isLocationOverlayActive) {
-            locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
-            locationOverlay?.enableMyLocation()
-            map.overlays.add(locationOverlay)
+        if (shouldShowLocationOverlay()) {
+            setupLocationOverlay()
         }
 
         map.invalidate()
     }
 
-    /**
-     * Configures and initializes the map with default settings.
-     */
+    private fun shouldShowLocationOverlay(): Boolean {
+        return ::map.isInitialized && SettingsManager.showMyLocationOnMapFlow.value
+    }
+
     private fun setupMapConfiguration() {
         Configuration.getInstance().apply {
             userAgentValue = context.packageName
@@ -140,9 +130,6 @@ class MapComponent(
         }
     }
 
-    /**
-     * Saves the current map position
-     */
     private fun saveCurrentMapPosition() {
         if (::map.isInitialized) {
             val currentCenter: GeoPoint = map.mapCenter as GeoPoint
@@ -154,9 +141,6 @@ class MapComponent(
         }
     }
 
-    /**
-     * Listener Configuration
-     */
     private fun setupMapClickListener() {
         val mapClickOverlay = object : Overlay() {
             override fun onSingleTapConfirmed(e: MotionEvent?, mapView: MapView?): Boolean {
@@ -168,43 +152,80 @@ class MapComponent(
         map.overlays.add(0, mapClickOverlay)
     }
 
-    /**
-     * Zoom In
-     */
     fun zoomIn() {
         if (::map.isInitialized) {
             map.controller.zoomIn()
         }
     }
 
-    /**
-     * Zoom Out
-     */
     fun zoomOut() {
         if (::map.isInitialized) {
             map.controller.zoomOut()
         }
     }
 
-    /**
-     * Center map on user's current location
-     */
     fun centerOnMyLocation() {
-        if (::map.isInitialized && locationOverlay != null &&
-            SettingsManager.showMyLocationOnMapFlow.value
-        ) {
+        if (!::map.isInitialized) return
+
+        if (!SettingsManager.showMyLocationOnMapFlow.value) {
+            return
+        }
+
+        if (locationOverlay == null) {
+            setupLocationOverlay()
+        }
+
+        if (isFollowingLocation) {
+            disableFollowMode()
+        } else {
             locationOverlay?.let { overlay ->
                 val lastKnownLocation = overlay.myLocation
                 if (lastKnownLocation != null) {
+                    enableFollowMode()
                     map.controller.animateTo(lastKnownLocation)
+                } else {
+                    overlay.runOnFirstFix {
+                        context.runOnUiThread {
+                            val currentLocation = overlay.myLocation
+                            if (currentLocation != null) {
+                                enableFollowMode()
+                                map.controller.animateTo(currentLocation)
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 
-    /**
-     * Sets up the marker clustering functionality for gas stations.
-     */
+    private fun enableFollowMode() {
+        if (isFollowingLocation) return
+
+        isFollowingLocation = true
+
+        locationOverlay?.enableFollowLocation()
+
+        locationOverlay?.let { overlay ->
+            val provider = overlay.myLocationProvider
+            provider?.let {
+                if (it is GpsMyLocationProvider) {
+                    it.locationUpdateMinTime = 1000L
+                    it.locationUpdateMinDistance = 1.0f
+                }
+            }
+        }
+
+        onFollowModeChanged(true)
+    }
+
+    private fun disableFollowMode() {
+        if (!isFollowingLocation) return
+
+        isFollowingLocation = false
+        locationOverlay?.disableFollowLocation()
+        onFollowModeChanged(false)
+    }
+
     private fun setupClusterer() {
         try {
             clusterer = GasStationCluster(context)
@@ -219,9 +240,6 @@ class MapComponent(
         }
     }
 
-    /**
-     * Updates the clustering radius based on current zoom level.
-     */
     private fun updateClustererRadius() {
         clusterer?.let { cluster ->
             val radius: Int = when {
@@ -269,6 +287,17 @@ class MapComponent(
         }
 
         return true
+    }
+
+    override fun onLocationChanged(location: Location?, source: IMyLocationProvider?) {
+        if (location == null || !isFollowingLocation) return
+
+        lastLocationUpdate = System.currentTimeMillis()
+
+        val geoPoint = GeoPoint(location.latitude, location.longitude)
+        context.runOnUiThread {
+            map.controller.animateTo(geoPoint)
+        }
     }
 
     private suspend fun loadStationsInCurrentView() {
@@ -334,7 +363,7 @@ class MapComponent(
     }
 
     private fun setupLocationOverlay() {
-        if (!isLocationOverlayActive) return
+        if (!shouldShowLocationOverlay()) return
 
         locationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(context), map)
         locationOverlay?.enableMyLocation()
@@ -344,22 +373,21 @@ class MapComponent(
     fun onResume() {
         if (!mapInitialized) return
         map.onResume()
+        locationOverlay?.enableMyLocation()
+
+        if (isFollowingLocation) {
+            locationOverlay?.enableFollowLocation()
+        }
     }
 
     fun onPause() {
         if (!mapInitialized) return
         map.onPause()
         saveCurrentMapPosition()
+        locationOverlay?.disableMyLocation()
+        locationOverlay?.disableFollowLocation()
     }
 
-    /**
-     * Map Color Filter Getter
-     *
-     * @param destinationColor Destination Monochromatic Color
-     * @param intensity Tint Intensity
-     *
-     * @return a [ColorMatrixColorFilter]
-     */
     fun getTintFilter(
         destinationColor: Int,
         intensity: Float = 1.0f
@@ -392,6 +420,10 @@ class MapComponent(
 
     fun searchGasStations(query: String) {
         if (!mapInitialized) return
+
+        if (isFollowingLocation) {
+            disableFollowMode()
+        }
 
         context.lifecycleScope.launch {
             try {

@@ -35,7 +35,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +62,6 @@ fun ProfileScreen(
 ) {
     val userRepository = remember { UserRepository.getInstance() }
     val coroutineScope = rememberCoroutineScope()
-    val authState by authViewModel.authState.collectAsState()
 
     var currentUser by remember { mutableStateOf<User?>(null) }
     var isLoading by remember { mutableStateOf(false) }
@@ -101,15 +99,6 @@ fun ProfileScreen(
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Profile",
-            style = MaterialTheme.typography.headlineLarge.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = ThemeManager.palette.title,
-            modifier = Modifier.padding(bottom = 24.dp)
-        )
-
         if (isLoading) {
             CircularProgressIndicator(
                 modifier = Modifier.padding(32.dp),
@@ -187,7 +176,10 @@ fun ProfileScreen(
                         },
                         modifier = Modifier.weight(1f),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = ThemeManager.palette.primary
+                            containerColor = ThemeManager.palette.primary,
+                            contentColor = ThemeManager.palette.text,
+                            disabledContainerColor = ThemeManager.palette.disabledBackground,
+                            disabledContentColor = ThemeManager.palette.disabledText
                         ),
                         enabled = !isSaving &&
                                 editedName.isNotBlank() &&
@@ -256,7 +248,7 @@ private fun ProfileInfoCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = ThemeManager.palette.white
+            containerColor = ThemeManager.palette.primary
         )
     ) {
         Column(
@@ -279,7 +271,7 @@ private fun ProfileInfoCard(
                     Icon(
                         imageVector = Icons.Default.Edit,
                         contentDescription = if (isEditing) "Stop Editing" else "Edit Profile",
-                        tint = ThemeManager.palette.primary
+                        tint = ThemeManager.palette.accent
                     )
                 }
             }
@@ -290,7 +282,7 @@ private fun ProfileInfoCard(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Profile",
                 modifier = Modifier.size(80.dp),
-                tint = ThemeManager.palette.primary
+                tint = ThemeManager.palette.accent
             )
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -302,13 +294,13 @@ private fun ProfileInfoCard(
                     label = { Text("First Name") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ThemeManager.palette.primary,
+                        focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
                         focusedTextColor = ThemeManager.palette.text,
                         unfocusedTextColor = ThemeManager.palette.text,
-                        focusedLabelColor = ThemeManager.palette.primary,
+                        focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
-                        cursorColor = ThemeManager.palette.primary
+                        cursorColor = ThemeManager.palette.secondary
                     )
                 )
 
@@ -320,13 +312,13 @@ private fun ProfileInfoCard(
                     label = { Text("Last Name") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ThemeManager.palette.primary,
+                        focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
-                        focusedLabelColor = ThemeManager.palette.primary,
+                        focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
-                        cursorColor = ThemeManager.palette.primary
+                        cursorColor = ThemeManager.palette.secondary
                     )
                 )
 
@@ -338,13 +330,13 @@ private fun ProfileInfoCard(
                     label = { Text("Username") },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ThemeManager.palette.primary,
+                        focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
-                        focusedLabelColor = ThemeManager.palette.primary,
+                        focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
-                        cursorColor = ThemeManager.palette.primary
+                        cursorColor = ThemeManager.palette.secondary
                     )
                 )
 
@@ -357,13 +349,13 @@ private fun ProfileInfoCard(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = ThemeManager.palette.primary,
+                        focusedBorderColor = ThemeManager.palette.secondary,
                         unfocusedBorderColor = ThemeManager.palette.border,
                         focusedTextColor = Color.Black,
                         unfocusedTextColor = Color.Black,
-                        focusedLabelColor = ThemeManager.palette.primary,
+                        focusedLabelColor = ThemeManager.palette.secondary,
                         unfocusedLabelColor = ThemeManager.palette.text,
-                        cursorColor = ThemeManager.palette.primary
+                        cursorColor = ThemeManager.palette.secondary
                     )
                 )
             } else {
@@ -397,7 +389,7 @@ private fun PasswordChangeCard(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = ThemeManager.palette.white
+            containerColor = ThemeManager.palette.primary
         )
     ) {
         Column(
@@ -426,13 +418,13 @@ private fun PasswordChangeCard(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ThemeManager.palette.primary,
+                    focusedBorderColor = ThemeManager.palette.secondary,
                     unfocusedBorderColor = ThemeManager.palette.border,
                     focusedTextColor = Color.Black,
                     unfocusedTextColor = Color.Black,
-                    focusedLabelColor = ThemeManager.palette.primary,
+                    focusedLabelColor = ThemeManager.palette.secondary,
                     unfocusedLabelColor = ThemeManager.palette.text,
-                    cursorColor = ThemeManager.palette.primary
+                    cursorColor = ThemeManager.palette.secondary
                 )
             )
 
@@ -446,13 +438,13 @@ private fun PasswordChangeCard(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                 modifier = Modifier.fillMaxWidth(),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ThemeManager.palette.primary,
+                    focusedBorderColor = ThemeManager.palette.secondary,
                     unfocusedBorderColor = ThemeManager.palette.border,
                     focusedTextColor = Color.Black,
                     unfocusedTextColor = Color.Black,
-                    focusedLabelColor = ThemeManager.palette.primary,
+                    focusedLabelColor = ThemeManager.palette.secondary,
                     unfocusedLabelColor = ThemeManager.palette.text,
-                    cursorColor = ThemeManager.palette.primary
+                    cursorColor = ThemeManager.palette.secondary
                 ),
                 isError = newPassword.isNotEmpty() && confirmPassword.isNotEmpty() && newPassword != confirmPassword
             )
