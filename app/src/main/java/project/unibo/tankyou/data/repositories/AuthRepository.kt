@@ -11,11 +11,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import project.unibo.tankyou.data.DatabaseClient
 
-/**
- * Repository class that handles user authentication operations using Supabase Auth.
- *
- * Implements singleton pattern and provides methods for user registration, login, logout, and password reset.
- */
 class AuthRepository {
     private val auth: Auth = DatabaseClient.client.auth
 
@@ -23,11 +18,6 @@ class AuthRepository {
         @Volatile
         private var INSTANCE: AuthRepository? = null
 
-        /**
-         * Returns the singleton instance of AuthRepository.
-         *
-         * @return the singleton AuthRepository instance
-         */
         fun getInstance(): AuthRepository {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: AuthRepository().also { INSTANCE = it }
@@ -35,24 +25,11 @@ class AuthRepository {
         }
     }
 
-    /**
-     * Flow that emits the current session status changes.
-     */
     val sessionStatus: Flow<SessionStatus> = auth.sessionStatus
 
-    /**
-     * The currently authenticated user information, null if no user is logged in.
-     */
-    val currentUser: UserInfo? = auth.currentUserOrNull()
+    val currentUser: UserInfo?
+        get() = auth.currentUserOrNull()
 
-    /**
-     * Registers a new user with email and password.
-     *
-     * @param email the user's email address
-     * @param password the user's password
-     *
-     * @return Result containing [Unit] on success or [Exception] on failure
-     */
     @OptIn(SupabaseInternal::class)
     suspend fun signUp(
         email: String,
@@ -77,14 +54,6 @@ class AuthRepository {
         }
     }
 
-    /**
-     * Authenticates a user with email and password.
-     *
-     * @param email the user's email address
-     * @param password the user's password
-     *
-     * @return Result containing [Unit] on success or [Exception] on failure
-     */
     suspend fun signIn(email: String, password: String): Result<Unit> {
         return try {
             auth.signInWith(Email) {
@@ -97,11 +66,6 @@ class AuthRepository {
         }
     }
 
-    /**
-     * Signs out the currently authenticated user.
-     *
-     * @return Result containing [Unit] on success or [Exception] on failure
-     */
     suspend fun signOut(): Result<Unit> {
         return try {
             auth.signOut()
@@ -111,22 +75,10 @@ class AuthRepository {
         }
     }
 
-    /**
-     * Checks if a user is currently logged in.
-     *
-     * @return true if a user is authenticated, false otherwise
-     */
     fun isUserLoggedIn(): Boolean {
         return auth.currentUserOrNull() != null
     }
 
-    /**
-     * Sends a password reset email to the specified email address.
-     *
-     * @param email the email address to send the reset link to
-     *
-     * @return Result containing [Unit] on success or [Exception] on failure
-     */
     suspend fun resetPassword(email: String): Result<Unit> {
         return try {
             auth.resetPasswordForEmail(email)

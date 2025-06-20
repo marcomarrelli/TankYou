@@ -262,8 +262,15 @@ class MainActivity : AppCompatActivity() {
         var isLocationOverlayAvailable by remember { mutableStateOf(false) }
         val focusRequester = remember { FocusRequester() }
 
-        // Observe location settings
         val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
+
+        LaunchedEffect(selectedGasStation) {
+            if (selectedGasStation != null) {
+                fabsVisible = false
+            } else {
+                fabsVisible = true
+            }
+        }
 
         LaunchedEffect(searchBarVisible) {
             if (searchBarVisible) {
@@ -280,11 +287,7 @@ class MainActivity : AppCompatActivity() {
                         mapComponent = MapComponent(
                             context = this@MainActivity,
                             mapContainer = this,
-                            onMapClick = {
-                                if (!searchBarVisible && selectedGasStation == null) {
-                                    fabsVisible = !fabsVisible
-                                }
-                            },
+                            onMapClick = {},
                             onGasStationClick = { gasStation ->
                                 selectedGasStation = gasStation
                             },
@@ -370,7 +373,6 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
-                    // Location FAB - Only enabled when location overlay exists and location is enabled in settings
                     FloatingActionButton(
                         onClick = {
                             if (::mapComponent.isInitialized && isLocationOverlayAvailable && showMyLocationOnMap) {
