@@ -258,6 +258,7 @@ class MainActivity : AppCompatActivity() {
         var searchBarVisible by remember { mutableStateOf(false) }
         var searchText by remember { mutableStateOf("") }
         var selectedGasStation by remember { mutableStateOf<GasStation?>(null) }
+        var isFollowModeActive by remember { mutableStateOf(false) }
         val focusRequester = remember { FocusRequester() }
 
         LaunchedEffect(searchBarVisible) {
@@ -282,6 +283,9 @@ class MainActivity : AppCompatActivity() {
                             },
                             onGasStationClick = { gasStation ->
                                 selectedGasStation = gasStation
+                            },
+                            onFollowModeChanged = { isActive ->
+                                isFollowModeActive = isActive
                             }
                         )
                     }
@@ -366,7 +370,10 @@ class MainActivity : AppCompatActivity() {
                             }
                         },
                         containerColor = ThemeManager.palette.background,
-                        contentColor = ThemeManager.palette.text
+                        contentColor = if (isFollowModeActive)
+                            ThemeManager.palette.accent
+                        else
+                            ThemeManager.palette.text
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.MyLocation,
