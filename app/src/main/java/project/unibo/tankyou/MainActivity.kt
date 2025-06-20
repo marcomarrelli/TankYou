@@ -259,7 +259,11 @@ class MainActivity : AppCompatActivity() {
         var searchText by remember { mutableStateOf("") }
         var selectedGasStation by remember { mutableStateOf<GasStation?>(null) }
         var isFollowModeActive by remember { mutableStateOf(false) }
+        var isLocationOverlayAvailable by remember { mutableStateOf(false) }
         val focusRequester = remember { FocusRequester() }
+
+        // Observe location settings
+        val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
 
         LaunchedEffect(searchBarVisible) {
             if (searchBarVisible) {
@@ -286,6 +290,9 @@ class MainActivity : AppCompatActivity() {
                             },
                             onFollowModeChanged = { isActive ->
                                 isFollowModeActive = isActive
+                            },
+                            onLocationOverlayAvailabilityChanged = { isAvailable ->
+                                isLocationOverlayAvailable = isAvailable
                             }
                         )
                     }
@@ -363,17 +370,23 @@ class MainActivity : AppCompatActivity() {
                         )
                     }
 
+                    // Location FAB - Only enabled when location overlay exists and location is enabled in settings
                     FloatingActionButton(
                         onClick = {
-                            if (::mapComponent.isInitialized) {
+                            if (::mapComponent.isInitialized && isLocationOverlayAvailable && showMyLocationOnMap) {
                                 mapComponent.centerOnMyLocation()
                             }
                         },
-                        containerColor = ThemeManager.palette.background,
-                        contentColor = if (isFollowModeActive)
-                            ThemeManager.palette.accent
-                        else
-                            ThemeManager.palette.text
+                        containerColor = if (isLocationOverlayAvailable && showMyLocationOnMap) {
+                            ThemeManager.palette.background
+                        } else {
+                            ThemeManager.palette.disabledBackground
+                        },
+                        contentColor = if (isLocationOverlayAvailable && showMyLocationOnMap) {
+                            if (isFollowModeActive) ThemeManager.palette.accent else ThemeManager.palette.text
+                        } else {
+                            ThemeManager.palette.disabledText
+                        }
                     ) {
                         Icon(
                             imageVector = Icons.TwoTone.MyLocation,

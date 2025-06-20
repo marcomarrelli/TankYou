@@ -36,7 +36,7 @@ object LightColors {
 
     /** The accent color, used for drawing attention to specific elements. */
     val Accent = Color(0xFFDA8A44)
-    
+
     /** The color for success or positive feedback (used also for cluster fullness). */
     val OK = Color(0xFF23BA39)
 
@@ -74,7 +74,7 @@ object DarkColors {
     val DisabledText = Color(0xFF8A8A8A)
 
     /** The background color for disabled elements. */
-    val DisabledBackground = Color(0xFF333F22)
+    val DisabledBackground = Color(0xFF435037)
 
     /** The border color for disabled elements. */
     val DisabledBorder = Color(0xFF242F18)
