@@ -2,6 +2,7 @@ package project.unibo.tankyou.data.repositories
 
 import io.github.jan.supabase.annotations.SupabaseInternal
 import io.github.jan.supabase.gotrue.Auth
+import io.github.jan.supabase.gotrue.OtpType
 import io.github.jan.supabase.gotrue.SessionStatus
 import io.github.jan.supabase.gotrue.auth
 import io.github.jan.supabase.gotrue.providers.builtin.Email
@@ -77,6 +78,24 @@ class AuthRepository {
 
     fun isUserLoggedIn(): Boolean {
         return auth.currentUserOrNull() != null
+    }
+
+    fun isEmailVerified(): Boolean {
+        return auth.currentUserOrNull()?.emailConfirmedAt != null
+    }
+
+    suspend fun resendEmailVerification(): Result<Unit> {
+        return try {
+            val user = auth.currentUserOrNull()
+            if (user != null) {
+                auth.resendEmail(type = OtpType.Email.SIGNUP, email = user.email.orEmpty())
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("No user logged in"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun resetPassword(email: String): Result<Unit> {
