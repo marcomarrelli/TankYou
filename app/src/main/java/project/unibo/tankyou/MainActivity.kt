@@ -39,6 +39,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Map
@@ -317,15 +318,21 @@ class MainActivity : AppCompatActivity() {
         val availableFlags: List<GasStationFlag> = Constants.GAS_STATION_FLAGS
         val availableFuelTypes: List<FuelType> = Constants.FUEL_TYPES
 
+        var showSavedOnly by remember { mutableStateOf(false) }
+
+        // Update the hasActiveFilters derivedState around line 318
         val hasActiveFilters by remember {
             derivedStateOf {
-                selectedFlags.isNotEmpty() || selectedFuelTypes.isNotEmpty() || selectedServiceTypes.isNotEmpty()
+                selectedFlags.isNotEmpty() || selectedFuelTypes.isNotEmpty() ||
+                        selectedServiceTypes.isNotEmpty() || showSavedOnly
             }
         }
 
+        // Update the activeFilterCount derivedState around line 322
         val activeFilterCount by remember {
             derivedStateOf {
-                selectedFlags.size + selectedFuelTypes.size + selectedServiceTypes.size
+                selectedFlags.size + selectedFuelTypes.size + selectedServiceTypes.size +
+                        (if (showSavedOnly) 1 else 0)
             }
         }
 
@@ -821,6 +828,36 @@ class MainActivity : AppCompatActivity() {
                                     )
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Saved Stations",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ThemeManager.palette.text
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FilterChip(
+                                onClick = {
+                                    showSavedOnly = !showSavedOnly
+                                },
+                                label = { Text("Show Only Saved") },
+                                selected = showSavedOnly,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = ThemeManager.palette.primary,
+                                    selectedLabelColor = Color.White
+                                ),
+                                leadingIcon = if (showSavedOnly) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                } else null
+                            )
                         }
                     }
                 }
