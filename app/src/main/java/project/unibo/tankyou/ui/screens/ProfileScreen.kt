@@ -75,8 +75,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.auth.AuthViewModel
+import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.User
 import project.unibo.tankyou.data.repositories.UserRepository
+import project.unibo.tankyou.ui.components.SavedGasStationCard
 import project.unibo.tankyou.ui.theme.ThemeManager
 import java.io.File
 import java.text.SimpleDateFormat
@@ -88,6 +90,7 @@ import java.util.Locale
 fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToLogin: () -> Unit = {},
+    onStationClick: (GasStation) -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
     val userRepository = remember { UserRepository.getInstance() }
@@ -357,6 +360,16 @@ fun ProfileScreen(
                             }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                if (!isEditing) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    SavedGasStationCard(
+                        onStationClick = onStationClick
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))

@@ -16,7 +16,8 @@ import project.unibo.tankyou.data.database.entities.GasStationType
 data class SearchFilters(
     val flags: List<GasStationFlag> = emptyList(),
     val fuelTypes: List<FuelType> = emptyList(),
-    val serviceTypes: List<Boolean> = emptyList()
+    val serviceTypes: List<Boolean> = emptyList(),
+    val savedOnly: Boolean = false
 )
 
 class AppRepository {
@@ -238,6 +239,94 @@ class AppRepository {
 
             searchCache.put(cacheKey, results)
             results
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+
+    suspend fun searchSavedStationsWithFilters(
+        query: String,
+        filters: SearchFilters
+    ): List<GasStation> = coroutineScope {
+        try {
+            val userRepository = UserRepository.getInstance()
+            val savedStations = userRepository.getUserSavedStations()
+
+            if (savedStations.isEmpty()) {
+                return@coroutineScope emptyList()
+            }
+
+            val savedStationIds = savedStations.map { it.stationId }
+
+            val allSavedStations = savedStationIds.chunked(100).flatMap { chunk ->
+                client.from("gas_stations")
+                    .select {
+                        filter {
+                            or {
+                                chunk.forEach { stationId ->
+                                    eq("id", stationId)
+                                }
+                            }
+                        }
+                        limit(1000)
+                    }
+                    .decodeList<GasStation>()
+            }
+
+            var filteredStations = if (query.isNotBlank()) {
+                val searchQuery = query.lowercase()
+                allSavedStations.filter { station ->
+                    (station.name?.lowercase()?.contains(searchQuery) == true) ||
+                            (station.city?.lowercase()?.contains(searchQuery) == true) ||
+                            (station.province?.lowercase()?.contains(searchQuery) == true)
+                }
+            } else {
+                allSavedStations
+            }
+
+            if (filters.flags.isNotEmpty()) {
+                val flagIds = filters.flags.map { it.id }
+                filteredStations = filteredStations.filter { station ->
+                    station.flag in flagIds
+                }
+            }
+
+            if (filters.fuelTypes.isNotEmpty()) {
+                val fuelTypeIds = filters.fuelTypes.map { it.id }
+
+                val stationFuelsDeferred = filteredStations.map { station ->
+                    async {
+                        val cachedFuels = fuelCache.get(station.id.toLong())
+                        if (cachedFuels != null) {
+                            station to cachedFuels
+                        } else {
+                            val fuels = try {
+                                client.from("fuels")
+                                    .select {
+                                        filter { eq("station_id", station.id.toLong()) }
+                                    }
+                                    .decodeList<Fuel>()
+                            } catch (e: Exception) {
+                                emptyList()
+                            }
+                            fuelCache.put(station.id.toLong(), fuels)
+                            station to fuels
+                        }
+                    }
+                }
+
+                val stationsWithFuels = stationFuelsDeferred.map { it.await() }
+
+                filteredStations = stationsWithFuels.filter { (_, fuels) ->
+                    fuelTypeIds.any { fuelTypeId ->
+                        fuels.any { fuel -> fuel.type == fuelTypeId }
+                    }
+                }.map { it.first }
+            }
+
+            filteredStations
+
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()

@@ -608,4 +608,36 @@ class MapComponent(
             loadStationsInCurrentView()
         }
     }
+
+    fun searchSavedGasStationsWithFilters(query: String, filters: SearchFilters) {
+        if (!mapInitialized) return
+
+        if (isFollowingLocation) {
+            disableFollowMode()
+        }
+
+        context.lifecycleScope.launch {
+            onSearchStateChanged(true)
+            try {
+                val searchResults =
+                    Constants.App.REPOSITORY.searchSavedStationsWithFilters(query, filters)
+
+                clusterer?.let { cluster ->
+                    cluster.items.clear()
+                    map.invalidate()
+                }
+
+                loadGasStationMarkers(searchResults)
+
+                if (searchResults.isNotEmpty()) {
+                    val bounds = calculateBounds(searchResults)
+                    map.zoomToBoundingBox(bounds, true, 100)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                onSearchStateChanged(false)
+            }
+        }
+    }
 }
