@@ -48,6 +48,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.UserSavedGasStation
 import project.unibo.tankyou.data.database.entities.toFlagLabel
+import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
 import project.unibo.tankyou.data.database.model.SavedGasStationsModel
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
@@ -288,7 +289,7 @@ private fun SavedStationItem(
 
                     // Format and display save date
                     Text(
-                        text = formatSaveDate(savedStation.savedAt),
+                        text = savedStation.savedAt.toLocalizedDateFormat(),
                         style = MaterialTheme.typography.labelSmall,
                         color = ThemeManager.palette.text.copy(alpha = 0.6f),
                         fontSize = 10.sp

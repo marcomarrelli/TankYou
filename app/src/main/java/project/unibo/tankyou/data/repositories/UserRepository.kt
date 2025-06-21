@@ -96,7 +96,6 @@ class UserRepository(private val supabase: SupabaseClient) {
                 return true // Return true since the desired state is already achieved
             }
 
-            // Insert new saved station
             supabase.from("user_saved_gas_stations")
                 .insert(
                     buildJsonObject {
