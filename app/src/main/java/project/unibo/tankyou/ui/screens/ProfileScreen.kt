@@ -77,6 +77,7 @@ import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.User
+import project.unibo.tankyou.data.database.model.SavedGasStationsModel
 import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.components.SavedGasStationCard
 import project.unibo.tankyou.ui.theme.ThemeManager
@@ -96,6 +97,7 @@ fun ProfileScreen(
     val userRepository = remember { UserRepository.getInstance() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val savedGasStationsModel: SavedGasStationsModel = viewModel()
 
     val isGuestMode by authViewModel.isGuestMode.collectAsState()
 
@@ -178,6 +180,12 @@ fun ProfileScreen(
             cameraLauncher.launch(photoUri)
         } else {
             errorMessage = "Camera permission is required to take photos"
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        if (!isGuestMode) {
+            savedGasStationsModel.refreshSavedStations()
         }
     }
 
@@ -368,7 +376,8 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(24.dp))
 
                     SavedGasStationCard(
-                        onStationClick = onStationClick
+                        onStationClick = onStationClick,
+                        savedGasStationsModel = savedGasStationsModel
                     )
                 }
 
