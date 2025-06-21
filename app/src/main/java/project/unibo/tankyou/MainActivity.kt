@@ -668,7 +668,8 @@ class MainActivity : AppCompatActivity() {
                                             searchText,
                                             selectedFlags,
                                             selectedFuelTypes,
-                                            selectedServiceTypes
+                                            selectedServiceTypes,
+                                            showSavedOnly
                                         )
                                         searchBarVisible = false
                                     }
@@ -726,7 +727,8 @@ class MainActivity : AppCompatActivity() {
                                         searchText,
                                         selectedFlags,
                                         selectedFuelTypes,
-                                        selectedServiceTypes
+                                        selectedServiceTypes,
+                                        showSavedOnly
                                     )
                                     searchBarVisible = false
                                 }
@@ -869,7 +871,8 @@ class MainActivity : AppCompatActivity() {
         query: String,
         flags: Set<GasStationFlag>,
         fuelTypes: Set<FuelType>,
-        serviceTypes: Set<Boolean>
+        serviceTypes: Set<Boolean>,
+        showSavedOnly: Boolean = false
     ) {
         if (::mapComponent.isInitialized) {
             val filters = SearchFilters(
@@ -878,8 +881,14 @@ class MainActivity : AppCompatActivity() {
                 serviceTypes = serviceTypes.toList()
             )
 
-            if (query.isNotBlank() || flags.isNotEmpty() || fuelTypes.isNotEmpty() || serviceTypes.isNotEmpty()) {
-                mapComponent.searchGasStationsWithFilters(query, filters)
+            if (query.isNotBlank() || flags.isNotEmpty() || fuelTypes.isNotEmpty() || serviceTypes.isNotEmpty() || showSavedOnly) {
+                if (showSavedOnly) {
+                    // Use the saved stations search method
+                    mapComponent.searchSavedGasStationsWithFilters(query, filters)
+                } else {
+                    // Use the regular search method
+                    mapComponent.searchGasStationsWithFilters(query, filters)
+                }
             } else {
                 mapComponent.clearSearch()
             }

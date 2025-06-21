@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import project.unibo.tankyou.data.database.entities.UserSavedGasStation
 import project.unibo.tankyou.data.repositories.UserRepository
+import java.time.Instant
 
 class SavedGasStationsModel : ViewModel() {
     private val userRepository = UserRepository.getInstance()
@@ -27,7 +28,13 @@ class SavedGasStationsModel : ViewModel() {
             _isLoading.value = true
             try {
                 val stations = userRepository.getUserSavedStations()
-                _savedStations.value = stations
+                _savedStations.value = stations.sortedByDescending { station ->
+                    try {
+                        Instant.parse(station.savedAt)
+                    } catch (e: Exception) {
+                        Instant.MIN
+                    }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _savedStations.value = emptyList()
@@ -37,12 +44,17 @@ class SavedGasStationsModel : ViewModel() {
         }
     }
 
+    // Add this function to force refresh
+    fun refreshSavedStations() {
+        loadSavedStations()
+    }
+
     fun saveGasStation(stationId: Long, notes: String? = null, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
             try {
                 val success = userRepository.saveGasStation(stationId, notes)
                 if (success) {
-                    loadSavedStations() // Refresh the list
+                    loadSavedStations()
                 }
                 onResult(success)
             } catch (e: Exception) {
@@ -57,7 +69,7 @@ class SavedGasStationsModel : ViewModel() {
             try {
                 val success = userRepository.removeSavedGasStation(stationId)
                 if (success) {
-                    loadSavedStations() // Refresh the list
+                    loadSavedStations()
                 }
                 onResult(success)
             } catch (e: Exception) {
