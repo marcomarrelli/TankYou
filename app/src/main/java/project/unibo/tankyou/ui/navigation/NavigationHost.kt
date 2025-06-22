@@ -45,7 +45,7 @@ fun NavigationHost(
                     }
                 },
                 onContinueAsGuest = {
-                    authViewModel.continueAsGuest()
+                    authViewModel.enterAsGuest()
                     navController.navigate(Screen.Map) {
                         popUpTo(Screen.Login) { inclusive = true }
                     }

@@ -192,7 +192,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestPermissions() {
-        val permissions = Constants.App.PERMISSIONS
+        val permissions = Constants.App.PERMISSIONS_LIST
 
         val missingPermissions = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED

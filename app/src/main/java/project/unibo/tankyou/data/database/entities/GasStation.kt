@@ -8,20 +8,30 @@ import project.unibo.tankyou.utils.Constants.GAS_STATION_FLAGS
 import project.unibo.tankyou.utils.Constants.GAS_STATION_TYPES
 import project.unibo.tankyou.utils.getResourceString
 
+/**
+ * Gas Station Type Database Table/Entity
+ */
 @Serializable
 data class GasStationType(
+    /** Gas Station Type ID */
     @SerialName("id")
     val id: Int,
 
+    /** Gas Station Type Name */
     @SerialName("name")
     val name: String
 )
 
+/**
+ * Gas Station Flag Database Table/Entity
+ */
 @Serializable
 data class GasStationFlag(
+    /** Gas Station Flag ID */
     @SerialName("id")
     val id: Int,
 
+    /** Gas Station Flag Name */
     @SerialName("name")
     val name: String
 )

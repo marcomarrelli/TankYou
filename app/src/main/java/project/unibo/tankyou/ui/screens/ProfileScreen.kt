@@ -67,7 +67,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -195,7 +194,7 @@ fun ProfileScreen(
         if (!isGuestMode) {
             isLoading = true
             try {
-                isEmailVerified = authViewModel.isEmailVerified()
+                isEmailVerified = authViewModel.isCurrentUserEmailVerified()
 
                 if (isEmailVerified) {
                     currentUser = userRepository.getCurrentUser()
@@ -274,15 +273,6 @@ fun ProfileScreen(
 
                 if (isEditing) {
                     Spacer(modifier = Modifier.height(16.dp))
-
-                    PasswordChangeCard(
-                        newPassword = newPassword,
-                        confirmPassword = confirmPassword,
-                        onNewPasswordChange = { newPassword = it },
-                        onConfirmPasswordChange = { confirmPassword = it }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -371,8 +361,6 @@ fun ProfileScreen(
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(32.dp))
 
                 if (!isEditing) {
                     Spacer(modifier = Modifier.height(24.dp))
@@ -877,98 +865,6 @@ private fun ProfileInfoCard(
                 ProfileInfoRow(
                     label = "Email",
                     value = currentUser?.email ?: "Not set"
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun PasswordChangeCard(
-    newPassword: String,
-    confirmPassword: String,
-    onNewPasswordChange: (String) -> Unit,
-    onConfirmPasswordChange: (String) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = ThemeManager.palette.primary
-        )
-    ) {
-        Column(
-            modifier = Modifier.padding(20.dp)
-        ) {
-            Text(
-                text = "Change Password",
-                style = MaterialTheme.typography.headlineSmall,
-                color = ThemeManager.palette.title,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            Text(
-                text = "Leave empty if you don't want to change your password",
-                style = MaterialTheme.typography.bodySmall,
-                color = ThemeManager.palette.text.copy(alpha = 0.7f),
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            OutlinedTextField(
-                value = newPassword,
-                onValueChange = onNewPasswordChange,
-                label = { Text("New Password") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ThemeManager.palette.secondary,
-                    unfocusedBorderColor = ThemeManager.palette.border,
-                    focusedTextColor = ThemeManager.palette.text,
-                    unfocusedTextColor = ThemeManager.palette.text,
-                    focusedLabelColor = ThemeManager.palette.secondary,
-                    unfocusedLabelColor = ThemeManager.palette.text,
-                    cursorColor = ThemeManager.palette.secondary
-                )
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            OutlinedTextField(
-                value = confirmPassword,
-                onValueChange = onConfirmPasswordChange,
-                label = { Text("Confirm Password") },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = ThemeManager.palette.secondary,
-                    unfocusedBorderColor = ThemeManager.palette.border,
-                    focusedTextColor = ThemeManager.palette.text,
-                    unfocusedTextColor = ThemeManager.palette.text,
-                    focusedLabelColor = ThemeManager.palette.secondary,
-                    unfocusedLabelColor = ThemeManager.palette.text,
-                    cursorColor = ThemeManager.palette.secondary
-                ),
-                isError = newPassword.isNotEmpty() && confirmPassword.isNotEmpty() && newPassword != confirmPassword
-            )
-
-            if (newPassword.isNotEmpty() && confirmPassword.isNotEmpty() && newPassword != confirmPassword) {
-                Text(
-                    text = "Passwords do not match",
-                    color = ThemeManager.palette.alert,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            if (newPassword.isNotEmpty() && newPassword.length < 6) {
-                Text(
-                    text = "Password must be at least 6 characters",
-                    color = ThemeManager.palette.warning,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.padding(top = 4.dp)
                 )
             }
         }

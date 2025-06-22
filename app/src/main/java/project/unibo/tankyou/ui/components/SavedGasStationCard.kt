@@ -79,7 +79,7 @@ fun SavedGasStationCard(
             try {
                 val stationsWithDetailsTemp = savedStations.map { savedStation ->
                     val gasStation =
-                        Constants.App.REPOSITORY.getStationById(savedStation.stationId.toString())
+                        Constants.App.APP_REPOSITORY.getStationById(savedStation.stationId.toString())
                     savedStation to gasStation
                 }
                 stationsWithDetails = stationsWithDetailsTemp

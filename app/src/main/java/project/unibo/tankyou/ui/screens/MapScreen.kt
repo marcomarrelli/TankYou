@@ -122,8 +122,10 @@ fun MapScreen() {
 
     val hasActiveFilters by remember {
         derivedStateOf {
-            selectedFlags.isNotEmpty() || selectedFuelTypes.isNotEmpty() ||
-                    selectedServiceTypes.isNotEmpty() || showSavedOnly
+            selectedFlags.isNotEmpty() ||
+                    selectedFuelTypes.isNotEmpty() ||
+                    selectedServiceTypes.isNotEmpty() ||
+                    showSavedOnly
         }
     }
 
@@ -318,7 +320,7 @@ fun MapScreen() {
             exit = slideOutHorizontally(targetOffsetX = { -it }) + fadeOut(),
             modifier = Modifier
                 .align(Alignment.TopStart)
-                .windowInsetsPadding(WindowInsets.statusBars)//.statusBarsPadding()
+                .windowInsetsPadding(WindowInsets.statusBars)
                 .padding(16.dp)
                 .zIndex(5f)
         ) {

@@ -188,7 +188,7 @@ fun LoginScreen(
             /** Guest access button for using app without authentication */
             TextButton(
                 onClick = {
-                    authViewModel.continueAsGuest()
+                    authViewModel.enterAsGuest()
                     onContinueAsGuest()
                 },
                 modifier = Modifier.weight(1f),

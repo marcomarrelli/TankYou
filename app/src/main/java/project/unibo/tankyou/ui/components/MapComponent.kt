@@ -415,7 +415,7 @@ class MapComponent(
                 currentBounds.lonWest - buffer
             )
 
-            val gasStations = Constants.App.REPOSITORY.getStationsForZoomLevel(
+            val gasStations = Constants.App.APP_REPOSITORY.getStationsForZoomLevel(
                 expandedBounds,
                 currentZoomLevel
             )
@@ -563,7 +563,7 @@ class MapComponent(
         context.lifecycleScope.launch {
             onSearchStateChanged(true)
             try {
-                val searchResults = Constants.App.REPOSITORY.searchStations(query)
+                val searchResults = Constants.App.APP_REPOSITORY.searchStations(query)
 
                 clusterer?.let { cluster ->
                     cluster.items.clear()
@@ -609,7 +609,7 @@ class MapComponent(
             onSearchStateChanged(true)
             try {
                 val searchResults =
-                    Constants.App.REPOSITORY.searchStationsWithFilters(query, filters)
+                    Constants.App.APP_REPOSITORY.searchStationsWithFilters(query, filters)
 
                 clusterer?.let { cluster ->
                     cluster.items.clear()
@@ -647,7 +647,7 @@ class MapComponent(
             onSearchStateChanged(true)
             try {
                 val searchResults =
-                    Constants.App.REPOSITORY.searchSavedStationsWithFilters(query, filters)
+                    Constants.App.APP_REPOSITORY.searchSavedStationsWithFilters(query, filters)
 
                 clusterer?.let { cluster ->
                     cluster.items.clear()

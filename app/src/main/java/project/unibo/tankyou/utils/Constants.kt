@@ -12,8 +12,15 @@ import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStationFlag
 import project.unibo.tankyou.data.database.entities.GasStationType
 import project.unibo.tankyou.data.repositories.AppRepository
-import project.unibo.tankyou.utils.Constants.App.PERMISSIONS
-import project.unibo.tankyou.utils.Constants.App.REPOSITORY
+import project.unibo.tankyou.data.repositories.AuthRepository
+import project.unibo.tankyou.data.repositories.UserRepository
+import project.unibo.tankyou.utils.Constants.App.APP_REPOSITORY
+import project.unibo.tankyou.utils.Constants.App.AUTH_REPOSITORY
+import project.unibo.tankyou.utils.Constants.App.LOG_TAG
+import project.unibo.tankyou.utils.Constants.App.PERMISSIONS_LIST
+import project.unibo.tankyou.utils.Constants.App.USER_REPOSITORY
+import project.unibo.tankyou.utils.Constants.AppLanguage.ENGLISH
+import project.unibo.tankyou.utils.Constants.AppLanguage.ITALIAN
 import project.unibo.tankyou.utils.Constants.Map.BOUNDS
 import project.unibo.tankyou.utils.Constants.Map.BOUNDS_BUFFER
 import project.unibo.tankyou.utils.Constants.Map.Cache.CACHE_SIZE
@@ -34,6 +41,7 @@ import project.unibo.tankyou.utils.Constants.Map.MIN_ZOOM_LEVEL
  *
  * @param Map Map Related Constants
  * @param App Application Related Constants
+ * @param AppLanguage Language Related Constants and Methods
  */
 object Constants {
     /**
@@ -121,29 +129,62 @@ object Constants {
     /**
      * Application Constants Global Object
      *
-     * @param REPOSITORY App Repository Instance
-     * @param PERMISSIONS Mandatory App Permissions
+     * @param APP_REPOSITORY App Repository Instance
+     * @param AUTH_REPOSITORY Auth Repository Instance
+     * @param USER_REPOSITORY User Repository Instance
+     * @param PERMISSIONS_LIST Mandatory App Permissions
+     * @param LOG_TAG Log Tag + <File>
      */
     object App {
-        val REPOSITORY: AppRepository = AppRepository.getInstance()
-        val PERMISSIONS = arrayOf(
+        /** App Repository Instance */
+        val APP_REPOSITORY: AppRepository = AppRepository.getInstance()
+
+        /** Auth Repository Instance */
+        val AUTH_REPOSITORY: AuthRepository = AuthRepository.getInstance()
+
+        /** User Repository Instance */
+        val USER_REPOSITORY: UserRepository = UserRepository.getInstance()
+
+        /**
+         * Mandatory App Permissions
+         *
+         * @param Manifest.permission.ACCESS_FINE_LOCATION Fine Location Permission
+         * @param Manifest.permission.ACCESS_COARSE_LOCATION Coarse Location Permission
+         * @param Manifest.permission.INTERNET Internet Permission
+         * @param Manifest.permission.ACCESS_NETWORK_STATE Network State Permission
+         * @param Manifest.permission.WRITE_EXTERNAL_STORAGE Write External Storage Permission
+         */
+        val PERMISSIONS_LIST: Array<String> = arrayOf(
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_COARSE_LOCATION,
             Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_NETWORK_STATE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
+
+        const val LOG_TAG = "TankYou@"
     }
 
     /**
      * App Language Global Enumeration
      *
      * @param code Language Code
+     *
+     * @see ITALIAN Italian Language Setting
+     * @see ENGLISH English Language Setting
+     * @see getDisplayName Returns the display name of the language
      */
     enum class AppLanguage(val code: String) {
+        /** Italian Language Setting */
         ITALIAN("it"),
+
+        /** English Language Setting */
         ENGLISH("en");
 
+        /**
+         * Returns the display name of the language
+         * across the whole application.
+         */
         @Composable
         fun getDisplayName(): String {
             return when (this) {
@@ -153,19 +194,20 @@ object Constants {
         }
     }
 
+    /** Fuel Types Global List, Retrieved from Database at Startup */
     var FUEL_TYPES: List<FuelType> = emptyList()
         private set
 
+    /** Gas Station Types Global List, Retrieved from Database at Startup */
     var GAS_STATION_TYPES: List<GasStationType> = emptyList()
         private set
 
+    /** Gas Station Flags Global List, Retrieved from Database at Startup */
     var GAS_STATION_FLAGS: List<GasStationFlag> = emptyList()
         private set
 
-    var GAS_STATION_SERVICES: List<Boolean> = emptyList()
-        private set
-
-    private var isInitialized = false
+    /** If Constants are Fully Initialized */
+    private var IS_INITIALIZED = false
 
     /**
      * Initializes database constants asynchronously in the background.
@@ -174,18 +216,18 @@ object Constants {
     fun initializeConstantLists() {
         /**
          * Initializes database-dependent constants by loading data from the database.
-         * This should be called once during application startup.
+         *
+         * This method MUST be called once during application startup.
          */
         suspend fun initConstLists() {
-            if (isInitialized) return
+            if (IS_INITIALIZED) return
 
             try {
-                FUEL_TYPES = REPOSITORY.getFuelTypes()
-                GAS_STATION_FLAGS = REPOSITORY.getFlags()
-                GAS_STATION_TYPES = REPOSITORY.getGasStationTypes()
-                GAS_STATION_SERVICES = listOf(true, false)
+                FUEL_TYPES = APP_REPOSITORY.getFuelTypes()
+                GAS_STATION_FLAGS = APP_REPOSITORY.getFlags()
+                GAS_STATION_TYPES = APP_REPOSITORY.getGasStationTypes()
 
-                isInitialized = true
+                IS_INITIALIZED = true
             } catch (e: Exception) {
                 e.printStackTrace()
 
