@@ -194,7 +194,7 @@ fun SavedGasStationCard(
                         exit = shrinkVertically() + fadeOut()
                     ) {
                         LazyColumn(
-                            modifier = Modifier.heightIn(max = if (isExpanded) 400.dp else 240.dp),
+                            modifier = Modifier.heightIn(max = if (isExpanded) 300.dp else 200.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(displayStations) { (savedStation, gasStation) ->

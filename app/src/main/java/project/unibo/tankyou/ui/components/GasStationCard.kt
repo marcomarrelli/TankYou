@@ -289,7 +289,7 @@ fun GasStationCard(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                text = gasStation.name ?: "Gas Station",
+                                text = gasStation.name ?: getResourceString(R.string.not_available),
                                 style = MaterialTheme.typography.headlineSmall,
                                 fontWeight = FontWeight.Bold,
                                 color = ThemeManager.palette.title,

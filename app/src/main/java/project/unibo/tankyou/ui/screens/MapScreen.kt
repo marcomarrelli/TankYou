@@ -83,6 +83,7 @@ import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.GasStationFlag
 import project.unibo.tankyou.data.database.entities.toFuelTypeName
+import project.unibo.tankyou.data.repositories.AuthRepository
 import project.unibo.tankyou.data.repositories.SearchFilters
 import project.unibo.tankyou.ui.components.GasStationCard
 import project.unibo.tankyou.ui.components.MapComponent
@@ -134,7 +135,7 @@ fun MapScreen() {
     var mapComponent: MapComponent? by remember { mutableStateOf(null) }
 
     LaunchedEffect(selectedGasStation) {
-        fabsVisible = selectedGasStation == null
+        fabsVisible = (selectedGasStation == null)
     }
 
     LaunchedEffect(searchBarVisible) {
@@ -316,7 +317,7 @@ fun MapScreen() {
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .statusBarsPadding()
-                .padding(start = 16.dp)
+                .padding(16.dp)
                 .zIndex(5f)
         ) {
             Box {
@@ -635,33 +636,35 @@ fun MapScreen() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text(
-                            text = "Saved Stations",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = ThemeManager.palette.text
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        FilterChip(
-                            onClick = {
-                                showSavedOnly = !showSavedOnly
-                            },
-                            label = { Text("Show Only Saved") },
-                            selected = showSavedOnly,
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = ThemeManager.palette.primary,
-                                selectedLabelColor = Color.White
-                            ),
-                            leadingIcon = if (showSavedOnly) {
-                                {
-                                    Icon(
-                                        imageVector = Icons.Filled.Bookmark,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            } else null
-                        )
+                        if (AuthRepository.getInstance().isUserLoggedIn()) {
+                            Text(
+                                text = "Saved Stations",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = ThemeManager.palette.text
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            FilterChip(
+                                onClick = {
+                                    showSavedOnly = !showSavedOnly
+                                },
+                                label = { Text("Show Only Saved") },
+                                selected = showSavedOnly,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = ThemeManager.palette.primary,
+                                    selectedLabelColor = Color.White
+                                ),
+                                leadingIcon = if (showSavedOnly) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.Bookmark,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                } else null
+                            )
+                        }
                     }
                 }
             }
