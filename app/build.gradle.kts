@@ -113,8 +113,12 @@ dependencies {
     implementation(libs.androidx.recyclerview)
 
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.material.icons.extended) // version 1.7.8
+    implementation(libs.androidx.material.icons.extended)
     implementation(libs.material)
+
+    // Navigation Compose with Type Safety
+    implementation("androidx.navigation:navigation-compose:2.8.4")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
@@ -127,47 +131,34 @@ dependencies {
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
 
-    // @DOC: Libreria per Gestione delle Preferenze (PreferenceManager)
     implementation(libs.androidx.preference.ktx)
 
-    // @DOC: Libreria 'osmdroid' per Mappe OpenStreetMap (OSM)
     implementation(libs.osmdroid.android)
-    implementation("com.github.MKergall:osmbonuspack:6.8.0") // Add-On per il Marker Clustering
+    implementation("com.github.MKergall:osmbonuspack:6.8.0")
 
-    // @DOC: (Opzionale) Funzionalità Aggiuntive (Ricerca di Indirizzi...)
-    // implementation(libs.osmdroid.mapsforge)
-
-    // @DOC: Libreria Room per Database Interno
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
 
-    // @DOC: Libreria per Lettura/Fetching di File .csv
     implementation(libs.opencsv)
 
-    // @DOC: Libreria per Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
-    // @DOC: Librerie per Download dei File .csv
     implementation(libs.okhttp)
     implementation(libs.androidx.work.runtime.ktx)
 
-    // @DOC: Librerie per Database Esterno (Supabase)
     implementation(libs.postgrest.kt.v260)
     implementation(libs.realtime.kt.v260)
     implementation(libs.storage.kt)
-    implementation(libs.gotrue.kt) // User-Supabase Auth
+    implementation(libs.gotrue.kt)
     implementation(libs.ktor.client.android)
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // Serialization
     implementation(libs.kotlinx.serialization.json)
 
-    // DateTime
     implementation(libs.kotlinx.datetime)
 
-    // Image Processing and Optimization
     implementation(libs.coil.compose)
 }

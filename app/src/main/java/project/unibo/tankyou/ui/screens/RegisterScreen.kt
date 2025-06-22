@@ -84,7 +84,7 @@ fun RegisterScreen(
             .fillMaxSize()
             .background(ThemeManager.palette.background)
             .padding(16.dp)
-            .imePadding(), // Gestisce solo il padding per la tastiera
+            .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {

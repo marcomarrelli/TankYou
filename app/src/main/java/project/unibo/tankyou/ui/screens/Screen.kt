@@ -1,33 +1,21 @@
 package project.unibo.tankyou.ui.screens
 
-import project.unibo.tankyou.ui.screens.Screen.LOGIN
-import project.unibo.tankyou.ui.screens.Screen.MAP
-import project.unibo.tankyou.ui.screens.Screen.PROFILE
-import project.unibo.tankyou.ui.screens.Screen.REGISTER
-import project.unibo.tankyou.ui.screens.Screen.SETTINGS
+import kotlinx.serialization.Serializable
 
-/**
- * Enum representing the different screens in the application.
- *
- * @param LOGIN User Login Page
- * @param REGISTER User Registration Page
- * @param PROFILE User Profile Page
- * @param MAP Map Page
- * @param SETTINGS Settings Page
- */
-enum class Screen {
-    /** User Login Page */
-    LOGIN,
+@Serializable
+sealed class Screen {
+    @Serializable
+    data object Login : Screen()
 
-    /** User Registration Page */
-    REGISTER,
+    @Serializable
+    data object Register : Screen()
 
-    /** User Profile Page */
-    PROFILE,
+    @Serializable
+    data object Map : Screen()
 
-    /** Map Page */
-    MAP,
+    @Serializable
+    data object Profile : Screen()
 
-    /** Settings Page */
-    SETTINGS
+    @Serializable
+    data object Settings : Screen()
 }
