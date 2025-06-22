@@ -1,5 +1,6 @@
 package project.unibo.tankyou.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,10 +19,13 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.ColorLens
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -36,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -45,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import project.unibo.tankyou.BuildConfig
 import project.unibo.tankyou.R
 import project.unibo.tankyou.ui.theme.ThemeManager
@@ -53,9 +59,6 @@ import project.unibo.tankyou.utils.Constants.AppLanguage
 import project.unibo.tankyou.utils.SettingsManager
 import project.unibo.tankyou.utils.getResourceString
 
-/**
- * Composable function for the settings screen.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen() {
@@ -65,6 +68,7 @@ fun SettingsScreen() {
     val currentMapTint by SettingsManager.mapTintFlow.collectAsState()
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -104,7 +108,6 @@ fun SettingsScreen() {
                 checked = showMyLocationOnMap,
                 onCheckedChange = {
                     SettingsManager.setShowMyLocationOnMap(it)
-                    println("Switch changed: $it")
                 }
             )
 
@@ -120,6 +123,47 @@ fun SettingsScreen() {
                 }
             )
         }
+
+        SettingsSection(
+            title = "Actions",
+            icon = Icons.Default.Refresh
+        ) {
+            SettingsActionItem(
+                title = "Reset to Defaults",
+                description = "Reset all settings to their default values",
+                icon = Icons.Default.Refresh,
+                onClick = {
+                    coroutineScope.launch {
+                        SettingsManager.resetToDefaults()
+                        Toast.makeText(context, "Done!", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            )
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = ThemeManager.palette.border
+            )
+
+            SettingsActionItem(
+                title = "Clear Cache",
+                description = "Clear application cache and temporary files",
+                icon = Icons.Default.CleaningServices,
+                onClick = {
+                    coroutineScope.launch {
+                        try {
+                            context.cacheDir.deleteRecursively()
+                            context.externalCacheDir?.deleteRecursively()
+                            Toast.makeText(context, "Done!", Toast.LENGTH_SHORT).show()
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            Toast.makeText(context, "Error occurred", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            )
+        }
+
 
         SettingsSection(
             title = getResourceString(R.string.information),
@@ -139,25 +183,10 @@ fun SettingsScreen() {
                 title = getResourceString(R.string.developer),
                 value = BuildConfig.AUTHORS.joinToString(", ")
             )
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                color = ThemeManager.palette.border
-            )
-
-            // SettingsInfoItem(
-            //     title = getResourceString(R.string.db_version),
-            //     value = getResourceString(R.string.db_version_value)
-            // )
         }
     }
 }
 
-/**
- * Composable function to display theme selection options.
- *
- * @param currentTheme The currently selected theme.
- */
 @Composable
 private fun ThemeSelectionCard(currentTheme: ThemeMode) {
     Column(
@@ -191,12 +220,6 @@ private fun ThemeSelectionCard(currentTheme: ThemeMode) {
     }
 }
 
-/**
- * Composable function to display language selection options.
- *
- * @param currentLanguage The currently selected language.
- * @param onLanguageChange Callback function invoked when the language is changed.
- */
 @Composable
 private fun LanguageSelectionCard(
     currentLanguage: AppLanguage,
@@ -223,12 +246,6 @@ private fun LanguageSelectionCard(
     }
 }
 
-/**
- * Composable function to display map tint selection options.
- *
- * @param currentTint The currently selected map tint.
- * @param onTintChange Callback function invoked when the tint is changed.
- */
 @Composable
 private fun MapTintSelectionCard(
     currentTint: SettingsManager.MapTint,
@@ -255,9 +272,6 @@ private fun MapTintSelectionCard(
     }
 }
 
-/**
- * Composable function to display a single map tint option row.
- */
 @Composable
 private fun MapTintOptionRow(
     tint: SettingsManager.MapTint,
@@ -317,13 +331,6 @@ private fun MapTintOptionRow(
     }
 }
 
-/**
- * Composable function to display a single option row.
- *
- * @param text The text to display for the option.
- * @param selected Whether the option is currently selected.
- * @param onClick The callback function invoked when the option is clicked.
- */
 @Composable
 private fun OptionRow(
     text: String,
@@ -370,13 +377,6 @@ private fun OptionRow(
     }
 }
 
-/**
- * Composable function to display a settings section with a title and content.
- *
- * @param title The title of the settings section.
- * @param icon The icon for the settings section.
- * @param content The content of the settings section.
- */
 @Composable
 private fun SettingsSection(
     title: String,
@@ -408,7 +408,7 @@ private fun SettingsSection(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = ThemeManager.palette.white
+                containerColor = ThemeManager.palette.primary.copy(alpha = 0.7f)
             ),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
@@ -421,14 +421,6 @@ private fun SettingsSection(
     }
 }
 
-/**
- * Composable function to display a settings toggle item.
- *
- * @param title The title of the settings item.
- * @param description The description of the settings item.
- * @param checked Whether the toggle is currently checked.
- * @param onCheckedChange The callback function invoked when the toggle state changes.
- */
 @Composable
 private fun SettingsToggleItem(
     title: String,
@@ -463,7 +455,7 @@ private fun SettingsToggleItem(
             checked = checked,
             onCheckedChange = onCheckedChange,
             colors = SwitchDefaults.colors(
-                checkedThumbColor = ThemeManager.palette.white,
+                checkedThumbColor = ThemeManager.palette.primary.copy(alpha = 0.7f),
                 checkedTrackColor = ThemeManager.palette.accent,
                 uncheckedThumbColor = ThemeManager.palette.disabledText,
                 uncheckedTrackColor = ThemeManager.palette.disabledBackground,
@@ -474,12 +466,54 @@ private fun SettingsToggleItem(
     }
 }
 
-/**
- * Composable function to display a settings item with a title and value.
- *
- * @param title The title of the settings item.
- * @param value The value of the settings item.
- */
+@Composable
+private fun SettingsActionItem(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = ThemeManager.palette.accent,
+            modifier = Modifier.size(24.dp)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = ThemeManager.palette.title
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = ThemeManager.palette.text
+            )
+        }
+
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+            contentDescription = null,
+            tint = ThemeManager.palette.text,
+            modifier = Modifier.size(20.dp)
+        )
+    }
+}
+
 @Composable
 private fun SettingsInfoItem(
     title: String,

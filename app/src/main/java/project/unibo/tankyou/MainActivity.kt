@@ -359,7 +359,11 @@ class MainActivity : AppCompatActivity() {
                         mapComponent = MapComponent(
                             context = this@MainActivity,
                             mapContainer = this,
-                            onMapClick = {},
+                            onMapClick = {
+                                if (selectedGasStation == null && !searchBarVisible) {
+                                    fabsVisible = !fabsVisible
+                                }
+                            },
                             onGasStationClick = { gasStation ->
                                 selectedGasStation = gasStation
                             },
