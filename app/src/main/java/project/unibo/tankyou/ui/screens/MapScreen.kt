@@ -1,6 +1,7 @@
 package project.unibo.tankyou.ui.screens
 
 import android.widget.RelativeLayout
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -69,6 +70,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -91,7 +93,9 @@ import project.unibo.tankyou.utils.getResourceString
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun MapScreenWithFABs() {
+fun MapScreen() {
+    val context = LocalContext.current
+    val activity = context as AppCompatActivity
     val coroutineScope = rememberCoroutineScope()
     var fabsVisible by remember { mutableStateOf(true) }
     var searchBarVisible by remember { mutableStateOf(false) }
@@ -169,10 +173,10 @@ fun MapScreenWithFABs() {
         modifier = Modifier.fillMaxSize()
     ) {
         AndroidView(
-            factory = { context ->
-                RelativeLayout(context).apply {
+            factory = { _ ->
+                RelativeLayout(activity).apply {
                     mapComponent = MapComponent(
-                        context = context, // @TODO FIX
+                        context = activity,
                         mapContainer = this,
                         onMapClick = {
                             if (selectedGasStation == null && !searchBarVisible) {

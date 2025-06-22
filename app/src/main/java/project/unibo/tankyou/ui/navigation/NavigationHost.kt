@@ -10,6 +10,7 @@ import androidx.navigation.compose.composable
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.ui.screens.LoginScreen
+import project.unibo.tankyou.ui.screens.MapScreen
 import project.unibo.tankyou.ui.screens.ProfileScreen
 import project.unibo.tankyou.ui.screens.RegisterScreen
 import project.unibo.tankyou.ui.screens.Screen
@@ -68,7 +69,7 @@ fun NavigationHost(
         }
 
         composable<Screen.Map> {
-            // MapScreenWithFABs() @TODO FIX
+            MapScreen()
         }
 
         composable<Screen.Profile> {
