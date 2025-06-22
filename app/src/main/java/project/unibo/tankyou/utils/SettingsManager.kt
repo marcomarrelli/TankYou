@@ -22,15 +22,21 @@ object SettingsManager {
     private const val LANGUAGE_KEY = "selected_language"
     private const val SHOW_MY_LOCATION_KEY = "show_my_location"
     private const val AUTO_CENTER_MAP_KEY = "auto_center_map"
+    private const val MAP_TINT_KEY = "map_tint"
 
     private const val MAP_CENTER_LATITUDE_KEY = "map_center_latitude"
     private const val MAP_CENTER_LONGITUDE_KEY = "map_center_longitude"
     private const val MAP_ZOOM_LEVEL_KEY = "map_zoom_level"
 
-    private lateinit var prefs: SharedPreferences // SharedPreferences instance for storing settings
+    enum class MapTint(val displayName: String, val colorValue: Int) {
+        NONE("None", 0x00000000.toInt()),
+        GRAY("Gray Scale", 0xFFA9A9A9.toInt()),
+        SEPIA("Sepia", 0xFF704214.toInt())
+    }
+
+    private lateinit var prefs: SharedPreferences
 
     private val _currentLanguageFlow = MutableStateFlow(AppLanguage.ITALIAN)
-
     private val _currentLanguage = mutableStateOf(AppLanguage.ITALIAN)
 
     /**
@@ -46,6 +52,13 @@ object SettingsManager {
     val showMyLocationOnMapFlow: StateFlow<Boolean> = _showMyLocationOnMapFlow.asStateFlow()
 
     private val _autoCenterMap = mutableStateOf(false)
+
+    private val _mapTintFlow = MutableStateFlow(MapTint.NONE)
+
+    /**
+     * A [StateFlow] holding the current map tint setting.
+     */
+    val mapTintFlow: StateFlow<MapTint> = _mapTintFlow.asStateFlow()
 
     /**
      * Initializes the SettingsManager with the application context.
@@ -75,6 +88,11 @@ object SettingsManager {
 
         // Load and set the 'auto center map' preference
         _autoCenterMap.value = prefs.getBoolean(AUTO_CENTER_MAP_KEY, false)
+
+        // Load and set the map tint preference
+        val savedTintName = prefs.getString(MAP_TINT_KEY, MapTint.NONE.name)
+        val mapTint = MapTint.entries.find { it.name == savedTintName } ?: MapTint.NONE
+        _mapTintFlow.value = mapTint
     }
 
     fun setLanguage(language: AppLanguage, context: Context? = null) {
@@ -115,8 +133,26 @@ object SettingsManager {
         prefs.edit {
             putBoolean(SHOW_MY_LOCATION_KEY, show)
         }
-        // TODO: Consider if autoCenterMap should be updated here based on 'show'
     }
+
+    /**
+     * Sets the map tint preference.
+     *
+     * @param tint The map tint to apply.
+     */
+    fun setMapTint(tint: MapTint) {
+        _mapTintFlow.value = tint
+        prefs.edit {
+            putString(MAP_TINT_KEY, tint.name)
+        }
+    }
+
+    /**
+     * Gets the currently selected map tint.
+     *
+     * @return The current [MapTint].
+     */
+    fun getCurrentMapTint(): MapTint = _mapTintFlow.value
 
     fun saveMapPosition(center: GeoPoint, zoomLevel: Double) {
         prefs.edit {
@@ -140,10 +176,10 @@ object SettingsManager {
             try {
                 GeoPoint(latStr.toDouble(), lonStr.toDouble())
             } catch (e: NumberFormatException) {
-                Constants.Map.DEFAULT_GEO_POINT // Fallback to default if parsing fails
+                Constants.Map.DEFAULT_GEO_POINT
             }
         } else {
-            Constants.Map.DEFAULT_GEO_POINT // Fallback to default if no saved values
+            Constants.Map.DEFAULT_GEO_POINT
         }
     }
 
@@ -159,10 +195,10 @@ object SettingsManager {
             try {
                 zoomStr.toDouble()
             } catch (e: NumberFormatException) {
-                Constants.Map.DEFAULT_ZOOM_LEVEL // Fallback to default if parsing fails
+                Constants.Map.DEFAULT_ZOOM_LEVEL
             }
         } else {
-            Constants.Map.DEFAULT_ZOOM_LEVEL // Fallback to default if no saved value
+            Constants.Map.DEFAULT_ZOOM_LEVEL
         }
     }
 

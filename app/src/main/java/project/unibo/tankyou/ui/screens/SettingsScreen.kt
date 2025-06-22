@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -37,6 +38,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
@@ -59,6 +62,7 @@ fun SettingsScreen() {
     val currentTheme by ThemeManager.themeMode
     val currentLanguage by SettingsManager.currentLanguage
     val showMyLocationOnMap by SettingsManager.showMyLocationOnMapFlow.collectAsState()
+    val currentMapTint by SettingsManager.mapTintFlow.collectAsState()
 
     val context = LocalContext.current
 
@@ -108,6 +112,13 @@ fun SettingsScreen() {
                 modifier = Modifier.padding(vertical = 8.dp),
                 color = ThemeManager.palette.border
             )
+
+            MapTintSelectionCard(
+                currentTint = currentMapTint,
+                onTintChange = { tint ->
+                    SettingsManager.setMapTint(tint)
+                }
+            )
         }
 
         SettingsSection(
@@ -128,38 +139,16 @@ fun SettingsScreen() {
                 title = getResourceString(R.string.developer),
                 value = BuildConfig.AUTHORS.joinToString(", ")
             )
-        }
-    }
-}
 
-/**
- * Composable function to display language selection options.
- *
- * @param currentLanguage The currently selected language.
- * @param onLanguageChange Callback function to handle language changes.
- */
-@Composable
-private fun LanguageSelectionCard(
-    currentLanguage: AppLanguage,
-    onLanguageChange: (AppLanguage) -> Unit
-) {
-    Column(
-        modifier = Modifier.selectableGroup()
-    ) {
-        Text(
-            text = getResourceString(R.string.select_language),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(bottom = 12.dp),
-            color = ThemeManager.palette.text
-        )
-
-        AppLanguage.entries.forEach { language ->
-            OptionRow(
-                text = language.getDisplayName(),
-                selected = currentLanguage == language,
-                onClick = { onLanguageChange(language) }
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                color = ThemeManager.palette.border
             )
+
+            // SettingsInfoItem(
+            //     title = getResourceString(R.string.db_version),
+            //     value = getResourceString(R.string.db_version_value)
+            // )
         }
     }
 }
@@ -203,11 +192,137 @@ private fun ThemeSelectionCard(currentTheme: ThemeMode) {
 }
 
 /**
- * Composable function to display a selectable option row.
+ * Composable function to display language selection options.
+ *
+ * @param currentLanguage The currently selected language.
+ * @param onLanguageChange Callback function invoked when the language is changed.
+ */
+@Composable
+private fun LanguageSelectionCard(
+    currentLanguage: AppLanguage,
+    onLanguageChange: (AppLanguage) -> Unit
+) {
+    Column(
+        modifier = Modifier.selectableGroup()
+    ) {
+        Text(
+            text = getResourceString(R.string.select_language),
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 12.dp),
+            color = ThemeManager.palette.text
+        )
+
+        AppLanguage.entries.forEach { language ->
+            OptionRow(
+                text = language.getDisplayName(),
+                selected = currentLanguage == language,
+                onClick = { onLanguageChange(language) }
+            )
+        }
+    }
+}
+
+/**
+ * Composable function to display map tint selection options.
+ *
+ * @param currentTint The currently selected map tint.
+ * @param onTintChange Callback function invoked when the tint is changed.
+ */
+@Composable
+private fun MapTintSelectionCard(
+    currentTint: SettingsManager.MapTint,
+    onTintChange: (SettingsManager.MapTint) -> Unit
+) {
+    Column(
+        modifier = Modifier.selectableGroup()
+    ) {
+        Text(
+            text = "Map Tint",
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(bottom = 12.dp),
+            color = ThemeManager.palette.text
+        )
+
+        SettingsManager.MapTint.entries.forEach { tint ->
+            MapTintOptionRow(
+                tint = tint,
+                selected = currentTint == tint,
+                onClick = { onTintChange(tint) }
+            )
+        }
+    }
+}
+
+/**
+ * Composable function to display a single map tint option row.
+ */
+@Composable
+private fun MapTintOptionRow(
+    tint: SettingsManager.MapTint,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton
+            )
+            .padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = onClick,
+            colors = RadioButtonDefaults.colors(
+                selectedColor = ThemeManager.palette.accent,
+                unselectedColor = ThemeManager.palette.text
+            )
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        if (tint != SettingsManager.MapTint.NONE) {
+            Card(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(tint.colorValue)
+                )
+            ) {}
+
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
+        Text(
+            text = tint.displayName,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f),
+            color = ThemeManager.palette.text
+        )
+
+        if (selected) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = getResourceString(R.string.selected),
+                tint = ThemeManager.palette.accent,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Composable function to display a single option row.
  *
  * @param text The text to display for the option.
  * @param selected Whether the option is currently selected.
- * @param onClick Callback function to handle option selection.
+ * @param onClick The callback function invoked when the option is clicked.
  */
 @Composable
 private fun OptionRow(
@@ -223,21 +338,19 @@ private fun OptionRow(
                 onClick = onClick,
                 role = Role.RadioButton
             )
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         RadioButton(
             selected = selected,
+            onClick = onClick,
             colors = RadioButtonDefaults.colors(
                 selectedColor = ThemeManager.palette.accent,
-                unselectedColor = ThemeManager.palette.primary,
-                disabledSelectedColor = ThemeManager.palette.disabledText,
-                disabledUnselectedColor = ThemeManager.palette.disabledBorder,
-            ),
-            onClick = null
+                unselectedColor = ThemeManager.palette.text
+            )
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(8.dp))
 
         Text(
             text = text,
@@ -279,15 +392,15 @@ private fun SettingsSection(
                 imageVector = icon,
                 contentDescription = null,
                 tint = ThemeManager.palette.title,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
 
             Spacer(modifier = Modifier.width(8.dp))
 
             Text(
                 text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
                 color = ThemeManager.palette.title
             )
         }
@@ -295,8 +408,9 @@ private fun SettingsSection(
         Card(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
-                containerColor = ThemeManager.palette.background
-            )
+                containerColor = ThemeManager.palette.white
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
@@ -308,12 +422,12 @@ private fun SettingsSection(
 }
 
 /**
- * Composable function to display a settings item with a toggle switch.
+ * Composable function to display a settings toggle item.
  *
  * @param title The title of the settings item.
  * @param description The description of the settings item.
- * @param checked Whether the toggle switch is currently checked.
- * @param onCheckedChange Callback function to handle toggle switch changes.
+ * @param checked Whether the toggle is currently checked.
+ * @param onCheckedChange The callback function invoked when the toggle state changes.
  */
 @Composable
 private fun SettingsToggleItem(

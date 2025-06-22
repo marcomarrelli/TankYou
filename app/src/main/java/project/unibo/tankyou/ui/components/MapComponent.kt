@@ -69,6 +69,30 @@ class MapComponent(
                 }
             }
         }
+
+        context.lifecycleScope.launch {
+            SettingsManager.mapTintFlow.collect { mapTint ->
+                if (mapInitialized) {
+                    applyMapTint(mapTint)
+                }
+            }
+        }
+    }
+
+    private fun applyMapTint(mapTint: SettingsManager.MapTint) {
+        if (!::map.isInitialized) return
+
+        try {
+            if (mapTint == SettingsManager.MapTint.NONE) {
+                map.overlayManager.tilesOverlay.setColorFilter(null)
+            } else {
+                val tintFilter = getTintFilter(mapTint.colorValue, 0.3f)
+                map.overlayManager.tilesOverlay.setColorFilter(tintFilter)
+            }
+            map.invalidate()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun updateLocationOverlay() {
@@ -144,6 +168,9 @@ class MapComponent(
             setupMapClickListener()
 
             map.addMapListener(this)
+
+            // Apply initial tint
+            applyMapTint(SettingsManager.getCurrentMapTint())
 
             mapInitialized = true
 

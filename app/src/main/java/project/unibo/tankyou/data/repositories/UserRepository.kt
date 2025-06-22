@@ -96,6 +96,10 @@ class UserRepository(private val supabase: SupabaseClient) {
                 return true // Return true since the desired state is already achieved
             }
 
+            // @Deprecated
+            // put("saved_at", now) > Not Needed because Database has default = now()
+            // val now = Calendar.getInstance().toDate(Calendar.getInstance().timeInMillis).toHttpDate()
+
             supabase.from("user_saved_gas_stations")
                 .insert(
                     buildJsonObject {
