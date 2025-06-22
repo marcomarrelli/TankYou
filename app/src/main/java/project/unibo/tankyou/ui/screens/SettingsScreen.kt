@@ -7,12 +7,14 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -73,7 +75,7 @@ fun SettingsScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .statusBarsPadding()
+            .windowInsetsPadding(WindowInsets.statusBars)//.statusBarsPadding()
             .background(ThemeManager.palette.background)
             .verticalScroll(rememberScrollState())
             .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 16.dp),
@@ -409,8 +411,7 @@ private fun SettingsSection(
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(
                 containerColor = ThemeManager.palette.primary.copy(alpha = 0.7f)
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            )
         ) {
             Column(
                 modifier = Modifier.padding(16.dp)
