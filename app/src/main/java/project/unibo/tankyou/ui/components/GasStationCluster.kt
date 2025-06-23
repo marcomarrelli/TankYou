@@ -9,6 +9,7 @@ import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.util.Log
 import android.util.LruCache
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toDrawable
@@ -33,7 +34,8 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * LRU cache for storing cluster icons to avoid recreating identical icons.
      * Maximum size of 50 entries should be sufficient for most use cases.
      */
-    private val iconCache = LruCache<String, Drawable>(Constants.Map.Cache.CACHE_SIZE)
+    private val iconCache: LruCache<String, Drawable> =
+        LruCache<String, Drawable>(Constants.Map.Cache.CACHE_SIZE)
 
     /**
      * Determines the appropriate color for a cluster based on its size.
@@ -48,11 +50,16 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * @return An integer color value representing the appropriate color for the cluster
      */
     private fun getClusterColor(size: Int): Int {
-        return when {
+        Log.d(Constants.App.LOG_TAG, "Determining cluster color for size: $size")
+
+        val color: Int = when {
             size > Constants.Map.Cluster.CLUSTER_MAX_COUNT -> ThemeManager.palette.alert.toAndroidColor()
             size >= (Constants.Map.Cluster.CLUSTER_MAX_COUNT / 2) -> ThemeManager.palette.warning.toAndroidColor()
             else -> ThemeManager.palette.ok.toAndroidColor()
         }
+
+        Log.d(Constants.App.LOG_TAG, "Selected cluster color: $color for size: $size")
+        return color
     }
 
     /**
@@ -66,25 +73,33 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * @param cluster The StaticCluster containing the grouped markers
      * @param mapView The MapView where the cluster will be displayed
      *
-     * @return A Marker object with the custom cluster icon
+     * @return A [Marker] object with the custom cluster icon
      */
     override fun buildClusterMarker(cluster: StaticCluster, mapView: MapView): Marker {
+        Log.d(
+            Constants.App.LOG_TAG,
+            "Building cluster marker for cluster with ${cluster.size} items"
+        )
+
         val marker = super.buildClusterMarker(cluster, mapView)
 
-        val clusterSize = cluster.size
-        val color = getClusterColor(clusterSize)
-        val cacheKey = "${clusterSize}_${color}"
+        val clusterSize: Int = cluster.size
+        val color: Int = getClusterColor(clusterSize)
+        val cacheKey: String = "${clusterSize}_${color}"
 
         /**
          * Icon from cache, or create a new one if not found.
          */
-        val icon = iconCache.get(cacheKey) ?: run {
-            val newIcon = buildClusterIcon(clusterSize, color)
+        val icon: Drawable = iconCache.get(cacheKey) ?: run {
+            Log.d(Constants.App.LOG_TAG, "Creating new cluster icon for cache key: $cacheKey")
+            val newIcon: Drawable = buildClusterIcon(clusterSize, color)
             iconCache.put(cacheKey, newIcon)
+            Log.d(Constants.App.LOG_TAG, "Cached new cluster icon. Cache size: ${iconCache.size()}")
             newIcon
         }
 
         marker.setOnMarkerClickListener { marker, _ ->
+            Log.d(Constants.App.LOG_TAG, "Cluster marker clicked, zooming to bounds")
             // the last parameter is the zoom border padding
             mapView.zoomToBoundingBox(
                 marker.bounds,
@@ -95,6 +110,7 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
         }
 
         marker.icon = icon
+        Log.d(Constants.App.LOG_TAG, "Successfully built cluster marker")
         return marker
     }
 
@@ -109,16 +125,21 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * @param clusterSize The number of gas stations in the cluster
      * @param baseColor The background color for the cluster icon
      *
-     * @return A Drawable object representing the cluster icon
+     * @return A [Drawable] object representing the cluster icon
      */
     private fun buildClusterIcon(clusterSize: Int, baseColor: Int): Drawable {
-        val size = Constants.Map.Cluster.CLUSTER_SIZE
+        Log.d(
+            Constants.App.LOG_TAG,
+            "Building cluster icon for size: $clusterSize with color: $baseColor"
+        )
+
+        val size: Int = Constants.Map.Cluster.CLUSTER_SIZE
         val bitmap = createBitmap(size, size)
         val canvas = Canvas(bitmap)
 
-        val centerX = size / 2f
-        val centerY = size / 2f
-        val radius = size / 2f - 2f
+        val centerX: Float = size / 2f
+        val centerY: Float = size / 2f
+        val radius: Float = size / 2f - 2f
 
         val radialGradient = RadialGradient(
             centerX,
@@ -153,7 +174,7 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
             style = Paint.Style.FILL
         }
 
-        val dynamicTextSize = when {
+        val dynamicTextSize: Float = when {
             clusterSize >= 1000 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 0.8)
             clusterSize >= 100 -> Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE
             clusterSize >= 10 -> (Constants.Map.Cluster.CLUSTER_TEXT_FONT_SIZE * 1.2)
@@ -172,11 +193,12 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
 
         canvas.drawCircle(centerX, centerY, radius, paint)
 
-        val text = formatClusterText(clusterSize)
-        val textY = centerY + (textPaint.textSize / 3f)
+        val text: String = formatClusterText(clusterSize)
+        val textY: Float = centerY + (textPaint.textSize / 3f)
 
         canvas.drawText(text, centerX, textY, textPaint)
 
+        Log.d(Constants.App.LOG_TAG, "Successfully created cluster icon for size: $clusterSize")
         return bitmap.toDrawable(Resources.getSystem())
     }
 
@@ -196,10 +218,16 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
      * @return A formatted string representation of the cluster size
      */
     private fun formatClusterText(clusterSize: Int): String {
-        return when {
+        val formattedText: String = when {
             clusterSize >= 1000 -> "${clusterSize / 1000}K+"
             clusterSize >= 100 -> "${clusterSize / 100}H+"
             else -> clusterSize.toString()
         }
+
+        Log.d(
+            Constants.App.LOG_TAG,
+            "Formatted cluster text: '$formattedText' for size: $clusterSize"
+        )
+        return formattedText
     }
 }

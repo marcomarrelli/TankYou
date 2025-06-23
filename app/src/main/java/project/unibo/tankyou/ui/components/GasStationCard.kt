@@ -75,90 +75,149 @@ import project.unibo.tankyou.data.repositories.AppRepository
 import project.unibo.tankyou.data.repositories.AuthRepository
 import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.getResourceString
 import java.util.Locale
 import kotlin.math.roundToInt
 
+/**
+ * A composable that displays a detailed gas station card with fuel prices and favorite functionality
+ *
+ * @param gasStation The gas station data to display
+ * @param onDismiss Callback function to handle card dismissal
+ * @param modifier Optional modifier for customizing the appearance
+ */
 @Composable
 fun GasStationCard(
     gasStation: GasStation,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var isVisible by remember { mutableStateOf(false) }
-    var fuelPrices by remember { mutableStateOf<List<Fuel>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var isFavorite by remember { mutableStateOf(false) }
-    var offsetY by remember { mutableFloatStateOf(0f) }
-    var showSaveDialog by remember { mutableStateOf(false) }
-    var isSaving by remember { mutableStateOf(false) }
+    // State variables for UI management
+    var isVisible: Boolean by remember { mutableStateOf(false) }
+    var fuelPrices: List<Fuel> by remember { mutableStateOf(emptyList()) }
+    var isLoading: Boolean by remember { mutableStateOf(true) }
+    var isFavorite: Boolean by remember { mutableStateOf(false) }
+    var offsetY: Float by remember { mutableFloatStateOf(0f) }
+    var showSaveDialog: Boolean by remember { mutableStateOf(false) }
+    var isSaving: Boolean by remember { mutableStateOf(false) }
 
     val density = LocalDensity.current
-    val repository = remember { AppRepository.getInstance() }
-    val userRepository = remember { UserRepository.getInstance() }
+    val repository: AppRepository = remember { AppRepository.getInstance() }
+    val userRepository: UserRepository = remember { UserRepository.getInstance() }
     val coroutineScope = rememberCoroutineScope()
 
+    // Initialize card data when gas station changes
     LaunchedEffect(gasStation) {
         isVisible = true
         isLoading = true
 
         try {
-            val prices = repository.getFuelPricesForStation(gasStation.id)
+            Log.d(Constants.App.LOG_TAG, "Loading fuel prices for gas station: ${gasStation.id}")
+            val prices: List<Fuel> = repository.getFuelPricesForStation(gasStation.id)
             fuelPrices = prices
 
-            // Always check the current state from database
+            // Check if the station is already saved as favorite
+            Log.d(
+                Constants.App.LOG_TAG,
+                "Checking favorite status for gas station: ${gasStation.id}"
+            )
             isFavorite = userRepository.isGasStationSaved(gasStation.id)
         } catch (e: Exception) {
-            Log.e("GasStationCard", "Error loading gas station data", e)
+            Log.e(
+                Constants.App.LOG_TAG,
+                "Error loading gas station data for station: ${gasStation.id}",
+                e
+            )
             fuelPrices = emptyList()
         } finally {
             isLoading = false
+            Log.d(Constants.App.LOG_TAG, "Finished loading data for gas station: ${gasStation.id}")
         }
     }
 
+    /**
+     * Refreshes the favorite state from the database
+     */
     fun refreshFavoriteState() {
         coroutineScope.launch {
             try {
+                Log.d(
+                    Constants.App.LOG_TAG,
+                    "Refreshing favorite state for gas station: ${gasStation.id}"
+                )
                 isFavorite = userRepository.isGasStationSaved(gasStation.id)
             } catch (e: Exception) {
-                Log.e("GasStationCard", "Error refreshing favorite state", e)
+                Log.e(
+                    Constants.App.LOG_TAG,
+                    "Error refreshing favorite state for station: ${gasStation.id}",
+                    e
+                )
             }
         }
     }
 
+    /**
+     * Handles the favorite button click logic
+     * Either removes from favorites or shows the save dialog
+     */
     fun handleFavoriteClick() {
-        if (isSaving) return // Prevent multiple clicks during operation
+        // Prevent multiple clicks during operation
+        if (isSaving) {
+            Log.w(
+                Constants.App.LOG_TAG,
+                "Favorite click ignored - save operation in progress for station: ${gasStation.id}"
+            )
+            return
+        }
 
         coroutineScope.launch {
             isSaving = true
             try {
-                // Re-check current state before proceeding
-                val currentlyFavorite = userRepository.isGasStationSaved(gasStation.id)
+                Log.d(
+                    Constants.App.LOG_TAG,
+                    "Processing favorite click for gas station: ${gasStation.id}"
+                )
+
+                // Re-check current state before proceeding to avoid race conditions
+                val currentlyFavorite: Boolean = userRepository.isGasStationSaved(gasStation.id)
 
                 if (currentlyFavorite) {
                     // Remove from favorites
-                    val success = userRepository.removeSavedGasStation(gasStation.id)
+                    Log.d(
+                        Constants.App.LOG_TAG,
+                        "Attempting to remove gas station ${gasStation.id} from favorites"
+                    )
+                    val success: Boolean = userRepository.removeSavedGasStation(gasStation.id)
                     if (success) {
                         isFavorite = false
                         Log.d(
-                            "GasStationCard",
+                            Constants.App.LOG_TAG,
                             "Successfully removed gas station ${gasStation.id} from favorites"
                         )
                     } else {
                         Log.e(
-                            "GasStationCard",
+                            Constants.App.LOG_TAG,
                             "Failed to remove gas station ${gasStation.id} from favorites"
                         )
-                        // Refresh state in case of error
+                        // Refresh state in case of error to maintain consistency
                         refreshFavoriteState()
                     }
                 } else {
                     // Show save dialog to add to favorites
+                    Log.d(
+                        Constants.App.LOG_TAG,
+                        "Showing save dialog for gas station: ${gasStation.id}"
+                    )
                     showSaveDialog = true
                 }
             } catch (e: Exception) {
-                Log.e("GasStationCard", "Error handling favorite click", e)
-                // Refresh state in case of error
+                Log.e(
+                    Constants.App.LOG_TAG,
+                    "Error handling favorite click for station: ${gasStation.id}",
+                    e
+                )
+                // Refresh state in case of error to maintain consistency
                 refreshFavoriteState()
             } finally {
                 isSaving = false
@@ -166,35 +225,48 @@ fun GasStationCard(
         }
     }
 
+    /**
+     * Handles saving a gas station to favorites with optional notes
+     *
+     * @param notes Optional notes to save with the gas station
+     */
     fun handleSaveStation(notes: String) {
         coroutineScope.launch {
             isSaving = true
             try {
-                // Double-check that the station isn't already saved
-                val alreadySaved = userRepository.isGasStationSaved(gasStation.id)
+                Log.d(
+                    Constants.App.LOG_TAG,
+                    "Attempting to save gas station ${gasStation.id} with notes: ${notes.isNotBlank()}"
+                )
+
+                // Double-check that the station isn't already saved to prevent duplicates
+                val alreadySaved: Boolean = userRepository.isGasStationSaved(gasStation.id)
                 if (alreadySaved) {
-                    Log.i("GasStationCard", "Gas station ${gasStation.id} is already saved")
+                    Log.i(
+                        Constants.App.LOG_TAG,
+                        "Gas station ${gasStation.id} is already saved, updating UI state"
+                    )
                     isFavorite = true
                     showSaveDialog = false
                     return@launch
                 }
 
-                val success = userRepository.saveGasStation(
+                val success: Boolean = userRepository.saveGasStation(
                     gasStation.id,
                     notes.ifBlank { null }
                 )
 
                 if (success) {
-                    Log.d("GasStationCard", "Gas station ${gasStation.id} saved successfully")
+                    Log.d(Constants.App.LOG_TAG, "Gas station ${gasStation.id} saved successfully")
                     isFavorite = true
                     showSaveDialog = false
                 } else {
-                    Log.e("GasStationCard", "Failed to save gas station ${gasStation.id}")
+                    Log.e(Constants.App.LOG_TAG, "Failed to save gas station ${gasStation.id}")
                     // Refresh state to ensure consistency
                     refreshFavoriteState()
                 }
             } catch (e: Exception) {
-                Log.e("GasStationCard", "Error saving gas station ${gasStation.id}", e)
+                Log.e(Constants.App.LOG_TAG, "Error saving gas station ${gasStation.id}", e)
                 // Refresh state to ensure consistency
                 refreshFavoriteState()
             } finally {
@@ -206,6 +278,7 @@ fun GasStationCard(
     Box(
         modifier = modifier.fillMaxSize()
     ) {
+        // Transparent overlay to capture background clicks
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -216,6 +289,7 @@ fun GasStationCard(
             color = Color.Transparent
         ) {}
 
+        // Animated card that slides in from bottom
         AnimatedVisibility(
             visible = isVisible,
             enter = slideInVertically(
@@ -233,17 +307,21 @@ fun GasStationCard(
                     .fillMaxWidth()
                     .offset { IntOffset(0, offsetY.roundToInt()) }
                     .pointerInput(Unit) {
+                        // Handle drag gestures for dismissing the card
                         detectDragGestures(
                             onDragEnd = {
-                                val threshold = with(density) { 150.dp.toPx() }
+                                val threshold: Float = with(density) { 150.dp.toPx() }
                                 if (offsetY > threshold) {
+                                    Log.d(Constants.App.LOG_TAG, "Card dismissed via drag gesture")
                                     onDismiss()
                                 } else {
+                                    // Reset position if drag threshold not met
                                     offsetY = 0f
                                 }
                             }
                         ) { _, dragAmount ->
-                            val newOffset = offsetY + dragAmount.y
+                            // Update card position during drag, only allow downward movement
+                            val newOffset: Float = offsetY + dragAmount.y
                             offsetY = if (newOffset > 0) newOffset else 0f
                         }
                     }
@@ -265,6 +343,7 @@ fun GasStationCard(
                         .fillMaxWidth()
                         .padding(24.dp)
                 ) {
+                    // Drag handle indicator at the top
                     Box(
                         modifier = Modifier
                             .width(40.dp)
@@ -280,11 +359,13 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(16.dp))
 
+                    // Header section with station name, address and action buttons
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.Top
                     ) {
+                        // Station name and address information
                         Column(
                             modifier = Modifier.weight(1f)
                         ) {
@@ -299,6 +380,7 @@ fun GasStationCard(
 
                             Spacer(modifier = Modifier.height(6.dp))
 
+                            // Address section with location icon
                             Row(
                                 verticalAlignment = Alignment.Top
                             ) {
@@ -310,7 +392,7 @@ fun GasStationCard(
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Column {
-                                    gasStation.address?.let { address ->
+                                    gasStation.address?.let { address: String ->
                                         Text(
                                             text = address,
                                             style = MaterialTheme.typography.bodyMedium,
@@ -319,18 +401,20 @@ fun GasStationCard(
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }
+                                    // Display city and province if available
                                     if (gasStation.city != null || gasStation.province != null) {
+                                        val locationText: String = buildString {
+                                            gasStation.city?.let { append(it) }
+                                            gasStation.province?.let {
+                                                if (gasStation.city != null) append(" ")
+                                                append("($it)")
+                                            }
+                                            if (isEmpty()) {
+                                                append(getResourceString(R.string.not_available))
+                                            }
+                                        }
                                         Text(
-                                            text = buildString {
-                                                gasStation.city?.let { append(it) }
-                                                gasStation.province?.let {
-                                                    if (gasStation.city != null) append(" ")
-                                                    append("($it)")
-                                                }
-                                                if (isEmpty()) {
-                                                    append(getResourceString(R.string.not_available))
-                                                }
-                                            },
+                                            text = locationText,
                                             style = MaterialTheme.typography.bodySmall,
                                             color = ThemeManager.palette.text.copy(alpha = 0.8f)
                                         )
@@ -339,9 +423,11 @@ fun GasStationCard(
                             }
                         }
 
+                        // Action buttons (favorite and close)
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
+                            // Show favorite button only for logged in users
                             if (AuthRepository.getInstance().isUserLoggedIn()) {
                                 IconButton(
                                     onClick = { handleFavoriteClick() },
@@ -351,12 +437,14 @@ fun GasStationCard(
                                         .size(40.dp)
                                 ) {
                                     if (isSaving) {
+                                        // Show loading indicator during save operation
                                         CircularProgressIndicator(
                                             modifier = Modifier.size(20.dp),
                                             color = ThemeManager.palette.primary,
                                             strokeWidth = 2.dp
                                         )
                                     } else {
+                                        // Show filled or outlined heart based on favorite status
                                         Icon(
                                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                                             contentDescription = if (isFavorite) "Remove from favorites" else "Add to favorites",
@@ -366,8 +454,12 @@ fun GasStationCard(
                                     }
                                 }
                             }
+                            // Close button
                             IconButton(
-                                onClick = onDismiss,
+                                onClick = {
+                                    Log.d(Constants.App.LOG_TAG, "Gas station card closed by user")
+                                    onDismiss()
+                                },
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .size(40.dp)
@@ -391,6 +483,7 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // Station information card (brand, type, owner)
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
@@ -403,6 +496,7 @@ fun GasStationCard(
                                 .fillMaxWidth()
                                 .padding(16.dp)
                         ) {
+                            // Brand and type information in a row
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceEvenly
@@ -424,7 +518,8 @@ fun GasStationCard(
                                 )
                             }
 
-                            if (gasStation.owner != null) {
+                            // Owner information (if available)
+                            gasStation.owner?.let { owner: String ->
                                 Spacer(modifier = Modifier.height(12.dp))
 
                                 HorizontalDivider(
@@ -437,7 +532,7 @@ fun GasStationCard(
                                 StationInfoItem(
                                     icon = Icons.Default.Person,
                                     label = getResourceString(R.string.card_owner_title),
-                                    value = gasStation.owner,
+                                    value = owner,
                                     modifier = Modifier.fillMaxWidth()
                                 )
                             }
@@ -453,6 +548,7 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(20.dp))
 
+                    // Fuel prices section header
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -474,7 +570,9 @@ fun GasStationCard(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
+                    // Fuel prices content with loading, empty or data states
                     if (isLoading) {
+                        // Loading state
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -495,6 +593,11 @@ fun GasStationCard(
                             }
                         }
                     } else if (fuelPrices.isEmpty()) {
+                        // Empty state when no fuel prices are available
+                        Log.w(
+                            Constants.App.LOG_TAG,
+                            "No fuel prices available for gas station: ${gasStation.id}"
+                        )
                         Card(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(
@@ -516,6 +619,11 @@ fun GasStationCard(
                             }
                         }
                     } else {
+                        // Data state - display fuel prices in a scrollable list
+                        Log.d(
+                            Constants.App.LOG_TAG,
+                            "Displaying ${fuelPrices.size} fuel prices for gas station: ${gasStation.id}"
+                        )
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -523,7 +631,7 @@ fun GasStationCard(
                             verticalArrangement = Arrangement.spacedBy(10.dp),
                             contentPadding = PaddingValues(vertical = 4.dp)
                         ) {
-                            items(fuelPrices) { fuel ->
+                            items(fuelPrices) { fuel: Fuel ->
                                 FuelPriceItem(fuel = fuel)
                             }
                         }
@@ -533,17 +641,30 @@ fun GasStationCard(
         }
     }
 
+    // Save station dialog
     SaveStationDialog(
         isVisible = showSaveDialog,
         stationName = gasStation.name ?: "Gas Station",
         onDismiss = {
+            Log.d(
+                Constants.App.LOG_TAG,
+                "Save station dialog dismissed for gas station: ${gasStation.id}"
+            )
             showSaveDialog = false
             isSaving = false // Reset saving state when dialog is dismissed
         },
-        onSave = { notes -> handleSaveStation(notes) }
+        onSave = { notes: String -> handleSaveStation(notes) }
     )
 }
 
+/**
+ * A composable that displays a single station information item with an icon, label and value
+ *
+ * @param icon The icon to display
+ * @param label The label text
+ * @param value The value text
+ * @param modifier Optional modifier for customizing the appearance
+ */
 @Composable
 private fun StationInfoItem(
     icon: ImageVector,
@@ -584,6 +705,11 @@ private fun StationInfoItem(
     }
 }
 
+/**
+ * A composable that displays a fuel price item with fuel type, service type and price information
+ *
+ * @param fuel The fuel data to display
+ */
 @Composable
 private fun FuelPriceItem(fuel: Fuel) {
     Card(
@@ -600,6 +726,7 @@ private fun FuelPriceItem(fuel: Fuel) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Fuel type and service type information
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = fuel.type.toFuelTypeName(),
@@ -619,11 +746,14 @@ private fun FuelPriceItem(fuel: Fuel) {
 
             Spacer(modifier = Modifier.width(12.dp))
 
+            // Price and last update information
             Column(
                 horizontalAlignment = Alignment.End
             ) {
+                // Format price with 3 decimal places
+                val formattedPrice: String = String.format(Locale.getDefault(), "€%.3f", fuel.price)
                 Text(
-                    text = String.format(Locale.getDefault(), "€%.3f", fuel.price),
+                    text = formattedPrice,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = ThemeManager.palette.accent,
@@ -632,8 +762,11 @@ private fun FuelPriceItem(fuel: Fuel) {
 
                 Spacer(modifier = Modifier.height(1.dp))
 
+                // Last update date
+                val lastUpdateText: String =
+                    getResourceString(R.string.fuel_prices_last_update_title) + " " + fuel.date.toLocalizedDateFormat()
                 Text(
-                    text = getResourceString(R.string.fuel_prices_last_update_title) + " " + fuel.date.toLocalizedDateFormat(),
+                    text = lastUpdateText,
                     style = MaterialTheme.typography.labelSmall,
                     color = ThemeManager.palette.text
                 )

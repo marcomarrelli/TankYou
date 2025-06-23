@@ -26,12 +26,36 @@ object SettingsManager {
 
     private const val LANGUAGE_KEY: String = "selected_language"
     private const val SHOW_MY_LOCATION_KEY: String = "show_my_location"
-    private const val AUTO_CENTER_MAP_KEY: String = "auto_center_map"
     private const val MAP_TINT_KEY: String = "map_tint"
 
     private const val MAP_CENTER_LATITUDE_KEY: String = "map_center_latitude"
     private const val MAP_CENTER_LONGITUDE_KEY: String = "map_center_longitude"
     private const val MAP_ZOOM_LEVEL_KEY: String = "map_zoom_level"
+
+    private lateinit var prefs: SharedPreferences
+
+    private val _mapTintFlow: MutableStateFlow<MapTint> = MutableStateFlow(MapTint.NONE)
+    private val _showMyLocationOnMapFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
+
+    // Language state management
+    private val _currentLanguageFlow: MutableStateFlow<AppLanguage> =
+        MutableStateFlow(AppLanguage.ITALIAN)
+    private val _currentLanguage = mutableStateOf(AppLanguage.ITALIAN)
+
+    /**
+     * A State holding the current application language for Compose components.
+     */
+    val currentLanguage: State<AppLanguage> = _currentLanguage
+
+    /**
+     * A StateFlow indicating whether the user's location should be shown on the map.
+     */
+    val showMyLocationOnMapFlow: StateFlow<Boolean> = _showMyLocationOnMapFlow.asStateFlow()
+
+    /**
+     * A StateFlow holding the current map tint setting.
+     */
+    val mapTintFlow: StateFlow<MapTint> = _mapTintFlow.asStateFlow()
 
     /**
      * Enumeration for available map tint options.
@@ -44,33 +68,6 @@ object SettingsManager {
         GRAY("Gray Scale", 0xFFA9A9A9.toInt()),
         SEPIA("Sepia", 0xFF704214.toInt())
     }
-
-    private lateinit var prefs: SharedPreferences
-
-    private val _currentLanguageFlow: MutableStateFlow<AppLanguage> =
-        MutableStateFlow(AppLanguage.ITALIAN)
-    private val _currentLanguage = mutableStateOf(AppLanguage.ITALIAN)
-
-    /**
-     * A State holding the current application language.
-     */
-    val currentLanguage: State<AppLanguage> = _currentLanguage
-
-    private val _showMyLocationOnMapFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
-
-    /**
-     * A StateFlow indicating whether the user's location should be shown on the map.
-     */
-    val showMyLocationOnMapFlow: StateFlow<Boolean> = _showMyLocationOnMapFlow.asStateFlow()
-
-    private val _autoCenterMap = mutableStateOf(false)
-
-    private val _mapTintFlow: MutableStateFlow<MapTint> = MutableStateFlow(MapTint.NONE)
-
-    /**
-     * A StateFlow holding the current map tint setting.
-     */
-    val mapTintFlow: StateFlow<MapTint> = _mapTintFlow.asStateFlow()
 
     /**
      * Initializes the SettingsManager with the application context.
@@ -106,18 +103,14 @@ object SettingsManager {
                 AppLanguage.entries.find { it.code == savedLanguage } ?: AppLanguage.ITALIAN
             Log.d(LOG_TAG, "Loaded language setting: ${language.code}")
 
-            _currentLanguage.value = language
+            // Update both StateFlow and State synchronously
             _currentLanguageFlow.value = language
+            _currentLanguage.value = language
 
             // Load and set the 'show my location' preference
             val showLocation: Boolean = prefs.getBoolean(SHOW_MY_LOCATION_KEY, true)
             _showMyLocationOnMapFlow.value = showLocation
             Log.d(LOG_TAG, "Loaded show location setting: $showLocation")
-
-            // Load and set the 'auto center map' preference
-            val autoCenter: Boolean = prefs.getBoolean(AUTO_CENTER_MAP_KEY, false)
-            _autoCenterMap.value = autoCenter
-            Log.d(LOG_TAG, "Loaded auto center map setting: $autoCenter")
 
             // Load and set the map tint preference
             val savedTintName: String? = prefs.getString(MAP_TINT_KEY, MapTint.NONE.name)
@@ -138,8 +131,10 @@ object SettingsManager {
     fun setLanguage(language: AppLanguage, context: Context? = null) {
         Log.d(LOG_TAG, "Setting language to: ${language.code}")
         try {
-            _currentLanguage.value = language
+            // Update both StateFlow and State synchronously
             _currentLanguageFlow.value = language
+            _currentLanguage.value = language
+
             prefs.edit { putString(LANGUAGE_KEY, language.code) }
 
             // Apply the language change to the application's locale if context is provided
@@ -173,7 +168,7 @@ object SettingsManager {
      * @return The current AppLanguage
      */
     fun getCurrentLanguage(): AppLanguage {
-        val currentLang: AppLanguage = _currentLanguage.value
+        val currentLang: AppLanguage = _currentLanguageFlow.value
         Log.d(LOG_TAG, "Getting current language: ${currentLang.code}")
         return currentLang
     }

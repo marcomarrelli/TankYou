@@ -1,5 +1,6 @@
 package project.unibo.tankyou.ui.components
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -40,6 +41,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,44 +54,61 @@ import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
 import project.unibo.tankyou.data.database.model.SavedGasStationsModel
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.util.Locale
 
+/**
+ * A composable card that displays user's saved gas stations with expand/collapse functionality.
+ *
+ * @param onStationClick Callback invoked when a gas station item is clicked
+ * @param savedGasStationsModel ViewModel that manages saved gas stations data
+ */
 @Composable
 fun SavedGasStationCard(
     onStationClick: (GasStation) -> Unit = {},
     savedGasStationsModel: SavedGasStationsModel = viewModel()
 ) {
-    val savedStations by savedGasStationsModel.savedStations.collectAsState()
-    val isLoading by savedGasStationsModel.isLoading.collectAsState()
+    // Collect state from the ViewModel
+    val savedStations: List<UserSavedGasStation> by savedGasStationsModel.savedStations.collectAsState()
+    val isLoading: Boolean by savedGasStationsModel.isLoading.collectAsState()
 
-    var stationsWithDetails by remember {
+    // State to hold stations with their complete details
+    var stationsWithDetails: List<Pair<UserSavedGasStation, GasStation?>> by remember {
         mutableStateOf<List<Pair<UserSavedGasStation, GasStation?>>>(
             emptyList()
         )
     }
-    var detailsLoading by remember { mutableStateOf(false) }
-    var isExpanded by remember { mutableStateOf(false) }
+    var detailsLoading: Boolean by remember { mutableStateOf(false) }
+    var isExpanded: Boolean by remember { mutableStateOf(false) }
 
+    // Effect to fetch detailed information for each saved station when savedStations changes
     LaunchedEffect(savedStations) {
         if (savedStations.isNotEmpty()) {
+            Log.d(
+                Constants.App.LOG_TAG,
+                "Fetching details for ${savedStations.size} saved stations"
+            )
             detailsLoading = true
             try {
-                val stationsWithDetailsTemp = savedStations.map { savedStation ->
-                    val gasStation =
-                        Constants.App.APP_REPOSITORY.getStationById(savedStation.stationId.toString())
-                    savedStation to gasStation
-                }
+                // Map each saved station to its complete GasStation details
+                val stationsWithDetailsTemp: List<Pair<UserSavedGasStation, GasStation?>> =
+                    savedStations.map { savedStation ->
+                        val gasStation: GasStation? =
+                            Constants.App.APP_REPOSITORY.getStationById(savedStation.stationId.toString())
+                        savedStation to gasStation
+                    }
                 stationsWithDetails = stationsWithDetailsTemp
+                Log.d(
+                    Constants.App.LOG_TAG,
+                    "Successfully loaded details for ${stationsWithDetailsTemp.size} stations"
+                )
             } catch (e: Exception) {
+                Log.e(Constants.App.LOG_TAG, "Error fetching station details: ${e.message}", e)
                 e.printStackTrace()
             } finally {
                 detailsLoading = false
             }
         } else {
             stationsWithDetails = emptyList()
+            Log.d(Constants.App.LOG_TAG, "No saved stations to display")
         }
     }
 
@@ -136,6 +155,7 @@ fun SavedGasStationCard(
                     }
                 }
 
+                // Show expand/collapse button only if there are saved stations
                 if (savedStations.isNotEmpty()) {
                     IconButton(onClick = { isExpanded = !isExpanded }) {
                         Icon(
@@ -149,8 +169,10 @@ fun SavedGasStationCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            // Display content based on loading state and data availability
             when {
                 isLoading || detailsLoading -> {
+                    Log.d(Constants.App.LOG_TAG, "Showing loading indicator for saved stations")
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -165,6 +187,10 @@ fun SavedGasStationCard(
                 }
 
                 stationsWithDetails.isEmpty() -> {
+                    Log.d(
+                        Constants.App.LOG_TAG,
+                        "No saved stations to display - showing empty state"
+                    )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -181,12 +207,18 @@ fun SavedGasStationCard(
                 }
 
                 else -> {
-                    // Show first 3 stations when collapsed, all when expanded
-                    val displayStations = if (isExpanded) {
-                        stationsWithDetails
-                    } else {
-                        stationsWithDetails.take(3)
-                    }
+                    // Determine which stations to display based on expand state
+                    val displayStations: List<Pair<UserSavedGasStation, GasStation?>> =
+                        if (isExpanded) {
+                            stationsWithDetails
+                        } else {
+                            stationsWithDetails.take(3)
+                        }
+
+                    Log.d(
+                        Constants.App.LOG_TAG,
+                        "Displaying ${displayStations.size} out of ${stationsWithDetails.size} stations (expanded: $isExpanded)"
+                    )
 
                     AnimatedVisibility(
                         visible = true,
@@ -203,6 +235,11 @@ fun SavedGasStationCard(
                                         savedStation = savedStation,
                                         gasStation = gasStation,
                                         onStationClick = { onStationClick(gasStation) }
+                                    )
+                                } else {
+                                    Log.w(
+                                        Constants.App.LOG_TAG,
+                                        "GasStation is null for saved station ID: ${savedStation.stationId}"
                                     )
                                 }
                             }
@@ -225,6 +262,13 @@ fun SavedGasStationCard(
     }
 }
 
+/**
+ * A composable item that displays individual saved gas station information.
+ *
+ * @param savedStation The saved gas station data containing user-specific information
+ * @param gasStation The complete gas station information
+ * @param onStationClick Callback invoked when the station item is clicked
+ */
 @Composable
 private fun SavedStationItem(
     savedStation: UserSavedGasStation,
@@ -275,15 +319,13 @@ private fun SavedStationItem(
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
-                    gasStation.flag?.let { flag ->
-                        Text(
-                            text = flag.toFlagLabel(),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = ThemeManager.palette.accent,
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 10.sp
-                        )
-                    }
+                    Text(
+                        text = gasStation.flag.toFlagLabel(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = ThemeManager.palette.accent,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 10.sp
+                    )
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -297,29 +339,18 @@ private fun SavedStationItem(
                 }
             }
 
+            // Display user notes if available
             if (!savedStation.notes.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = savedStation.notes,
                     style = MaterialTheme.typography.bodySmall,
                     color = ThemeManager.palette.text,
-                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic,
+                    fontStyle = FontStyle.Italic,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
         }
-    }
-}
-
-private fun formatSaveDate(savedAt: String): String {
-    return try {
-        val instant = Instant.parse(savedAt)
-        val formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy")
-            .withLocale(Locale.getDefault())
-            .withZone(ZoneId.systemDefault())
-        "Saved: ${formatter.format(instant)}"
-    } catch (e: Exception) {
-        "Saved: Unknown"
     }
 }
