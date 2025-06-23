@@ -13,6 +13,7 @@ import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.GasStationFlag
 import project.unibo.tankyou.data.database.entities.GasStationType
+import project.unibo.tankyou.data.database.entities.UserSavedGasStation
 import project.unibo.tankyou.utils.Constants
 
 /**
@@ -36,9 +37,9 @@ data class SearchFilters(
  */
 class AppRepository {
     private val client = DatabaseClient.client
-    private val stationCache = LruCache<String, List<GasStation>>(50)
-    private val searchCache = LruCache<String, List<GasStation>>(20)
-    private val fuelCache = LruCache<Long, List<Fuel>>(100)
+    private val stationCache: LruCache<String, List<GasStation>> = LruCache(50)
+    private val searchCache: LruCache<String, List<GasStation>> = LruCache(20)
+    private val fuelCache: LruCache<Long, List<Fuel>> = LruCache(100)
 
     companion object {
         @Volatile
@@ -70,19 +71,19 @@ class AppRepository {
         bounds: BoundingBox,
         zoomLevel: Double
     ): List<GasStation> {
-        val roundedZoom = kotlin.math.round(zoomLevel * 2) / 2.0
+        val roundedZoom: Double = kotlin.math.round(zoomLevel * 2) / 2.0
         val cacheKey =
             "${bounds.latSouth}_${bounds.latNorth}_${bounds.lonWest}_${bounds.lonEast}_$roundedZoom"
 
-        stationCache.get(cacheKey)?.let {
+        stationCache.get(cacheKey)?.let { cachedStations ->
             Log.d(
                 Constants.App.LOG_TAG,
-                "Retrieved ${it.size} stations from cache for zoom level $roundedZoom"
+                "Retrieved ${cachedStations.size} stations from cache for zoom level $roundedZoom"
             )
-            return it
+            return cachedStations
         }
 
-        val limit = when {
+        val limit: Int = when {
             zoomLevel < 8 -> 10000
             zoomLevel < 10 -> 5000
             zoomLevel < 13 -> 1000
@@ -96,7 +97,7 @@ class AppRepository {
                 "Fetching stations for bounds: $bounds, zoom: $zoomLevel, limit: $limit"
             )
 
-            val stations = client.from("gas_stations")
+            val stations: List<GasStation> = client.from("gas_stations")
                 .select {
                     filter {
                         and {
@@ -131,13 +132,14 @@ class AppRepository {
      * Retrieves a specific gas station by its unique identifier.
      *
      * @param id The unique identifier of the gas station
+     *
      * @return The gas station if found, null otherwise
      */
     suspend fun getStationById(id: String): GasStation? {
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching station with ID: $id")
 
-            val station = client.from("gas_stations").select {
+            val station: GasStation? = client.from("gas_stations").select {
                 filter { eq("id", id) }
             }.decodeSingleOrNull<GasStation>()
 
@@ -159,21 +161,22 @@ class AppRepository {
      * Implements caching to improve performance for repeated requests.
      *
      * @param stationId The unique identifier of the gas station
+     *
      * @return List of fuel prices for the specified station
      */
     suspend fun getFuelPricesForStation(stationId: Long): List<Fuel> {
-        fuelCache.get(stationId)?.let {
+        fuelCache.get(stationId)?.let { cachedFuels ->
             Log.d(
                 Constants.App.LOG_TAG,
-                "Retrieved ${it.size} fuel prices from cache for station $stationId"
+                "Retrieved ${cachedFuels.size} fuel prices from cache for station $stationId"
             )
-            return it
+            return cachedFuels
         }
 
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching fuel prices for station: $stationId")
 
-            val fuels = client.from("fuels")
+            val fuels: List<Fuel> = client.from("fuels")
                 .select {
                     filter { eq("station_id", stationId) }
                     order("type", Order.ASCENDING)
@@ -201,7 +204,7 @@ class AppRepository {
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching fuel types")
 
-            val fuelTypes = client.from("fuel_types")
+            val fuelTypes: List<FuelType> = client.from("fuel_types")
                 .select()
                 .decodeList<FuelType>()
 
@@ -222,7 +225,7 @@ class AppRepository {
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching gas station types")
 
-            val stationTypes = client.from("gas_station_types")
+            val stationTypes: List<GasStationType> = client.from("gas_station_types")
                 .select()
                 .decodeList<GasStationType>()
 
@@ -246,7 +249,7 @@ class AppRepository {
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching gas station flags")
 
-            val flags = client.from("gas_station_flags")
+            val flags: List<GasStationFlag> = client.from("gas_station_flags")
                 .select()
                 .decodeList<GasStationFlag>()
 
@@ -263,6 +266,7 @@ class AppRepository {
      * Implements caching to improve performance for repeated searches.
      *
      * @param query The search query string
+     *
      * @return List of gas stations matching the search criteria
      */
     suspend fun searchStations(query: String): List<GasStation> {
@@ -272,12 +276,12 @@ class AppRepository {
         }
 
         val cacheKey = "search_$query"
-        searchCache.get(cacheKey)?.let {
+        searchCache.get(cacheKey)?.let { cachedResults ->
             Log.d(
                 Constants.App.LOG_TAG,
-                "Retrieved ${it.size} search results from cache for query: $query"
+                "Retrieved ${cachedResults.size} search results from cache for query: $query"
             )
-            return it
+            return cachedResults
         }
 
         val searchQuery = "%${query.lowercase()}%"
@@ -285,7 +289,7 @@ class AppRepository {
         return try {
             Log.d(Constants.App.LOG_TAG, "Searching stations with query: $query")
 
-            val results = client.from("gas_stations")
+            val results: List<GasStation> = client.from("gas_stations")
                 .select {
                     filter {
                         or {
@@ -316,6 +320,7 @@ class AppRepository {
      *
      * @param query The search query string
      * @param filters Additional filters to apply to the search
+     *
      * @return List of saved gas stations matching the search criteria and filters
      */
     suspend fun searchSavedStationsWithFilters(
@@ -328,8 +333,8 @@ class AppRepository {
                 "Searching saved stations with query: '$query' and filters: $filters"
             )
 
-            val userRepository = UserRepository.getInstance()
-            val savedStations = userRepository.getUserSavedStations()
+            val userRepository: UserRepository = UserRepository.getInstance()
+            val savedStations: List<UserSavedGasStation> = userRepository.getUserSavedStations()
 
             if (savedStations.isEmpty()) {
                 Log.w(Constants.App.LOG_TAG, "No saved stations found for user")
@@ -337,9 +342,9 @@ class AppRepository {
             }
 
             Log.d(Constants.App.LOG_TAG, "Found ${savedStations.size} saved stations")
-            val savedStationIds = savedStations.map { it.stationId }
+            val savedStationIds: List<Long> = savedStations.map { it.stationId }
 
-            val allSavedStations = savedStationIds.chunked(100).flatMap { chunk ->
+            val allSavedStations: List<GasStation> = savedStationIds.chunked(100).flatMap { chunk ->
                 client.from("gas_stations")
                     .select {
                         filter {
@@ -354,8 +359,8 @@ class AppRepository {
                     .decodeList<GasStation>()
             }
 
-            var filteredStations = if (query.isNotBlank()) {
-                val searchQuery = query.lowercase()
+            var filteredStations: List<GasStation> = if (query.isNotBlank()) {
+                val searchQuery: String = query.lowercase()
                 allSavedStations.filter { station ->
                     (station.name?.lowercase()?.contains(searchQuery) == true) ||
                             (station.city?.lowercase()?.contains(searchQuery) == true) ||
@@ -366,7 +371,7 @@ class AppRepository {
             }
 
             if (filters.flags.isNotEmpty()) {
-                val flagIds = filters.flags.map { it.id }
+                val flagIds: List<Int> = filters.flags.map { it.id }
                 filteredStations = filteredStations.filter { station ->
                     station.flag in flagIds
                 }
@@ -377,15 +382,15 @@ class AppRepository {
             }
 
             if (filters.fuelTypes.isNotEmpty()) {
-                val fuelTypeIds = filters.fuelTypes.map { it.id }
+                val fuelTypeIds: List<Int> = filters.fuelTypes.map { it.id }
 
                 val stationFuelsDeferred = filteredStations.map { station ->
                     async {
-                        val cachedFuels = fuelCache.get(station.id.toLong())
+                        val cachedFuels: List<Fuel>? = fuelCache.get(station.id.toLong())
                         if (cachedFuels != null) {
                             station to cachedFuels
                         } else {
-                            val fuels = try {
+                            val fuels: List<Fuel> = try {
                                 client.from("fuels")
                                     .select {
                                         filter { eq("station_id", station.id.toLong()) }
@@ -405,7 +410,8 @@ class AppRepository {
                     }
                 }
 
-                val stationsWithFuels = stationFuelsDeferred.map { it.await() }
+                val stationsWithFuels: List<Pair<GasStation, List<Fuel>>> =
+                    stationFuelsDeferred.map { it.await() }
 
                 filteredStations = stationsWithFuels.filter { (_, fuels) ->
                     fuelTypeIds.any { fuelTypeId ->
@@ -437,6 +443,7 @@ class AppRepository {
      *
      * @param query The search query string
      * @param filters Additional filters to apply to the search
+     *
      * @return List of gas stations matching the search criteria and filters
      */
     suspend fun searchStationsWithFilters(
@@ -450,9 +457,12 @@ class AppRepository {
 
         val cacheKey =
             "filtered_${query}_${filters.flags.joinToString { it.id.toString() }}_${filters.fuelTypes.joinToString { it.id.toString() }}"
-        searchCache.get(cacheKey)?.let {
-            Log.d(Constants.App.LOG_TAG, "Retrieved ${it.size} filtered search results from cache")
-            return@coroutineScope it
+        searchCache.get(cacheKey)?.let { cachedResults ->
+            Log.d(
+                Constants.App.LOG_TAG,
+                "Retrieved ${cachedResults.size} filtered search results from cache"
+            )
+            return@coroutineScope cachedResults
         }
 
         try {
@@ -482,11 +492,11 @@ class AppRepository {
                 }
             }
 
-            var filteredStations = baseStationsDeferred.await()
+            var filteredStations: List<GasStation> = baseStationsDeferred.await()
             Log.d(Constants.App.LOG_TAG, "Base search returned ${filteredStations.size} stations")
 
             if (filters.flags.isNotEmpty()) {
-                val flagIds = filters.flags.map { it.id }
+                val flagIds: List<Int> = filters.flags.map { it.id }
                 filteredStations = filteredStations.filter { station ->
                     station.flag in flagIds
                 }
@@ -497,15 +507,15 @@ class AppRepository {
             }
 
             if (filters.fuelTypes.isNotEmpty()) {
-                val fuelTypeIds = filters.fuelTypes.map { it.id }
+                val fuelTypeIds: List<Int> = filters.fuelTypes.map { it.id }
 
                 val stationFuelsDeferred = filteredStations.map { station ->
                     async {
-                        val cachedFuels = fuelCache.get(station.id.toLong())
+                        val cachedFuels: List<Fuel>? = fuelCache.get(station.id.toLong())
                         if (cachedFuels != null) {
                             station to cachedFuels
                         } else {
-                            val fuels = try {
+                            val fuels: List<Fuel> = try {
                                 client.from("fuels")
                                     .select {
                                         filter { eq("station_id", station.id.toLong()) }
@@ -525,7 +535,8 @@ class AppRepository {
                     }
                 }
 
-                val stationsWithFuels = stationFuelsDeferred.map { it.await() }
+                val stationsWithFuels: List<Pair<GasStation, List<Fuel>>> =
+                    stationFuelsDeferred.map { it.await() }
 
                 filteredStations = stationsWithFuels.filter { (_, fuels) ->
                     fuelTypeIds.any { fuelTypeId ->

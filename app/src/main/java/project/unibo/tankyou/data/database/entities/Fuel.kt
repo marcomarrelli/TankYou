@@ -1,5 +1,6 @@
 package project.unibo.tankyou.data.database.entities
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -60,7 +61,7 @@ data class Fuel(
  */
 fun String.toLocalizedDateFormat(): String {
     val isoFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US)
-    val localizedFormat = when (SettingsManager.currentLanguage.value) {
+    val localizedFormat: SimpleDateFormat = when (SettingsManager.currentLanguage.value) {
         Constants.AppLanguage.ENGLISH -> SimpleDateFormat(
             "MM/dd/yyyy HH:mm:ss",
             Locale.getDefault()
@@ -73,10 +74,10 @@ fun String.toLocalizedDateFormat(): String {
     }
 
     return try {
-        val date = isoFormat.parse(this)
-        localizedFormat.format(date ?: Date())
+        localizedFormat.format(isoFormat.parse(this) ?: Date())
     } catch (e: Exception) {
-        println("Error parsing date: $this - ${e.message}")
+        Log.e(Constants.App.LOG_TAG, "Error parsing date: $this", e)
+
         this.replace("T", " ")
     }
 }
@@ -96,7 +97,7 @@ fun Boolean.toLabel(): String {
  */
 @Composable
 fun Int.toFuelTypeName(): String {
-    val id = this
+    val id: Int = this
     return when (FUEL_TYPES.find { it.id == id }?.name?.lowercase()) {
         "g" -> getResourceString(R.string.fuel_type_g)
         "d" -> getResourceString(R.string.fuel_type_d)

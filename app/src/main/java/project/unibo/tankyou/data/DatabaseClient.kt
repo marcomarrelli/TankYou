@@ -1,5 +1,6 @@
 package project.unibo.tankyou.data
 
+import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.gotrue.Auth
 import io.github.jan.supabase.postgrest.Postgrest
@@ -43,7 +44,7 @@ object DatabaseClient {
      * Includes Postgrest for database operations, Realtime for live updates, and Auth for authentication.
      * This client is used throughout the application for all database interactions.
      */
-    val client = createSupabaseClient(
+    val client: SupabaseClient = createSupabaseClient(
         supabaseUrl = SUPABASE_URL,
         supabaseKey = SUPABASE_ANON_KEY
     ) {

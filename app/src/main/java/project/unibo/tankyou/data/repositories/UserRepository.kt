@@ -28,6 +28,7 @@ class UserRepository(private val supabase: SupabaseClient) {
          * Thread-safe implementation using double-checked locking pattern.
          *
          * @param supabaseClient The Supabase client instance to use
+         *
          * @return The singleton instance of UserRepository
          */
         fun getInstance(supabaseClient: SupabaseClient = DatabaseClient.client): UserRepository {
@@ -56,7 +57,7 @@ class UserRepository(private val supabase: SupabaseClient) {
                 return null
             }
 
-            val user = supabase.from("users")
+            val user: User = supabase.from("users")
                 .select {
                     filter {
                         eq("auth_user_id", authUser.id)
@@ -86,15 +87,16 @@ class UserRepository(private val supabase: SupabaseClient) {
         return try {
             Log.d(Constants.App.LOG_TAG, "Fetching saved gas stations for current user")
 
-            val currentUser = getCurrentUser()
+            val currentUser: User? = getCurrentUser()
             currentUser?.let { user ->
-                val savedStations = supabase.from("user_saved_gas_stations")
-                    .select {
-                        filter {
-                            eq("user_id", user.id)
+                val savedStations: List<UserSavedGasStation> =
+                    supabase.from("user_saved_gas_stations")
+                        .select {
+                            filter {
+                                eq("user_id", user.id)
+                            }
                         }
-                    }
-                    .decodeList<UserSavedGasStation>()
+                        .decodeList<UserSavedGasStation>()
 
                 Log.d(
                     Constants.App.LOG_TAG,
@@ -116,22 +118,24 @@ class UserRepository(private val supabase: SupabaseClient) {
      *
      * @param stationId The ID of the gas station to save
      * @param notes Optional notes about the gas station
+     *
      * @return true if successful, false otherwise
      */
     suspend fun saveGasStation(stationId: Long, notes: String? = null): Boolean {
         return try {
             Log.d(
                 Constants.App.LOG_TAG,
-                "Attempting to save gas station $stationId with notes: ${notes?.let { "provided" } ?: "none"}")
+                "Attempting to save gas station $stationId with notes: ${notes?.let { "provided" } ?: "none"}"
+            )
 
-            val currentUser = getCurrentUser()
+            val currentUser: User? = getCurrentUser()
             if (currentUser == null) {
                 Log.w(Constants.App.LOG_TAG, "Cannot save gas station: user not logged in")
                 return false
             }
 
             // Check if station is already saved
-            val isAlreadySaved = isGasStationSaved(stationId)
+            val isAlreadySaved: Boolean = isGasStationSaved(stationId)
             if (isAlreadySaved) {
                 Log.d(
                     Constants.App.LOG_TAG,
@@ -166,13 +170,14 @@ class UserRepository(private val supabase: SupabaseClient) {
      * Removes a saved gas station for the current user.
      *
      * @param stationId The ID of the gas station to remove
+     *
      * @return true if successful, false otherwise
      */
     suspend fun removeSavedGasStation(stationId: Long): Boolean {
         return try {
             Log.d(Constants.App.LOG_TAG, "Attempting to remove saved gas station $stationId")
 
-            val currentUser = getCurrentUser()
+            val currentUser: User? = getCurrentUser()
             currentUser?.let { user ->
                 supabase.from("user_saved_gas_stations")
                     .delete {
@@ -200,15 +205,16 @@ class UserRepository(private val supabase: SupabaseClient) {
      * Checks if a gas station is saved by the current user.
      *
      * @param stationId The ID of the gas station to check
+     *
      * @return true if saved, false otherwise
      */
     suspend fun isGasStationSaved(stationId: Long): Boolean {
         return try {
             Log.d(Constants.App.LOG_TAG, "Checking if gas station $stationId is saved")
 
-            val currentUser = getCurrentUser()
+            val currentUser: User? = getCurrentUser()
             currentUser?.let { user ->
-                val result = supabase.from("user_saved_gas_stations")
+                val result: List<UserSavedGasStation> = supabase.from("user_saved_gas_stations")
                     .select {
                         filter {
                             eq("user_id", user.id)
@@ -218,7 +224,7 @@ class UserRepository(private val supabase: SupabaseClient) {
                     }
                     .decodeList<UserSavedGasStation>()
 
-                val isSaved = result.isNotEmpty()
+                val isSaved: Boolean = result.isNotEmpty()
                 Log.d(
                     Constants.App.LOG_TAG,
                     "Gas station $stationId is ${if (isSaved) "saved" else "not saved"} for user ${user.id}"
@@ -239,6 +245,7 @@ class UserRepository(private val supabase: SupabaseClient) {
      *
      * @param uri The URI of the image to upload
      * @param context The Android context for accessing content resolver
+     *
      * @return The public URL of the uploaded image
      * @throws Exception if upload fails or user is not authenticated
      */
@@ -259,7 +266,7 @@ class UserRepository(private val supabase: SupabaseClient) {
             val inputStream = context.contentResolver.openInputStream(uri)
                 ?: throw Exception("Cannot open image file")
 
-            val bytes = inputStream.readBytes()
+            val bytes: ByteArray = inputStream.readBytes()
             inputStream.close()
 
             Log.d(
@@ -271,7 +278,7 @@ class UserRepository(private val supabase: SupabaseClient) {
                 .from("profile-photos")
                 .upload(fileName, bytes)
 
-            val publicUrl = supabase.storage
+            val publicUrl: String = supabase.storage
                 .from("profile-photos")
                 .publicUrl(fileName)
 
@@ -287,6 +294,7 @@ class UserRepository(private val supabase: SupabaseClient) {
      * Updates user information in the database.
      *
      * @param user The updated user object
+     *
      * @return true if successful, false otherwise
      */
     suspend fun updateUser(user: User): Boolean {

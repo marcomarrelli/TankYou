@@ -85,9 +85,11 @@ class SavedGasStationsModel : ViewModel() {
      *
      * This method is equivalent to calling loadSavedStations() and can be used
      * when you need to explicitly refresh the data from the repository.
+     * Keeping the methods separated for future implementation (?)
      */
     fun refreshSavedStations() {
         Log.i(Constants.App.LOG_TAG, "Refreshing saved gas stations...")
+
         loadSavedStations()
     }
 }

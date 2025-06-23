@@ -51,6 +51,7 @@ class AuthRepository {
      * @param name The user's first name
      * @param surname The user's surname
      * @param username The user's chosen username
+     *
      * @return Result containing Unit on success or Exception on failure
      */
     @OptIn(SupabaseInternal::class)
@@ -90,6 +91,7 @@ class AuthRepository {
      *
      * @param email The user's email address
      * @param password The user's password
+     *
      * @return Result containing Unit on success or Exception on failure
      */
     suspend fun signIn(email: String, password: String): Result<Unit> {
@@ -116,7 +118,7 @@ class AuthRepository {
      */
     suspend fun signOut(): Result<Unit> {
         return try {
-            val userEmail = currentUser?.email
+            val userEmail: String? = currentUser?.email
             Log.d(Constants.App.LOG_TAG, "Attempting to sign out user: $userEmail")
 
             auth.signOut()
@@ -135,7 +137,7 @@ class AuthRepository {
      * @return true if a user is logged in, false otherwise
      */
     fun isUserLoggedIn(): Boolean {
-        val isLoggedIn = auth.currentUserOrNull() != null
+        val isLoggedIn: Boolean = auth.currentUserOrNull() != null
         Log.d(Constants.App.LOG_TAG, "User logged in status: $isLoggedIn")
         return isLoggedIn
     }
@@ -146,8 +148,8 @@ class AuthRepository {
      * @return true if the user's email is verified, false otherwise
      */
     fun isEmailVerified(): Boolean {
-        val user = auth.currentUserOrNull()
-        val isVerified = user?.emailConfirmedAt != null
+        val user: UserInfo? = auth.currentUserOrNull()
+        val isVerified: Boolean = user?.emailConfirmedAt != null
         Log.d(
             Constants.App.LOG_TAG,
             "Email verification status for user ${user?.email}: $isVerified"
