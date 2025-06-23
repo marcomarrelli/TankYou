@@ -306,7 +306,8 @@ fun RegisterScreen(
             } else {
                 Text(
                     LocalContext.current.getString(R.string.register),
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    color = ThemeManager.palette.text
                 )
             }
         }

@@ -244,7 +244,7 @@ fun MapScreen() {
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         text = "Searching...",
-                        color = Color.White,
+                        color = ThemeManager.palette.white,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
                     )
@@ -550,18 +550,18 @@ fun MapScreen() {
                         if (isSearching) {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(16.dp),
-                                color = Color.White,
+                                color = ThemeManager.palette.white,
                                 strokeWidth = 2.dp
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.TwoTone.Search,
                                 contentDescription = null,
-                                tint = Color.White
+                                tint = ThemeManager.palette.white
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Search", color = Color.White)
+                        Text("Search", color = ThemeManager.palette.white)
                     }
                 }
 
@@ -596,11 +596,16 @@ fun MapScreen() {
                                             selectedFlags + flag
                                         }
                                     },
-                                    label = { Text(flag.name) },
+                                    label = {
+                                        Text(
+                                            text = flag.name,
+                                            color = ThemeManager.palette.text
+                                        )
+                                    },
                                     selected = selectedFlags.contains(flag),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = ThemeManager.palette.primary,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = ThemeManager.palette.white
                                     )
                                 )
                             }
@@ -630,11 +635,16 @@ fun MapScreen() {
                                                 selectedFuelTypes + fuelType
                                             }
                                     },
-                                    label = { Text(fuelType.id.toFuelTypeName()) },
+                                    label = {
+                                        Text(
+                                            text = fuelType.id.toFuelTypeName(),
+                                            color = ThemeManager.palette.text
+                                        )
+                                    },
                                     selected = selectedFuelTypes.contains(fuelType),
                                     colors = FilterChipDefaults.filterChipColors(
                                         selectedContainerColor = ThemeManager.palette.primary,
-                                        selectedLabelColor = Color.White
+                                        selectedLabelColor = ThemeManager.palette.white
                                     )
                                 )
                             }
@@ -654,11 +664,16 @@ fun MapScreen() {
                                 onClick = {
                                     showSavedOnly = !showSavedOnly
                                 },
-                                label = { Text("Show Only Saved") },
+                                label = {
+                                    Text(
+                                        text = "Show Only Saved",
+                                        color = ThemeManager.palette.text
+                                    )
+                                },
                                 selected = showSavedOnly,
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = ThemeManager.palette.primary,
-                                    selectedLabelColor = Color.White
+                                    selectedLabelColor = ThemeManager.palette.white
                                 ),
                                 leadingIcon = if (showSavedOnly) {
                                     {

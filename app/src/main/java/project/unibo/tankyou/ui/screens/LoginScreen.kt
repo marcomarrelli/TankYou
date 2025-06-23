@@ -76,7 +76,7 @@ fun LoginScreen(
             .fillMaxSize()
             .background(ThemeManager.palette.background)
             .padding(16.dp)
-            .imePadding(), // Gestisce solo il padding per la tastiera
+            .imePadding(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -159,7 +159,8 @@ fun LoginScreen(
             } else {
                 Text(
                     getResourceString(R.string.log_in),
-                    fontSize = 18.sp
+                    fontSize = 18.sp,
+                    color = ThemeManager.palette.text
                 )
             }
         }
