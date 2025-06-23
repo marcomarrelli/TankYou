@@ -40,7 +40,6 @@ import project.unibo.tankyou.utils.TankYouVocabulary
 import project.unibo.tankyou.utils.getResourceString
 
 class MainActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

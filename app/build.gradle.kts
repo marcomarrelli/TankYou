@@ -25,8 +25,6 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0-rc1"
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -116,17 +114,8 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.material)
 
-    // Navigation Compose with Type Safety
     implementation("androidx.navigation:navigation-compose:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
 
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
