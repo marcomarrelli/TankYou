@@ -49,6 +49,7 @@ class AuthViewModel : ViewModel() {
 
         if (Constants.App.AUTH_REPOSITORY.isUserLoggedIn()) {
             Log.i(Constants.App.LOG_TAG, "User is already logged in!")
+
             _authState.value = AuthState.Authenticated
             _isGuestMode.value = false
         } else {
@@ -76,14 +77,17 @@ class AuthViewModel : ViewModel() {
                 val result = Constants.App.AUTH_REPOSITORY.signIn(email, password)
                 _authState.value = if (result.isSuccess) {
                     Log.i(Constants.App.LOG_TAG, "Sign in successful for user: $email")
+
                     _isGuestMode.value = false
                     AuthState.Authenticated
                 } else {
                     val errorMessage = result.exceptionOrNull()?.message ?: "Login error"
+
                     Log.e(
                         Constants.App.LOG_TAG,
                         "Sign in failed for user: $email. Error: $errorMessage"
                     )
+
                     AuthState.Error(errorMessage)
                 }
             } catch (e: Exception) {

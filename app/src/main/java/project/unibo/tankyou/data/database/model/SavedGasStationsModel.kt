@@ -62,9 +62,10 @@ class SavedGasStationsModel : ViewModel() {
                     try {
                         Instant.parse(station.savedAt)
                     } catch (e: Exception) {
-                        Log.w(
+                        Log.e(
                             Constants.App.LOG_TAG,
-                            "Invalid date format for station ${station.stationId}: ${station.savedAt}"
+                            "Invalid date format for station ${station.stationId}: ${station.savedAt}",
+                            e
                         )
                         Instant.MIN
                     }

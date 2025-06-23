@@ -78,7 +78,7 @@ fun SettingsScreen() {
             .windowInsetsPadding(WindowInsets.statusBars)//.statusBarsPadding()
             .background(ThemeManager.palette.background)
             .verticalScroll(rememberScrollState())
-            .padding(start = 16.dp, top = 0.dp, end = 16.dp, bottom = 16.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SettingsSection(

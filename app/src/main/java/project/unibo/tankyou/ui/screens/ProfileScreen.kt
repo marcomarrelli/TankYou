@@ -224,7 +224,7 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(ThemeManager.palette.background)
             .padding(16.dp)
-            .windowInsetsPadding(WindowInsets.statusBars)//.statusBarsPadding()
+            .windowInsetsPadding(WindowInsets.statusBars) // instead of statusBarsPadding()
             .imePadding()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -356,6 +356,7 @@ fun ProfileScreen(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
+
                                 Text("Save Changes")
                             }
                         }

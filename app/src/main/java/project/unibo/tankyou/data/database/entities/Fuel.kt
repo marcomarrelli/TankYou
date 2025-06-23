@@ -91,6 +91,8 @@ fun Boolean.toLabel(): String {
 
 /**
  * Gets a fuel type name by its ID, with fallback to "Unknown Fuel"
+ *
+ * In the function, .toLowerCase() shouldn't be necessary, but you never know! ;)
  */
 @Composable
 fun Int.toFuelTypeName(): String {

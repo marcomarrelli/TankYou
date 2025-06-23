@@ -162,7 +162,7 @@ object Constants {
             Manifest.permission.WRITE_EXTERNAL_STORAGE
         )
 
-        const val LOG_TAG = "TankYou@"
+        const val LOG_TAG = "TankYou"
     }
 
     /**

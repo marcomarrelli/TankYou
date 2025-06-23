@@ -14,7 +14,7 @@
     <string name="settings_page_title">Settings</string>
 
     <!-- Login Screen -->
-    <string name="email">Email</string>
+    <string name="email" translatable="false">Email</string>
     <string name="password">Password</string>
     <string name="log_in">Log In</string>
     <string name="register_now">Sign Up Now</string>
