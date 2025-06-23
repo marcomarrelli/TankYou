@@ -14,16 +14,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,10 +28,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Save
@@ -224,7 +221,7 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ThemeManager.palette.background)
-            .windowInsetsPadding(WindowInsets.statusBars) // instead of statusBarsPadding()
+            // @FIXME .windowInsetsPadding(WindowInsets.statusBars)
             .imePadding()
             .verticalScroll(rememberScrollState())
             .padding(
@@ -466,7 +463,7 @@ private fun GuestModeContent(
             shape = RoundedCornerShape(12.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Login,
+                imageVector = Icons.AutoMirrored.Filled.Login,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp)
             )
@@ -730,7 +727,7 @@ private fun ProfileInfoCard(
                     if (hasValidProfilePicture) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(currentUser?.profilePicture)
+                                .data(currentUser.profilePicture)
                                 .crossfade(true)
                                 .build(),
                             contentDescription = "Profile Photo",
@@ -743,7 +740,7 @@ private fun ProfileInfoCard(
                             onError = {
                                 Log.e(
                                     "ProfileScreen",
-                                    "Error loading profile image: ${currentUser?.profilePicture}"
+                                    "Error loading profile image: ${currentUser.profilePicture}"
                                 )
                             }
                         )

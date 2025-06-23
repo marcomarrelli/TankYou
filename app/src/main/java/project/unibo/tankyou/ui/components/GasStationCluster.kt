@@ -85,7 +85,7 @@ class GasStationCluster(context: Context) : RadiusMarkerClusterer(context) {
 
         val clusterSize: Int = cluster.size
         val color: Int = getClusterColor(clusterSize)
-        val cacheKey: String = "${clusterSize}_${color}"
+        val cacheKey = "${clusterSize}_${color}"
 
         /**
          * Icon from cache, or create a new one if not found.

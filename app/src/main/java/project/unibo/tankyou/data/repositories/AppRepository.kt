@@ -262,59 +262,6 @@ class AppRepository {
     }
 
     /**
-     * Searches for gas stations by name, city, or province.
-     * Implements caching to improve performance for repeated searches.
-     *
-     * @param query The search query string
-     *
-     * @return List of gas stations matching the search criteria
-     */
-    suspend fun searchStations(query: String): List<GasStation> {
-        if (query.isBlank()) {
-            Log.w(Constants.App.LOG_TAG, "Search query is blank, returning empty list")
-            return emptyList()
-        }
-
-        val cacheKey = "search_$query"
-        searchCache.get(cacheKey)?.let { cachedResults ->
-            Log.d(
-                Constants.App.LOG_TAG,
-                "Retrieved ${cachedResults.size} search results from cache for query: $query"
-            )
-            return cachedResults
-        }
-
-        val searchQuery = "%${query.lowercase()}%"
-
-        return try {
-            Log.d(Constants.App.LOG_TAG, "Searching stations with query: $query")
-
-            val results: List<GasStation> = client.from("gas_stations")
-                .select {
-                    filter {
-                        or {
-                            ilike("name", searchQuery)
-                            ilike("city", searchQuery)
-                            ilike("province", searchQuery)
-                        }
-                    }
-                    // limit(x), maybe a const val for limits? x = 1000
-                }
-                .decodeList<GasStation>()
-
-            searchCache.put(cacheKey, results)
-            Log.d(
-                Constants.App.LOG_TAG,
-                "Successfully found and cached ${results.size} stations for query: $query"
-            )
-            results
-        } catch (e: Exception) {
-            Log.e(Constants.App.LOG_TAG, "Error searching stations with query: $query", e)
-            emptyList()
-        }
-    }
-
-    /**
      * Searches within saved stations using specified query and filters.
      * Only searches among stations that the user has previously saved.
      *

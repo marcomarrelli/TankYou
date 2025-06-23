@@ -26,6 +26,7 @@ import androidx.compose.runtime.getValue
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import project.unibo.tankyou.data.database.auth.AuthState
@@ -108,7 +109,7 @@ class MainActivity : AppCompatActivity() {
 
     @Composable
     private fun BottomNavigationBar(
-        navController: androidx.navigation.NavHostController,
+        navController: NavHostController,
         currentDestination: String?
     ) {
         NavigationBar(
