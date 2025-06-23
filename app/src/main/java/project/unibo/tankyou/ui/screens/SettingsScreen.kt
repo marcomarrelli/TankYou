@@ -57,6 +57,7 @@ import project.unibo.tankyou.BuildConfig
 import project.unibo.tankyou.R
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.ui.theme.ThemeMode
+import project.unibo.tankyou.utils.Constants
 import project.unibo.tankyou.utils.Constants.AppLanguage
 import project.unibo.tankyou.utils.SettingsManager
 import project.unibo.tankyou.utils.getResourceString
@@ -78,7 +79,12 @@ fun SettingsScreen() {
             .windowInsetsPadding(WindowInsets.statusBars)//.statusBarsPadding()
             .background(ThemeManager.palette.background)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = Constants.App.STATUS_BAR_PADDING,
+                bottom = 16.dp
+            ),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         SettingsSection(

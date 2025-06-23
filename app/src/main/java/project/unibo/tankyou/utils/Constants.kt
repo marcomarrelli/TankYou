@@ -2,6 +2,8 @@ package project.unibo.tankyou.utils
 
 import android.Manifest
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -163,6 +165,8 @@ object Constants {
         )
 
         const val LOG_TAG = "TankYou"
+
+        val STATUS_BAR_PADDING: Dp = 52.dp
     }
 
     /**

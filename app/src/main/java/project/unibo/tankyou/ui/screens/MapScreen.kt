@@ -321,8 +321,13 @@ fun MapScreen() {
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .windowInsetsPadding(WindowInsets.statusBars)
-                .padding(16.dp)
                 .zIndex(5f)
+                .padding(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = Constants.App.STATUS_BAR_PADDING,
+                    bottom = 16.dp
+                )
         ) {
             Box {
                 FloatingActionButton(

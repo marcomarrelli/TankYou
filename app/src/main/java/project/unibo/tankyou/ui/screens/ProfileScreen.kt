@@ -82,6 +82,7 @@ import project.unibo.tankyou.data.database.model.SavedGasStationsModel
 import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.components.SavedGasStationCard
 import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.utils.Constants
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -223,10 +224,15 @@ fun ProfileScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(ThemeManager.palette.background)
-            .padding(16.dp)
             .windowInsetsPadding(WindowInsets.statusBars) // instead of statusBarsPadding()
             .imePadding()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(
+                start = 16.dp,
+                end = 16.dp,
+                top = Constants.App.STATUS_BAR_PADDING,
+                bottom = 16.dp
+            ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         when {
