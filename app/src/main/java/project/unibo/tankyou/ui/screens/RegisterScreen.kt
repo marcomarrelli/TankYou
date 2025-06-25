@@ -1,7 +1,6 @@
 package project.unibo.tankyou.ui.screens
 
 import android.util.Patterns
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
-
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -23,7 +21,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -31,22 +28,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
 import androidx.lifecycle.viewmodel.compose.viewModel
 import project.unibo.tankyou.R
-
 import project.unibo.tankyou.data.database.auth.AuthState
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.ui.theme.ThemeManager
+import project.unibo.tankyou.utils.getResourceString
 
 /**
  * Register screen composable that provides user registration interface.
@@ -90,7 +84,7 @@ fun RegisterScreen(
     ) {
         /** Application title text with primary color styling and bold font */
         Text(
-            text = LocalContext.current.getString(R.string.register_title),
+            text = getResourceString(R.string.register_title),
             style = MaterialTheme.typography.headlineLarge.copy(
                 fontWeight = FontWeight.Bold
             ),
@@ -104,7 +98,7 @@ fun RegisterScreen(
             onValueChange = { name = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.name),
+                    getResourceString(R.string.name),
                     color = ThemeManager.palette.text
                 )
             },
@@ -127,7 +121,7 @@ fun RegisterScreen(
             onValueChange = { surname = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.surname),
+                    getResourceString(R.string.surname),
                     color = ThemeManager.palette.text
                 )
             },
@@ -150,7 +144,7 @@ fun RegisterScreen(
             onValueChange = { username = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.username),
+                    getResourceString(R.string.username),
                     color = ThemeManager.palette.text
                 )
             },
@@ -173,7 +167,7 @@ fun RegisterScreen(
             onValueChange = { email = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.email),
+                    getResourceString(R.string.email),
                     color = ThemeManager.palette.text
                 )
             },
@@ -194,7 +188,7 @@ fun RegisterScreen(
         /** Email validation error message */
         if (email.isNotEmpty() && !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             Text(
-                text = LocalContext.current.getString(R.string.invalid_email),
+                text = getResourceString(R.string.invalid_email),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -209,7 +203,7 @@ fun RegisterScreen(
             onValueChange = { password = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.password),
+                    getResourceString(R.string.password),
                     color = ThemeManager.palette.text
                 )
             },
@@ -231,7 +225,7 @@ fun RegisterScreen(
         /** Password validation error message */
         if (password.isNotEmpty() && password.length < 6) {
             Text(
-                text = LocalContext.current.getString(R.string.password_min_length),
+                text = getResourceString(R.string.password_min_length),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -246,7 +240,7 @@ fun RegisterScreen(
             onValueChange = { confirmPassword = it },
             label = {
                 Text(
-                    LocalContext.current.getString(R.string.confirm_password),
+                    getResourceString(R.string.confirm_password),
                     color = ThemeManager.palette.text
                 )
             },
@@ -268,7 +262,7 @@ fun RegisterScreen(
         /** Confirm password validation error message */
         if (confirmPassword.isNotEmpty() && password != confirmPassword) {
             Text(
-                text = LocalContext.current.getString(R.string.passwords_dont_match),
+                text = getResourceString(R.string.passwords_dont_match),
                 color = ThemeManager.palette.alert,
                 style = MaterialTheme.typography.bodySmall,
                 modifier = Modifier.padding(start = 16.dp, top = 4.dp)
@@ -305,7 +299,7 @@ fun RegisterScreen(
                 )
             } else {
                 Text(
-                    LocalContext.current.getString(R.string.register),
+                    getResourceString(R.string.register),
                     fontSize = 18.sp,
                     color = ThemeManager.palette.text
                 )
@@ -321,7 +315,7 @@ fun RegisterScreen(
                 contentColor = ThemeManager.palette.secondary
             )
         ) {
-            Text(LocalContext.current.getString(R.string.already_have_account))
+            Text(getResourceString(R.string.already_have_account))
         }
 
         /** Error message display for authentication failures */

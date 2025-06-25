@@ -3,6 +3,7 @@ package project.unibo.tankyou.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.edit
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.osmdroid.util.GeoPoint
+import project.unibo.tankyou.R
 import project.unibo.tankyou.utils.Constants.App.LOG_TAG
 import project.unibo.tankyou.utils.Constants.AppLanguage
 import java.util.Locale
@@ -33,6 +35,7 @@ object SettingsManager {
     private const val MAP_ZOOM_LEVEL_KEY: String = "map_zoom_level"
 
     private lateinit var prefs: SharedPreferences
+    private lateinit var appContext: Context
 
     private val _mapTintFlow: MutableStateFlow<MapTint> = MutableStateFlow(MapTint.NONE)
     private val _showMyLocationOnMapFlow: MutableStateFlow<Boolean> = MutableStateFlow(true)
@@ -60,13 +63,27 @@ object SettingsManager {
     /**
      * Enumeration for available map tint options.
      *
-     * @param displayName Human-readable name for the tint option
+     * @param stringResId Resource ID for the localized display name
      * @param colorValue Color value to apply as tint overlay
      */
-    enum class MapTint(val displayName: String, val colorValue: Int) {
-        NONE("None", 0x00000000.toInt()),
-        GRAY("Gray Scale", 0xFFA9A9A9.toInt()),
-        SEPIA("Sepia", 0xFF704214.toInt())
+    enum class MapTint(@StringRes val stringResId: Int, val colorValue: Int) {
+        NONE(R.string.map_tint_none, 0x00000000.toInt()),
+        GRAY(R.string.map_tint_gray, 0xFFA9A9A9.toInt()),
+        SEPIA(R.string.map_tint_sepia, 0xFF704214.toInt());
+
+        /**
+         * Gets the localized display name for this map tint.
+         * This method requires SettingsManager to be initialized.
+         *
+         * @return The localized display name
+         */
+        fun getDisplayName(): String {
+            return if (::appContext.isInitialized) {
+                appContext.getResourceString(stringResId)
+            } else {
+                this.name
+            }
+        }
     }
 
     /**
@@ -79,7 +96,9 @@ object SettingsManager {
      */
     fun initialize(context: Context) {
         Log.d(LOG_TAG, "Initializing SettingsManager")
+
         try {
+            appContext = context.applicationContext
             prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             loadAllSettings()
             Log.d(LOG_TAG, "SettingsManager initialized successfully")

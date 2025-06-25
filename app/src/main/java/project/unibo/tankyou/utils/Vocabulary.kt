@@ -6,10 +6,12 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ProvidableCompositionLocal
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import project.unibo.tankyou.R
 import project.unibo.tankyou.utils.Constants.App.LOG_TAG
 import project.unibo.tankyou.utils.Constants.AppLanguage
 import java.util.Locale
@@ -20,7 +22,7 @@ import java.util.Locale
  * This allows Composable functions to access localized strings using [LocalVocabulary.current][vocabulary].
  * An error is thrown if this is accessed before being provided by [TankYouVocabulary].
  */
-val LocalVocabulary = compositionLocalOf<Vocabulary> {
+val LocalVocabulary: ProvidableCompositionLocal<Vocabulary> = compositionLocalOf<Vocabulary> {
     error(
         "LocalStrings not provided - wrap your content with ProvideLocalizedStrings"
     )
@@ -128,4 +130,44 @@ fun vocabulary(): Vocabulary {
 @Composable
 fun getResourceString(@StringRes id: Int): String {
     return vocabulary().get(id)
+}
+
+/**
+ * Retrieves a localized string for the given resource ID using the current app language.
+ *
+ * This function works outside of Composable context by creating a temporary Vocabulary
+ * instance with the current language setting.
+ *
+ * @param context The application context
+ * @param resId The resource ID of the string
+ *
+ * @return The localized string based on current language settings
+ */
+fun getResourceStringFromContext(context: Context, @StringRes resId: Int): String {
+    val vocabulary = Vocabulary(context, SettingsManager.currentLanguage.value)
+
+    return try {
+        vocabulary.get(resId)
+    } catch (e: Exception) {
+        Log.e(
+            LOG_TAG,
+            "Error retrieving localized string outside Composable for resource ID: $resId",
+            e
+        )
+
+        vocabulary.get(R.string.not_available)
+    }
+}
+
+/**
+ * Extension function for Context to get localized strings more conveniently.
+ *
+ * This extension function provides a more convenient way to get localized strings
+ * from any Context instance without needing to pass the context as a parameter.
+ *
+ * @param resId The resource ID of the string
+ * @return The localized string based on current language settings
+ */
+fun Context.getResourceString(@StringRes resId: Int): String {
+    return getResourceStringFromContext(this, resId)
 }

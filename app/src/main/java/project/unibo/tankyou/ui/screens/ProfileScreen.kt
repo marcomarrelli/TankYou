@@ -72,6 +72,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import kotlinx.coroutines.launch
+import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.auth.AuthViewModel
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.User
@@ -80,6 +81,7 @@ import project.unibo.tankyou.data.repositories.UserRepository
 import project.unibo.tankyou.ui.components.SavedGasStationCard
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
+import project.unibo.tankyou.utils.getResourceString
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -297,7 +299,7 @@ fun ProfileScreen(
                             modifier = Modifier.weight(1f)
                         ) {
                             Text(
-                                "Cancel",
+                                getResourceString(R.string.cancel_button),
                                 color = ThemeManager.palette.text
                             )
                         }
@@ -360,7 +362,7 @@ fun ProfileScreen(
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
 
-                                Text("Save Changes")
+                                Text(getResourceString(R.string.save_button))
                             }
                         }
                     }
@@ -373,24 +375,24 @@ fun ProfileScreen(
                         onStationClick = onStationClick,
                         savedGasStationsModel = savedGasStationsModel
                     )
-                }
 
-                Spacer(modifier = Modifier.height(32.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                Button(
-                    onClick = onLogout,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = ThemeManager.palette.alert
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ExitToApp,
-                        contentDescription = "Logout",
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("Logout", color = ThemeManager.palette.white)
+                    Button(
+                        onClick = onLogout,
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = ThemeManager.palette.alert
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = getResourceString(R.string.logout),
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(getResourceString(R.string.logout), color = ThemeManager.palette.white)
+                    }
                 }
             }
         }
@@ -436,7 +438,7 @@ private fun GuestModeContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Guest Mode",
+            text = getResourceString(R.string.guest_mode_title),
             style = MaterialTheme.typography.headlineMedium,
             color = ThemeManager.palette.title,
             fontWeight = FontWeight.Bold
@@ -445,7 +447,7 @@ private fun GuestModeContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "You're currently using the app as a guest. Sign up or log in to unlock additional features and save your preferences.",
+            text = getResourceString(R.string.guest_mode_description),
             style = MaterialTheme.typography.bodyLarge,
             color = ThemeManager.palette.text,
             textAlign = TextAlign.Center,
@@ -469,7 +471,7 @@ private fun GuestModeContent(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Want more? Join now",
+                text = getResourceString(R.string.join_now),
                 color = ThemeManager.palette.white,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
@@ -499,7 +501,7 @@ private fun EmailNotVerifiedContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Email Verification Required",
+            text = getResourceString(R.string.email_required),
             style = MaterialTheme.typography.headlineMedium,
             color = ThemeManager.palette.title,
             fontWeight = FontWeight.Bold,
@@ -509,7 +511,7 @@ private fun EmailNotVerifiedContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "User Registered but not verified",
+            text = getResourceString(R.string.email_required_description),
             style = MaterialTheme.typography.bodyLarge,
             color = ThemeManager.palette.text,
             textAlign = TextAlign.Center
@@ -518,7 +520,7 @@ private fun EmailNotVerifiedContent(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Please check your email and click the verification link to activate your account.",
+            text = getResourceString(R.string.email_required_instruction),
             style = MaterialTheme.typography.bodyMedium,
             color = ThemeManager.palette.text.copy(alpha = 0.7f),
             textAlign = TextAlign.Center,
@@ -561,14 +563,14 @@ private fun PhotoSelectionDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Select Photo Source",
+                text = getResourceString(R.string.get_photo),
                 color = ThemeManager.palette.title,
                 style = MaterialTheme.typography.titleLarge
             )
         },
         text = {
             Text(
-                text = "Choose how you want to add your profile photo",
+                text = getResourceString(R.string.get_photo_from),
                 color = ThemeManager.palette.text,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -590,7 +592,7 @@ private fun PhotoSelectionDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Camera")
+                    Text(getResourceString(R.string.photo_camera))
                 }
 
                 Button(
@@ -606,14 +608,14 @@ private fun PhotoSelectionDialog(
                         modifier = Modifier.size(18.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Gallery")
+                    Text(getResourceString(R.string.photo_gallery))
                 }
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text(
-                    "Cancel",
+                    getResourceString(R.string.cancel_button),
                     color = ThemeManager.palette.text
                 )
             }
@@ -695,7 +697,7 @@ private fun ProfileInfoCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Profile Information",
+                    text = getResourceString(R.string.profile_page_title),
                     style = MaterialTheme.typography.headlineSmall,
                     color = ThemeManager.palette.title,
                     fontWeight = FontWeight.Medium
@@ -704,7 +706,9 @@ private fun ProfileInfoCard(
                 IconButton(onClick = onEditToggle) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = if (isEditing) "Stop Editing" else "Edit Profile",
+                        contentDescription = if (isEditing) getResourceString(R.string.stop_editing_info) else getResourceString(
+                            R.string.editing_info
+                        ),
                         tint = ThemeManager.palette.accent
                     )
                 }
@@ -730,7 +734,7 @@ private fun ProfileInfoCard(
                                 .data(currentUser.profilePicture)
                                 .crossfade(true)
                                 .build(),
-                            contentDescription = "Profile Photo",
+                            contentDescription = getResourceString(R.string.profile_picture),
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(CircleShape)
@@ -756,7 +760,7 @@ private fun ProfileInfoCard(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Person,
-                                contentDescription = "Default Profile",
+                                contentDescription = getResourceString(R.string.default_photo),
                                 modifier = Modifier.size(40.dp),
                                 tint = ThemeManager.palette.accent
                             )
@@ -775,7 +779,7 @@ private fun ProfileInfoCard(
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
-                        contentDescription = "Change Photo",
+                        contentDescription = getResourceString(R.string.change_photo),
                         modifier = Modifier.size(12.dp),
                         tint = ThemeManager.palette.white
                     )
@@ -788,7 +792,7 @@ private fun ProfileInfoCard(
                 OutlinedTextField(
                     value = editedName,
                     onValueChange = onNameChange,
-                    label = { Text("First Name") },
+                    label = { Text(getResourceString(R.string.name)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
@@ -806,7 +810,7 @@ private fun ProfileInfoCard(
                 OutlinedTextField(
                     value = editedSurname,
                     onValueChange = onSurnameChange,
-                    label = { Text("Last Name") },
+                    label = { Text(getResourceString(R.string.surname)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
@@ -824,7 +828,7 @@ private fun ProfileInfoCard(
                 OutlinedTextField(
                     value = editedUsername,
                     onValueChange = onUsernameChange,
-                    label = { Text("Username") },
+                    label = { Text(getResourceString(R.string.username)) },
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = ThemeManager.palette.secondary,
@@ -842,7 +846,7 @@ private fun ProfileInfoCard(
                 OutlinedTextField(
                     value = editedEmail,
                     onValueChange = onEmailChange,
-                    label = { Text("Email") },
+                    label = { Text(getResourceString(R.string.email)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -857,18 +861,19 @@ private fun ProfileInfoCard(
                 )
             } else {
                 ProfileInfoRow(
-                    label = "Name",
-                    value = currentUser?.let { "${it.name} ${it.surname}" } ?: "Not set"
+                    label = getResourceString(R.string.name),
+                    value = currentUser?.let { "${it.name} ${it.surname}" }
+                        ?: getResourceString(R.string.not_available)
                 )
 
                 ProfileInfoRow(
-                    label = "Username",
-                    value = currentUser?.username ?: "Not set"
+                    label = getResourceString(R.string.username),
+                    value = currentUser?.username ?: getResourceString(R.string.not_available)
                 )
 
                 ProfileInfoRow(
-                    label = "Email",
-                    value = currentUser?.email ?: "Not set"
+                    label = getResourceString(R.string.email),
+                    value = currentUser?.email ?: getResourceString(R.string.not_available)
                 )
             }
         }

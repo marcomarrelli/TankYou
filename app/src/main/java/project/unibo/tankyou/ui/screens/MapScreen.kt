@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.launch
+import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.entities.FuelType
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.GasStationFlag
@@ -243,7 +244,7 @@ fun MapScreen() {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Searching...",
+                        text = getResourceString(R.string.searching),
                         color = ThemeManager.palette.white,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Medium
@@ -271,7 +272,7 @@ fun MapScreen() {
                 ) {
                     Icon(
                         imageVector = Icons.TwoTone.Add,
-                        contentDescription = getResourceString(project.unibo.tankyou.R.string.zoom_in_icon_description)
+                        contentDescription = getResourceString(R.string.zoom_in_icon_description)
                     )
                 }
 
@@ -282,7 +283,7 @@ fun MapScreen() {
                 ) {
                     Icon(
                         imageVector = Icons.TwoTone.Remove,
-                        contentDescription = getResourceString(project.unibo.tankyou.R.string.zoom_out_icon_description)
+                        contentDescription = getResourceString(R.string.zoom_out_icon_description)
                     )
                 }
 
@@ -305,7 +306,7 @@ fun MapScreen() {
                 ) {
                     Icon(
                         imageVector = Icons.TwoTone.MyLocation,
-                        contentDescription = getResourceString(project.unibo.tankyou.R.string.show_my_location_desc)
+                        contentDescription = getResourceString(R.string.show_my_location_desc)
                     )
                 }
             }
@@ -338,7 +339,7 @@ fun MapScreen() {
                 ) {
                     Icon(
                         Icons.TwoTone.Search,
-                        contentDescription = getResourceString(project.unibo.tankyou.R.string.search_icon_description)
+                        contentDescription = getResourceString(R.string.search_icon_description)
                     )
                 }
 
@@ -436,7 +437,7 @@ fun MapScreen() {
                         maxLines = 1,
                         placeholder = {
                             Text(
-                                getResourceString(project.unibo.tankyou.R.string.search_hint),
+                                getResourceString(R.string.search_hint),
                                 color = ThemeManager.palette.text.copy(alpha = 0.6f)
                             )
                         },
@@ -499,7 +500,7 @@ fun MapScreen() {
                         onClick = { showAdvancedFilters = !showAdvancedFilters }
                     ) {
                         Text(
-                            text = "More Filters",
+                            text = getResourceString(R.string.more_filters),
                             color = ThemeManager.palette.primary
                         )
                         if (hasActiveFilters) {
@@ -561,7 +562,7 @@ fun MapScreen() {
                             )
                         }
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Search", color = ThemeManager.palette.white)
+                        Text(getResourceString(R.string.search), color = ThemeManager.palette.white)
                     }
                 }
 
@@ -576,7 +577,7 @@ fun MapScreen() {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Flags",
+                            text = getResourceString(R.string.flags),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = ThemeManager.palette.text
@@ -614,7 +615,7 @@ fun MapScreen() {
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
-                            text = "Fuel Types",
+                            text = getResourceString(R.string.fuel_types),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
                             color = ThemeManager.palette.text
@@ -654,7 +655,7 @@ fun MapScreen() {
 
                         if (AuthRepository.getInstance().isUserLoggedIn()) {
                             Text(
-                                text = "Saved Stations",
+                                text = getResourceString(R.string.saved_gas_station),
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Medium,
                                 color = ThemeManager.palette.text
@@ -666,7 +667,7 @@ fun MapScreen() {
                                 },
                                 label = {
                                     Text(
-                                        text = "Show Only Saved",
+                                        text = getResourceString(R.string.show_saved_only),
                                         color = ThemeManager.palette.text
                                     )
                                 },

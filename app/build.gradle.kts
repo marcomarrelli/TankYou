@@ -24,7 +24,7 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "1.0.1"
     }
 
     buildTypes {
@@ -114,7 +114,9 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.material)
 
+    //noinspection UseTomlInstead,GradleDependency
     implementation("androidx.navigation:navigation-compose:2.8.4")
+    //noinspection UseTomlInstead,GradleDependency
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation(libs.androidx.appcompat)
@@ -123,6 +125,7 @@ dependencies {
     implementation(libs.androidx.preference.ktx)
 
     implementation(libs.osmdroid.android)
+    //noinspection UseTomlInstead,GradleDependency
     implementation("com.github.MKergall:osmbonuspack:6.8.0")
 
     implementation(libs.androidx.room.runtime)

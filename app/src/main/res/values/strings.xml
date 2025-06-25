@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- APP -->
-    <string name="app_name">TankYou</string>
+    <string name="app_name" translatable="false">TankYou</string>
 
     <!-- Settings -->
     <string name="settings_map_setting_title">Map</string>
@@ -15,7 +15,7 @@
 
     <!-- Login Screen -->
     <string name="email" translatable="false">Email</string>
-    <string name="password">Password</string>
+    <string name="password" translatable="false">Password</string>
     <string name="log_in">Log In</string>
     <string name="register_now">Sign Up Now</string>
     <string name="enter_as_guest">Enter as a Guest</string>
@@ -54,7 +54,7 @@
     <string name="location_access">Location Access</string>
     <string name="location_access_desc">Allow location access to find nearby stations</string>
     <string name="app_version">App Version</string>
-    <string name="developer">Developer</string>
+    <string name="developer">Developers</string>
     <string name="select_language">Language</string>
     <string name="map">Map</string>
     <string name="show_my_location">Show my location</string>
@@ -98,4 +98,43 @@
     <string name="notes_placeholder">Notes (optional)</string>
     <string name="save_button">Save</string>
     <string name="cancel_button">Cancel</string>
+    <string name="action_setting_title">System</string>
+    <string name="reset_settings_title">Reset to Defaults</string>
+    <string name="reset_settings_description">Reset all settings to their default values</string>
+    <string name="action_ok">Done!</string>
+    <string name="clear_cache_error">Error cleaning cache…</string>
+    <string name="clear_cache_title">Clear Cache</string>
+    <string name="clear_cache_description">Clear application cache and its temporary files</string>
+    <string name="map_tint_title">Map Color Filter</string>
+    <string name="map_tint_none">None</string>
+    <string name="map_tint_gray">Gray Scale</string>
+    <string name="map_tint_sepia">Sepia</string>
+    <string name="guest_mode_title">Guest Mode</string>
+    <string name="guest_mode_description">You\'re currently using the app as a guest. Sign up or log in to unlock additional features!</string>
+    <string name="join_now">Want more? Join now</string>
+    <string name="email_required">Email Verification Required</string>
+    <string name="email_required_description">You are registered, but not verified!</string>
+    <string name="email_required_instruction">Please check your email and click the verification link to activate your account</string>
+    <string name="get_photo">Select a Photo</string>
+    <string name="get_photo_from">Choose a method to pick your new profile picture…</string>
+    <string name="photo_camera" translatable="false">Camera</string>
+    <string name="photo_gallery">Gallery</string>
+    <string name="editing_info">Edit Profile</string>
+    <string name="stop_editing_info">Stop Edits</string>
+    <string name="profile_picture">Profile Photo</string>
+    <string name="default_photo">Default Profile</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="logout">Logout</string>
+    <string name="saved_gas_station">Saved Gas Stations</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
+    <string name="no_saved_gas_stations">No saved gas stations yet.\nStart exploring and save your favorites!</string>
+    <string name="show_more">more stations</string>
+    <string name="and">and</string>
+    <string name="more_filters">More Filters</string>
+    <string name="flags">Flags</string>
+    <string name="fuel_types">Fuel Types</string>
+    <string name="show_saved_only">Show Only Saved</string>
+    <string name="search">Search</string>
+    <string name="searching">Searching…</string>
 </resources>

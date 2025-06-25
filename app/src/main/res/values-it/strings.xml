@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- APP -->
-    <string name="app_name">TankYou</string>
 
     <!-- Settings -->
     <string name="settings_map_setting_title">Mappa</string>
@@ -14,8 +13,6 @@
     <string name="settings_page_title">Impostazioni</string>
 
     <!-- Login Screen -->
-    <string name="email">Email</string>
-    <string name="password">Password</string>
     <string name="log_in">Accedi</string>
     <string name="register_now">Registrati Ora</string>
     <string name="enter_as_guest">Entra Come Ospite</string>
@@ -54,7 +51,7 @@
     <string name="location_access">Accesso Posizione</string>
     <string name="location_access_desc">Permetti l\'accesso alla posizione per trovare stazioni vicine</string>
     <string name="app_version">Versione App</string>
-    <string name="developer">Sviluppatore</string>
+    <string name="developer">Sviluppatori</string>
     <string name="select_language">Lingua</string>
     <string name="map">Mappa</string>
     <string name="show_my_location">Mostra la mia posizione</string>
@@ -98,4 +95,42 @@
     <string name="notes_placeholder">Annotazione (opzionale)</string>
     <string name="save_button">Salva</string>
     <string name="cancel_button">Cancella</string>
+    <string name="action_setting_title">Sistema</string>
+    <string name="reset_settings_title">Ripristina Impostazioni</string>
+    <string name="reset_settings_description">Ripristina tutte le impostazioni al loro valore di default</string>
+    <string name="action_ok">Fatto!</string>
+    <string name="clear_cache_error">Errore nella pulizia cache</string>
+    <string name="clear_cache_title">Svuota la Cache</string>
+    <string name="clear_cache_description">Svuota la cache dell\'applicazione ed elimina i file temporanei</string>
+    <string name="map_tint_title">Filtro Colore su Mappa</string>
+    <string name="map_tint_none">Nessuno</string>
+    <string name="map_tint_gray">Scala di Grigi</string>
+    <string name="map_tint_sepia">Seppia</string>
+    <string name="guest_mode_title">Modalità Ospite</string>
+    <string name="guest_mode_description">Stai attualmente utilizzando l\'applicazione in modalità ospite. Registrati od esegui il login per sbloccare funzionalità aggiuntive!</string>
+    <string name="join_now">Unisciti adesso!</string>
+    <string name="email_required_instruction">Controlla la tua email e clicca sul link per attivare il tuo account</string>
+    <string name="get_photo">Seleziona una Foto</string>
+    <string name="get_photo_from">Scegli come caricare la tua nuova foto profilo…</string>
+    <string name="photo_gallery">Galleria</string>
+    <string name="email_required">Verifica Utente Necessaria</string>
+    <string name="email_required_description">Sei registrato, ma non hai verificato l\'account!</string>
+    <string name="editing_info">Modifica Profilo</string>
+    <string name="stop_editing_info">Termina Modifiche</string>
+    <string name="profile_picture">Foto Profilo</string>
+    <string name="default_photo">Foto Profilo di Default</string>
+    <string name="change_photo">Cambia Foto Profilo</string>
+    <string name="logout">Esci</string>
+    <string name="saved_gas_station">Distributori Salvati</string>
+    <string name="expand">Espandi</string>
+    <string name="collapse">Collapse</string>
+    <string name="no_saved_gas_stations">Nessuna stazione salvata da mostrare.\\nEsplora la mappa e salva i tuoi distributori preferiti!</string>
+    <string name="show_more">stazioni da mostrare</string>
+    <string name="and">e</string>
+    <string name="more_filters">Filtri Avanzati</string>
+    <string name="flags">Bandiere</string>
+    <string name="fuel_types">Carburanti</string>
+    <string name="show_saved_only">Mostra solo i Preferiti</string>
+    <string name="search">Ricerca</string>
+    <string name="searching">Cercando…</string>
 </resources>

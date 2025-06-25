@@ -47,6 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import project.unibo.tankyou.R
 import project.unibo.tankyou.data.database.entities.GasStation
 import project.unibo.tankyou.data.database.entities.UserSavedGasStation
 import project.unibo.tankyou.data.database.entities.toFlagLabel
@@ -54,6 +55,7 @@ import project.unibo.tankyou.data.database.entities.toLocalizedDateFormat
 import project.unibo.tankyou.data.database.model.SavedGasStationsModel
 import project.unibo.tankyou.ui.theme.ThemeManager
 import project.unibo.tankyou.utils.Constants
+import project.unibo.tankyou.utils.getResourceString
 
 /**
  * A composable card that displays user's saved gas stations with expand/collapse functionality.
@@ -140,7 +142,7 @@ fun SavedGasStationCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Saved Gas Stations",
+                        text = getResourceString(R.string.saved_gas_station),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = ThemeManager.palette.title
@@ -160,7 +162,9 @@ fun SavedGasStationCard(
                     IconButton(onClick = { isExpanded = !isExpanded }) {
                         Icon(
                             imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (isExpanded) "Collapse" else "Expand",
+                            contentDescription = if (isExpanded) getResourceString(R.string.collapse) else getResourceString(
+                                R.string.expand
+                            ),
                             tint = ThemeManager.palette.accent
                         )
                     }
@@ -198,7 +202,7 @@ fun SavedGasStationCard(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No saved gas stations yet.\nStart exploring and save your favorites!",
+                            text = getResourceString(R.string.no_saved_gas_stations),
                             color = ThemeManager.palette.text.copy(alpha = 0.7f),
                             style = MaterialTheme.typography.bodyMedium,
                             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -214,11 +218,6 @@ fun SavedGasStationCard(
                         } else {
                             stationsWithDetails.take(3)
                         }
-
-                    Log.d(
-                        Constants.App.LOG_TAG,
-                        "Displaying ${displayStations.size} out of ${stationsWithDetails.size} stations (expanded: $isExpanded)"
-                    )
 
                     AnimatedVisibility(
                         visible = true,
@@ -250,7 +249,9 @@ fun SavedGasStationCard(
                     if (!isExpanded && stationsWithDetails.size > 3) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            text = "... and ${stationsWithDetails.size - 3} more stations",
+                            text = "..." + getResourceString(R.string.and) + " " +
+                                    (stationsWithDetails.size - 3).toString() + " " +
+                                    getResourceString(R.string.show_more),
                             color = ThemeManager.palette.text.copy(alpha = 0.6f),
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -297,7 +298,7 @@ private fun SavedStationItem(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = gasStation.name ?: "Unknown Station",
+                        text = gasStation.name ?: getResourceString(R.string.not_available),
                         style = MaterialTheme.typography.titleMedium,
                         color = ThemeManager.palette.title,
                         fontWeight = FontWeight.Medium,

@@ -130,17 +130,21 @@ fun SettingsScreen() {
         }
 
         SettingsSection(
-            title = "Actions",
+            title = getResourceString(R.string.action_setting_title),
             icon = Icons.Default.Refresh
         ) {
             SettingsActionItem(
-                title = "Reset to Defaults",
-                description = "Reset all settings to their default values",
+                title = getResourceString(R.string.reset_settings_title),
+                description = getResourceString(R.string.reset_settings_description),
                 icon = Icons.Default.Refresh,
                 onClick = {
                     coroutineScope.launch {
                         SettingsManager.resetToDefaults()
-                        Toast.makeText(context, "Done!", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context,
+                            context.getResourceString(R.string.action_ok),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             )
@@ -151,18 +155,26 @@ fun SettingsScreen() {
             )
 
             SettingsActionItem(
-                title = "Clear Cache",
-                description = "Clear application cache and temporary files",
+                title = getResourceString(R.string.clear_cache_title),
+                description = getResourceString(R.string.clear_cache_description),
                 icon = Icons.Default.CleaningServices,
                 onClick = {
                     coroutineScope.launch {
                         try {
                             context.cacheDir.deleteRecursively()
                             context.externalCacheDir?.deleteRecursively()
-                            Toast.makeText(context, "Done!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                context.getResourceString(R.string.action_ok),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         } catch (e: Exception) {
                             e.printStackTrace()
-                            Toast.makeText(context, "Error occurred", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                context.getResourceString(R.string.clear_cache_error),
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
                 }
@@ -260,7 +272,7 @@ private fun MapTintSelectionCard(
         modifier = Modifier.selectableGroup()
     ) {
         Text(
-            text = "Map Tint",
+            text = getResourceString(R.string.map_tint_title),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
             modifier = Modifier.padding(bottom = 12.dp),
@@ -319,7 +331,7 @@ private fun MapTintOptionRow(
         }
 
         Text(
-            text = tint.displayName,
+            text = tint.getDisplayName(),
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
             color = ThemeManager.palette.text
